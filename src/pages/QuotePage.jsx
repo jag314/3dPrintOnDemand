@@ -1,39 +1,153 @@
-import { useState } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
 
 import UploadZone from "../components/upload/UploadZone";
+
 import ViewerCanvas from "../components/upload/ViewerCanvas";
 
-const QuotePage = () => {
+import ModelViewer from "../components/ModelViewer";
 
-  const [uploadedFile, setUploadedFile] =
+const QuotePage = ({
+  materials,
+}) => {
+
+  // =========================
+  // FILE
+  // =========================
+
+  const [file, setFile] =
     useState(null);
 
-  const [selectedMaterial, setSelectedMaterial] =
-    useState("PLA");
+  // =========================
+  // MODEL STATS
+  // =========================
 
   const [modelStats, setModelStats] =
-    useState({});
+    useState({
+
+      fileName: "-",
+
+      dimensions: "-",
+
+      materialUsage: "0 g",
+
+      complexity: "-",
+
+    });
+
+  // =========================
+  // MATERIAL
+  // =========================
+
+  const [selectedMaterial, setSelectedMaterial] =
+    useState(
+
+      Object.keys(materials)[0]
+
+    );
+
+  // =========================
+  // COLOR
+  // =========================
+
+  const [selectedColor, setSelectedColor] =
+    useState(null);
+
+  // =========================
+  // DEBUG
+  // =========================
+
+  useEffect(() => {
+
+    console.log(
+      "QUOTE PAGE FILE:",
+      file
+    );
+
+  }, [file]);
+
+  // =========================
+  // AUTO SELECT FIRST COLOR
+  // =========================
+
+  useEffect(() => {
+
+    const material =
+      materials[
+        selectedMaterial
+      ];
+
+    if (
+      material?.colors?.length > 0
+    ) {
+
+      setSelectedColor(
+
+        material.colors[0]
+
+      );
+
+    }
+
+  }, [
+    selectedMaterial,
+    materials,
+  ]);
+
+  // =========================
+  // WEIGHT
+  // =========================
+
+  const weight = parseFloat(
+
+    modelStats.materialUsage
+
+      ?.replace(" g", "") || 0
+
+  );
+
+  // =========================
+  // PRICE
+  // =========================
+
+  const activePricePerGram =
+
+    selectedColor?.useMaterialPrice
+
+      ? materials[
+          selectedMaterial
+        ]?.pricePerGram || 0
+
+      : selectedColor?.customPrice || 0;
+
+  const totalPrice =
+    weight *
+    activePricePerGram;
 
   return (
 
-    <main className="min-h-screen bg-[#050816] text-white px-6 py-10">
+    <main className="min-h-screen bg-[#050816] text-white pt-32 px-6">
 
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
 
-        <div>
+        <div className="mb-10">
 
-          <h1 className="text-5xl md:text-7xl font-black leading-[0.9]">
+          <h1 className="text-6xl font-black leading-none">
 
             Upload Your
             <span className="text-violet-500">
+
               {" "}3D File
+
             </span>
 
           </h1>
 
-          <p className="mt-6 text-white/60 text-lg max-w-2xl">
+          <p className="text-white/50 mt-4">
 
             Upload STL, GLTF or GLB files and instantly preview your object.
 
@@ -41,51 +155,76 @@ const QuotePage = () => {
 
         </div>
 
-        {/* UPLOAD ZONE */}
+        {/* UPLOAD */}
 
-        <div className="mt-12">
+        <UploadZone
 
-          <UploadZone
-            onFileUpload={setUploadedFile}
-          />
+          onFileUpload={(uploadedFile) => {
 
-        </div>
+            console.log(
+              "SETTING FILE:",
+              uploadedFile
+            );
+
+            setFile(
+              uploadedFile
+            );
+
+           setModelStats({
+
+  fileName:
+    uploadedFile.name,
+
+  dimensions:
+    "-",
+
+  materialUsage:
+    "0 g",
+
+  complexity:
+    "-",
+
+});
+
+          }}
+
+        />
 
         {/* MAIN GRID */}
 
-        <div className="mt-12 grid lg:grid-cols-[2fr_1fr] gap-8">
+        <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-10">
 
-          {/* ========================= */}
           {/* VIEWER */}
-          {/* ========================= */}
 
-          <div className="relative rounded-3xl border border-white/10 overflow-hidden bg-black/30 min-h-[700px]">
+          <div className="relative rounded-3xl border border-white/10 bg-black/20 overflow-hidden h-[700px]">
 
             {/* LIVE ANALYSIS */}
 
-            <div className="absolute top-5 right-5 z-20 rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-5 w-[240px]">
+            <div className="absolute top-6 right-6 z-10 rounded-3xl border border-white/10 bg-black/60 backdrop-blur-xl p-5 w-[220px]">
 
-              <div className="text-xs tracking-[0.2em] uppercase text-white/60 mb-4">
+              <p className="text-xs uppercase tracking-widest text-white/40">
 
                 Live Analysis
 
-              </div>
+              </p>
 
-              <div className="space-y-4">
+              <div className="mt-4 space-y-3 text-sm">
 
                 {/* FILE */}
 
-                <div className="flex justify-between gap-3">
+                <div className="flex justify-between">
 
-                  <span className="text-white/50">
+                  <span className="text-white/40">
 
                     File
 
                   </span>
 
-                  <span className="font-semibold truncate max-w-[130px] text-right">
+                  <span className="font-semibold text-right max-w-[120px] truncate">
 
-                    {modelStats.fileName || "-"}
+                    {
+                      modelStats.fileName
+                    }
 
                   </span>
 
@@ -95,7 +234,7 @@ const QuotePage = () => {
 
                 <div className="flex justify-between">
 
-                  <span className="text-white/50">
+                  <span className="text-white/40">
 
                     Weight
 
@@ -103,7 +242,9 @@ const QuotePage = () => {
 
                   <span className="font-semibold">
 
-                    {modelStats.weight || "-"}
+                    {
+                      modelStats.materialUsage
+                    }
 
                   </span>
 
@@ -113,23 +254,31 @@ const QuotePage = () => {
 
                 <div className="flex justify-between">
 
-                  <span className="text-white/50">
+                  <span className="text-white/40">
 
                     Status
 
                   </span>
 
                   <span
-                    className={`font-semibold ${
-                      uploadedFile
-                        ? "text-green-400"
-                        : "text-yellow-400"
+                    className={`font-semibold
+
+                    ${file
+
+                      ? "text-green-400"
+
+                      : "text-yellow-400"
+
                     }`}
                   >
 
-                    {uploadedFile
+                    {file
+
                       ? "Ready"
-                      : "Waiting"}
+
+                      : "Awaiting Upload"
+
+                    }
 
                   </span>
 
@@ -141,31 +290,37 @@ const QuotePage = () => {
 
             {/* VIEWER */}
 
-            <ViewerCanvas
-              file={uploadedFile}
-              setModelStats={setModelStats}
-              selectedMaterial={selectedMaterial}
-            />
+            <ViewerCanvas>
+
+              <ModelViewer
+
+                file={file}
+
+                setModelStats={
+                  setModelStats
+                }
+
+                selectedColor={
+                  selectedColor
+                }
+
+              />
+
+            </ViewerCanvas>
 
           </div>
 
-          {/* ========================= */}
-          {/* QUOTE PANEL */}
-          {/* ========================= */}
+          {/* SIDEBAR */}
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 h-fit sticky top-28">
 
-            {/* LABEL */}
-
-            <div className="text-xs tracking-[0.25em] text-violet-300 uppercase mb-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-violet-300">
 
               Summary
 
-            </div>
+            </p>
 
-            {/* TITLE */}
-
-            <h2 className="text-5xl font-black leading-none">
+            <h2 className="text-5xl font-black leading-none mt-4">
 
               Instant
               <br />
@@ -173,116 +328,208 @@ const QuotePage = () => {
 
             </h2>
 
-            {/* ========================= */}
             {/* MATERIALS */}
-            {/* ========================= */}
 
             <div className="mt-10">
 
-              <div className="text-white/60 mb-4">
+              <h3 className="text-white/60 text-sm uppercase tracking-widest mb-4">
 
                 Select Material
 
-              </div>
+              </h3>
 
               <div className="grid grid-cols-2 gap-3">
 
-                {[
-                  {
-                    name: "PLA",
-                    description: "Fast & affordable",
-                  },
+                {Object.keys(
+                  materials
+                ).map(
+                  (
+                    materialName
+                  ) => {
 
-                  {
-                    name: "PETG",
-                    description: "Durable & heat resistant",
-                  },
+                    const material =
+                      materials[
+                        materialName
+                      ];
 
-                  {
-                    name: "ABS",
-                    description: "Industrial strength",
-                  },
+                    const isSelected =
+                      selectedMaterial ===
+                      materialName;
 
-                  {
-                    name: "Resin",
-                    description: "Ultra detail",
-                  },
+                    return (
 
-                ].map((material) => (
+                      <button
+                        key={
+                          materialName
+                        }
+                        onClick={() =>
+                          setSelectedMaterial(
+                            materialName
+                          )
+                        }
+                        className={`rounded-2xl border p-4 transition text-left
 
-                  <button
-                    key={material.name}
-                    onClick={() =>
-                      setSelectedMaterial(material.name)
-                    }
-                    className={`rounded-2xl p-4 text-left transition border
+                        ${isSelected
 
-                    ${
-                      selectedMaterial === material.name
+                          ? "border-violet-500 bg-violet-500/10"
 
-                        ? "bg-violet-600 border-violet-500"
+                          : "border-white/10 hover:border-violet-500/30"
 
-                        : "border-white/10 hover:border-violet-500/40 hover:bg-white/[0.03]"
-                    }
-                    
-                    `}
-                  >
+                        }`}
+                      >
 
-                    <div className="font-bold">
+                        <h4 className="font-bold text-lg">
 
-                      {material.name}
+                          {materialName}
 
-                    </div>
+                        </h4>
 
-                    <div className="text-sm text-white/70 mt-1">
+                        <p className="text-white/40 text-sm mt-1">
 
-                      {material.description}
+                          ₡
+                          {
+                            material.pricePerGram
+                          }
+                          /g
 
-                    </div>
+                        </p>
 
-                  </button>
+                      </button>
 
-                ))}
+                    );
+
+                  }
+                )}
 
               </div>
 
             </div>
 
-            {/* ========================= */}
-            {/* MODEL DATA */}
-            {/* ========================= */}
+            {/* COLORS */}
 
-            <div className="mt-10 space-y-6">
+            {materials[selectedMaterial]
+              ?.colors?.length > 0 && (
 
-              {/* FILE */}
+              <div className="mt-8">
 
-              <div className="flex justify-between gap-4">
+                <h3 className="text-white/60 text-sm uppercase tracking-widest mb-4">
 
-                <span className="text-white/60">
+                  Select Color
+
+                </h3>
+
+                <div className="grid grid-cols-2 gap-3">
+
+                  {materials[
+                    selectedMaterial
+                  ].colors.map(
+                    (
+                      color,
+                      index
+                    ) => {
+
+                      const isSelected =
+                        selectedColor?.name ===
+                        color.name;
+
+                      return (
+
+                        <button
+                          key={index}
+                          onClick={() =>
+                            setSelectedColor(
+                              color
+                            )
+                          }
+                          className={`rounded-2xl border p-4 transition text-left
+
+                          ${isSelected
+
+                            ? "border-violet-500 bg-violet-500/10"
+
+                            : "border-white/10 hover:border-violet-500/30"
+
+                          }`}
+                        >
+
+                          <div className="flex items-center gap-3">
+
+                            <div
+                              className="w-6 h-6 rounded-full border border-white/20"
+                              style={{
+                                background:
+                                  color.hex,
+                              }}
+                            />
+
+                            <div>
+
+                              <h4 className="font-semibold text-white">
+
+                                {color.name}
+
+                              </h4>
+
+                              <p className="text-xs text-white/40">
+
+                                {color.useMaterialPrice
+
+                                  ? "Standard"
+
+                                  : "Premium"
+
+                                }
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </button>
+
+                      );
+
+                    }
+                  )}
+
+                </div>
+
+              </div>
+
+            )}
+
+            {/* DETAILS */}
+
+            <div className="mt-10 space-y-5 text-sm">
+
+              <div className="flex justify-between">
+
+                <span className="text-white/40">
 
                   File
 
                 </span>
 
-                <span className="truncate max-w-[180px] text-right">
+                <span className="font-semibold">
 
-                  {modelStats.fileName || "-"}
+                  {
+                    modelStats.fileName
+                  }
 
                 </span>
 
               </div>
 
-              {/* MATERIAL */}
+              <div className="flex justify-between">
 
-              <div className="flex justify-between gap-4">
-
-                <span className="text-white/60">
+                <span className="text-white/40">
 
                   Material
 
                 </span>
 
-                <span>
+                <span className="font-semibold">
 
                   {selectedMaterial}
 
@@ -290,73 +537,72 @@ const QuotePage = () => {
 
               </div>
 
-              {/* WEIGHT */}
+              <div className="flex justify-between">
 
-              <div className="flex justify-between gap-4">
+                <span className="text-white/40">
 
-                <span className="text-white/60">
+                  Color
+
+                </span>
+
+                <span className="font-semibold">
+
+                  {selectedColor?.name ||
+                    "-"}
+
+                </span>
+
+              </div>
+
+              <div className="flex justify-between">
+
+                <span className="text-white/40">
 
                   Weight
 
                 </span>
 
-                <span>
+                <span className="font-semibold">
 
-                  {modelStats.weight || "-"}
+                  {
+                    modelStats.materialUsage
+                  }
 
                 </span>
 
               </div>
 
-              {/* DIMENSIONS */}
+              <div className="flex justify-between">
 
-              <div className="flex justify-between gap-4">
-
-                <span className="text-white/60">
+                <span className="text-white/40">
 
                   Dimensions
 
                 </span>
 
-                <span className="text-right max-w-[180px]">
+                <span className="font-semibold text-right">
 
-                  {modelStats.dimensions || "-"}
+                  {
+                    modelStats.dimensions
+                  }
 
                 </span>
 
               </div>
 
-              {/*
-<div className="flex justify-between gap-4">
+              <div className="flex justify-between">
 
-  <span className="text-white/60">
-
-    Print Time
-
-  </span>
-
-  <span>
-
-    {modelStats.estimatedTime || "-"}
-
-  </span>
-
-</div>
-*/}
-
-              {/* COMPLEXITY */}
-
-              <div className="flex justify-between gap-4">
-
-                <span className="text-white/60">
+                <span className="text-white/40">
 
                   Complexity
 
                 </span>
 
-                <span>
+                <span className="font-semibold">
 
-                  {modelStats.complexity || "-"}
+                  {
+                    modelStats.complexity
+                  }
 
                 </span>
 
@@ -364,31 +610,34 @@ const QuotePage = () => {
 
             </div>
 
-            {/* ========================= */}
             {/* PRICE */}
-            {/* ========================= */}
 
-            <div className="mt-12 border-t border-white/10 pt-8">
+            <div className="mt-10 pt-8 border-t border-white/10">
 
-              <div className="text-white/50 mb-2">
+              <p className="text-white/40 text-sm">
 
                 Estimated Price
 
-              </div>
+              </p>
 
-              <div className="text-6xl font-black">
+              <h3 className="text-6xl font-black mt-3">
 
-                ₡12,500
+                ₡
+                {Math.round(
+                  totalPrice
+                ).toLocaleString()}
 
-              </div>
-
-              <button className="w-full mt-8 bg-violet-600 hover:bg-violet-500 transition py-4 rounded-2xl font-semibold">
-
-                Continue to Checkout
-
-              </button>
+              </h3>
 
             </div>
+
+            {/* BUTTON */}
+
+            <button className="mt-8 w-full bg-violet-600 hover:bg-violet-500 transition rounded-2xl py-5 font-bold">
+
+              Continue to Checkout
+
+            </button>
 
           </div>
 

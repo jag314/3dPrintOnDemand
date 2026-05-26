@@ -1,327 +1,346 @@
-import { useEffect, useState } from "react";
-
-import { useLoader } from "@react-three/fiber";
-
-import { STLLoader } from "three-stdlib";
-
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import * as THREE from "three";
 
-const materialDensities = {
-
-  PLA: 1.24,
-
-  PETG: 1.27,
-
-  ABS: 1.04,
-
-  Resin: 1.10,
-
-};
+import {
+  STLLoader,
+} from "three/examples/jsm/loaders/STLLoader";
 
 const ModelViewer = ({
   file,
   setModelStats,
-  selectedMaterial,
+  selectedColor,
 }) => {
 
-  const [url, setUrl] = useState("");
+  const [geometry, setGeometry] =
+    useState(null);
+
+  const [scale, setScale] =
+    useState(1);
+
+  const [positionY, setPositionY] =
+    useState(0);
 
   // =========================
-  // CREATE OBJECT URL
+  // LOAD MODEL
   // =========================
 
   useEffect(() => {
 
-    const objectUrl =
-      URL.createObjectURL(file);
+    // RESET
 
-    setUrl(objectUrl);
+    if (!file) {
 
-    return () => {
+      setGeometry(null);
 
-      URL.revokeObjectURL(objectUrl);
+      setModelStats({
 
-    };
+        fileName: "-",
 
-  }, [file]);
+        dimensions: "-",
 
-  // WAIT URL
+        materialUsage: "0 g",
 
-  if (!url) return null;
+        complexity: "-",
 
-  // =========================
-  // STL FILES
-  // =========================
+      });
 
-  if (
-    file.name.toLowerCase().endsWith(".stl")
-  ) {
-
-    const geometry =
-      useLoader(STLLoader, url);
-
-    geometry.center();
-
-    geometry.computeBoundingBox();
-
-    const box =
-      geometry.boundingBox;
-
-    const size =
-      new THREE.Vector3();
-
-    box.getSize(size);
-
-    // DIMENSIONS
-
-    const width =
-      size.x.toFixed(1);
-
-    const height =
-      size.y.toFixed(1);
-
-    const depth =
-      size.z.toFixed(1);
-
-    // =========================
-    // REAL GEOMETRY VOLUME
-    // =========================
-
-    let volume = 0;
-
-    const position =
-      geometry.attributes.position;
-
-    for (
-      let i = 0;
-      i < position.count;
-      i += 3
-    ) {
-
-      const p1 =
-        new THREE.Vector3(
-          position.getX(i),
-          position.getY(i),
-          position.getZ(i)
-        );
-
-      const p2 =
-        new THREE.Vector3(
-          position.getX(i + 1),
-          position.getY(i + 1),
-          position.getZ(i + 1)
-        );
-
-      const p3 =
-        new THREE.Vector3(
-          position.getX(i + 2),
-          position.getY(i + 2),
-          position.getZ(i + 2)
-        );
-
-      volume +=
-        p1.dot(
-          p2.cross(p3)
-        ) / 6;
+      return;
 
     }
 
-    volume = Math.abs(volume);
-
-    // mm³ → cm³
-
-    const volumeCm3 =
-      volume / 1000;
-
-    // =========================
-    // MATERIAL DENSITY
-    // =========================
-
-    const density =
-      materialDensities[
-        selectedMaterial
-      ] || 1.24;
-
-    // =========================
-    // WEIGHT
-    // =========================
-
-    const estimatedWeight =
-      volumeCm3 * density;
-
-    // =========================
-    // PRINT TIME
-    // =========================
-
-    const estimatedHours =
-      estimatedWeight / 6;
-
-    // =========================
-    // COMPLEXITY
-    // =========================
-
-    let complexity = "Low";
-
-    if (estimatedWeight > 80)
-      complexity = "Medium";
-
-    if (estimatedWeight > 200)
-      complexity = "High";
-
-    // =========================
-    // SEND DATA
-    // =========================
-
-    setModelStats({
-
-      fileName: file.name,
-
-      dimensions:
-        `${width} × ${height} × ${depth} mm`,
-
-      weight:
-        `${estimatedWeight.toFixed(1)} g`,
-
-      estimatedTime:
-        `${estimatedHours.toFixed(1)} h`,
-
-      complexity,
-
-    });
-
-    return (
-
-      <mesh
-        geometry={geometry}
-        scale={0.05}
-      >
-
-        <meshStandardMaterial
-          color="#c084fc"
-          metalness={0.25}
-          roughness={0.35}
-        />
-
-      </mesh>
-
+    console.log(
+      "MODEL VIEWER FILE:",
+      file
     );
 
-  }
+    const reader =
+      new FileReader();
 
-  // =========================
-  // GLTF / GLB
-  // =========================
+    reader.onload = (
+      event
+    ) => {
 
-  if (
-    file.name.toLowerCase().endsWith(".gltf") ||
-    file.name.toLowerCase().endsWith(".glb")
-  ) {
+      try {
 
-    const gltf =
-      useLoader(GLTFLoader, url);
+        console.log(
+          "READ SUCCESS"
+        );
 
-    gltf.scene.traverse((child) => {
+        // =========================
+        // LOAD STL
+        // =========================
 
-      if (child.isMesh) {
+        const loader =
+          new STLLoader();
 
-        child.castShadow = true;
+        const parsedGeometry =
+          loader.parse(
+            event.target.result
+          );
 
-        child.receiveShadow = true;
+        parsedGeometry.computeVertexNormals();
+
+        parsedGeometry.computeBoundingBox();
+
+        // =========================
+        // SIZE
+        // =========================
+
+        const box =
+          parsedGeometry.boundingBox;
+
+        const size =
+          new THREE.Vector3();
+
+        box.getSize(size);
+
+        console.log(
+          "ORIGINAL SIZE:",
+          size
+        );
+
+        // =========================
+        // FIX UNITS
+        // =========================
+
+        let normalizedX =
+          size.x;
+
+        let normalizedY =
+          size.y;
+
+        let normalizedZ =
+          size.z;
+
+        const maxDimension =
+          Math.max(
+            size.x,
+            size.y,
+            size.z
+          );
+
+        // Tiny models probably exported in meters
+
+        if (
+          maxDimension < 5
+        ) {
+
+          normalizedX *= 1000;
+          normalizedY *= 1000;
+          normalizedZ *= 1000;
+
+        }
+
+        console.log(
+          "NORMALIZED:",
+          normalizedX,
+          normalizedY,
+          normalizedZ
+        );
+
+        // =========================
+        // AUTO SCALE
+        // =========================
+
+        const targetSize =
+          120;
+
+        const autoScale =
+          targetSize /
+          Math.max(
+            normalizedX,
+            normalizedY,
+            normalizedZ
+          );
+
+        setScale(
+          autoScale
+        );
+
+        // =========================
+        // CENTER MODEL
+        // =========================
+
+        parsedGeometry.center();
+
+        // =========================
+        // FLOOR POSITION
+        // =========================
+
+        const scaledHeight =
+          normalizedY *
+          autoScale;
+
+        setPositionY(
+          scaledHeight / 2
+        );
+
+        // =========================
+        // VOLUME
+        // =========================
+
+        const volumeCm3 =
+
+          (
+            normalizedX *
+            normalizedY *
+            normalizedZ
+          ) / 1000;
+
+        console.log(
+          "VOLUME:",
+          volumeCm3
+        );
+
+        // =========================
+        // WEIGHT
+        // =========================
+
+        const estimatedWeight =
+
+          Math.max(
+
+            volumeCm3 * 1.24,
+
+            1
+
+          ).toFixed(1);
+
+        console.log(
+          "WEIGHT:",
+          estimatedWeight
+        );
+
+        // =========================
+        // COMPLEXITY
+        // =========================
+
+        const triangles =
+          parsedGeometry
+            .attributes.position
+            .count / 3;
+
+        const complexity =
+
+          triangles > 100000
+
+            ? "High"
+
+            : triangles > 30000
+
+              ? "Medium"
+
+              : "Low";
+
+        // =========================
+        // FINAL STATS
+        // =========================
+
+        const finalStats = {
+
+          fileName:
+            file.name,
+
+          dimensions:
+
+            `${normalizedX.toFixed(1)} × ${normalizedY.toFixed(1)} × ${normalizedZ.toFixed(1)} mm`,
+
+          materialUsage:
+
+            `${estimatedWeight} g`,
+
+          complexity,
+
+        };
+
+        console.log(
+          "FINAL STATS:",
+          finalStats
+        );
+
+        setModelStats(
+          finalStats
+        );
+
+        // =========================
+        // SAVE GEOMETRY
+        // =========================
+
+        setGeometry(
+          parsedGeometry
+        );
 
       }
 
-    });
+      catch (error) {
 
-    const box =
-      new THREE.Box3().setFromObject(
-        gltf.scene
-      );
+        console.error(
+          "STL ERROR:",
+          error
+        );
 
-    const size =
-      new THREE.Vector3();
+      }
 
-    box.getSize(size);
+    };
 
-    const width =
-      (size.x * 1000).toFixed(1);
-
-    const height =
-      (size.y * 1000).toFixed(1);
-
-    const depth =
-      (size.z * 1000).toFixed(1);
-
-    // APPROX VOLUME
-
-    const volumeCm3 =
-      (
-        (
-          (size.x * 1000) *
-          (size.y * 1000) *
-          (size.z * 1000)
-        ) / 1800
-      );
-
-    // DENSITY
-
-    const density =
-      materialDensities[
-        selectedMaterial
-      ] || 1.24;
-
-    // WEIGHT
-
-    const estimatedWeight =
-      volumeCm3 * density;
-
-    // TIME
-
-    const estimatedHours =
-      estimatedWeight / 6;
-
-    // COMPLEXITY
-
-    let complexity = "Low";
-
-    if (estimatedWeight > 80)
-      complexity = "Medium";
-
-    if (estimatedWeight > 200)
-      complexity = "High";
-
-    // SEND DATA
-
-    setModelStats({
-
-      fileName: file.name,
-
-      dimensions:
-        `${width} × ${height} × ${depth} mm`,
-
-      weight:
-        `${estimatedWeight.toFixed(1)} g`,
-
-      estimatedTime:
-        `${estimatedHours.toFixed(1)} h`,
-
-      complexity,
-
-    });
-
-    return (
-
-      <primitive
-        object={gltf.scene}
-        scale={2}
-      />
-
+    reader.readAsArrayBuffer(
+      file
     );
 
-  }
+  }, [file]);
 
-  return null;
+  // =========================
+  // EMPTY
+  // =========================
+
+  if (!geometry)
+    return null;
+
+  // =========================
+  // RENDER
+  // =========================
+
+  return (
+
+    <mesh
+
+      geometry={geometry}
+
+      scale={scale}
+
+      position={[
+        0,
+        positionY,
+        0,
+      ]}
+
+      rotation={[
+        -Math.PI / 2,
+        0,
+        0,
+      ]}
+    >
+
+      <meshStandardMaterial
+
+        color={
+          selectedColor?.hex ||
+          "#c084fc"
+        }
+
+        metalness={0.2}
+
+        roughness={0.35}
+
+      />
+
+    </mesh>
+
+  );
 
 };
 

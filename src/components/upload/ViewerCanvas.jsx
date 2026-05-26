@@ -1,72 +1,73 @@
-import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
+import {
+  Canvas,
+} from "@react-three/fiber";
 
-import ViewerLoader from "./ViewerLoader";
 import {
   OrbitControls,
-  Environment,
+  Grid,
 } from "@react-three/drei";
 
-import ModelViewer from "./ModelViewer";
-
 const ViewerCanvas = ({
-  file,
-  setModelStats,
-  selectedMaterial,
+  children,
 }) => {
 
- return (
+  return (
 
-  <Canvas
-    camera={{
-      position: [0, 0, 120],
-      fov: 35,
-    }}
-  >
+    <div className="w-full h-full">
 
-    <color
-      attach="background"
-      args={["#050816"]}
-    />
+      <Canvas
+        camera={{
+          position: [
+            0,
+            60,
+            160,
+          ],
+          fov: 45,
+        }}
+      >
 
-    {/* LIGHTS */}
+        {/* LIGHTS */}
 
-    <ambientLight intensity={1.8} />
+        <ambientLight intensity={2} />
 
-    <directionalLight
-      position={[10, 10, 5]}
-      intensity={2}
-    />
-
-    <Environment preset="city" />
-
-    {/* CONTROLS */}
-
-    <OrbitControls
-      enablePan
-      enableZoom
-      enableRotate
-    />
-
-    {/* MODEL */}
-
-    <Suspense fallback={<ViewerLoader />}>
-
-      {file && (
-
-        <ModelViewer
-          file={file}
-          setModelStats={setModelStats}
-          selectedMaterial={selectedMaterial}
+        <directionalLight
+          position={[
+            50,
+            50,
+            50,
+          ]}
+          intensity={4}
         />
 
-      )}
+        {/* GRID */}
 
-    </Suspense>
+        <Grid
+          args={[
+            200,
+            200,
+          ]}
+          cellSize={10}
+          sectionSize={50}
+          fadeDistance={300}
+        />
 
-  </Canvas>
+        {/* MODEL */}
 
-);
+        {children}
+
+        {/* CONTROLS */}
+
+        <OrbitControls
+          enableZoom
+          enablePan
+        />
+
+      </Canvas>
+
+    </div>
+
+  );
+
 };
 
 export default ViewerCanvas;
