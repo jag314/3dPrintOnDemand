@@ -9,7 +9,7 @@ const Footer = () => {
         <div>
 
           <h2 className="text-3xl font-black">
-            PRINT<span className="text-violet-500">FORGE</span>
+            Inity<span className="text-violet-500">3D</span>
           </h2>
 
           <p className="text-white/50 mt-2">
@@ -19,7 +19,7 @@ const Footer = () => {
         </div>
 
         <div className="text-white/40 text-sm">
-          © 2026 PRINTFORGE — Costa Rica
+          © 2026 INITY 3D — Costa Rica
         </div>
 
       </div>

@@ -16,6 +16,14 @@ import QuotePage from "./pages/QuotePage";
 
 import Dashboard from "./pages/Dashboard";
 
+import About from "./pages/About";
+
+import Teach from "./pages/Teach";
+
+import Designer from "./pages/Designer";
+
+import Contact from "./pages/Contact";
+
 // =========================
 // DEFAULT MATERIALS
 // =========================
@@ -80,10 +88,6 @@ const defaultMaterials = {
 
 const App = () => {
 
-  // =========================
-  // LOAD FROM LOCAL STORAGE
-  // =========================
-
   const [materials, setMaterials] =
     useState(() => {
 
@@ -101,10 +105,6 @@ const App = () => {
         : defaultMaterials;
 
     });
-
-  // =========================
-  // AUTO SAVE
-  // =========================
 
   useEffect(() => {
 
@@ -154,6 +154,26 @@ const App = () => {
             />
 
           }
+        />
+
+        <Route
+          path="/about"
+          element={<About />}
+        />
+
+        <Route
+          path="/teach"
+          element={<Teach />}
+        />
+
+        <Route
+          path="/designer"
+          element={<Designer />}
+        />
+
+        <Route
+          path="/contact"
+          element={<Contact />}
         />
 
       </Routes>

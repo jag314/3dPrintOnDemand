@@ -2,7 +2,7 @@ export default function QuoteSidebar() {
 
   return (
 
-    <aside className="sticky top-28 h-fit border border-white/10 bg-white/[0.03] rounded-[32px] p-8 backdrop-blur-md">
+    <aside className="sticky top-28 h-fit border border-white/10 glass-card rounded-[32px] p-8 backdrop-blur-md">
 
       {/* HEADER */}
 

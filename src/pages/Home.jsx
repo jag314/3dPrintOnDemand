@@ -1,28 +1,36 @@
-import Hero from "../components/Hero";
+import {
+  Hero,
+  Materials,
+  Workflow,
+  LivePreview,
+  PremiumFinishes,
+  WhyInity3D,
+  CTASection,
+  Footer,
+} from "../components";
 
-import About from "../components/About";
-
-import Tech from "../components/Tech";
-
-import Works from "../components/Works";
-
-import Contact from "../components/Contact";
 
 const Home = () => {
 
   return (
 
-    <main className="relative z-0 bg-black">
+    <main className="bg-[#050816] text-white overflow-hidden">
 
       <Hero />
 
-      <About />
+      <Materials />
 
-      <Tech />
+      <Workflow />
 
-      <Works />
+      <LivePreview />
 
-      <Contact />
+    
+
+      <WhyInity3D />
+
+      <CTASection />
+
+      <Footer />
 
     </main>
 

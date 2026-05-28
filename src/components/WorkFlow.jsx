@@ -1,58 +1,159 @@
-const steps = [
-  'Upload your 3D model',
-  'Automatic file analysis',
-  'Instant manufacturing quote',
-  'Secure online payment',
-  'Production and shipping',
+import {
+  Upload,
+  ScanSearch,
+  Calculator,
+  Printer,
+} from "lucide-react";
+
+const workflow = [
+
+  {
+    title: "Upload Model",
+    icon: Upload,
+    description:
+      "Upload STL, OBJ or STEP files directly through the instant manufacturing platform.",
+  },
+
+  {
+    title: "Live Analysis",
+    icon: ScanSearch,
+    description:
+      "Automatic geometry analysis and real-time 3D visualization before production.",
+  },
+
+  {
+    title: "Instant Quote",
+    icon: Calculator,
+    description:
+      "Receive automated pricing based on material, volume, finishes and production complexity.",
+  },
+
+  {
+    title: "Production",
+    icon: Printer,
+    description:
+      "Your project enters professional additive manufacturing workflow and quality validation.",
+  },
+
 ];
 
 const Workflow = () => {
 
   return (
 
-    <section id="workflow" className="py-32 px-6">
+    <section
+      id="workflow"
+      className="section-background py-32 px-6 overflow-hidden relative"
+    >
 
-      <div className="max-w-7xl mx-auto">
+      {/* GLOW */}
 
-        <div className="mb-20">
+      <div className="section-glow" />
 
-          <p className="text-violet-400 uppercase tracking-widest text-sm">
-            Process
+      <div className="max-w-7xl mx-auto relative z-10">
+
+        {/* HEADER */}
+
+        <div className="text-center max-w-4xl mx-auto">
+
+          <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
+
+            HOW INITY 3D WORKS
+
           </p>
 
-          <h2 className="text-5xl font-black mt-4">
-            How PRINTFORGE Works
+          <h2 className="text-6xl font-black mt-6 leading-tight">
+
+            Automated
+            <br />
+
+            Manufacturing Workflow
+
           </h2>
+
+          <p className="soft-text text-lg mt-8 leading-relaxed">
+
+            A simplified digital manufacturing pipeline focused on speed, precision and production efficiency.
+
+          </p>
 
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
+        {/* STEPS */}
 
-          {steps.map((step, index) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-24">
 
-            <div
-              key={step}
-              className="border border-white/10 bg-white/[0.03] rounded-3xl p-8"
-            >
+          {workflow.map((step, index) => {
 
-              <div className="text-violet-500 text-5xl font-black mb-6">
-                0{index + 1}
+            const Icon =
+              step.icon;
+
+            return (
+
+              <div
+                key={step.title}
+                className="
+                group
+                relative
+                glass-card
+                rounded-[36px]
+                p-10
+                hover-card
+                overflow-hidden
+                "
+              >
+
+                {/* NUMBER */}
+
+                <div className="absolute top-6 right-6 text-white/10 text-7xl font-black">
+
+                  0{index + 1}
+
+                </div>
+
+                {/* ICON */}
+
+                <div className="relative z-10 w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500/20 to-violet-700/10 border border-violet-500/20 flex items-center justify-center">
+
+                  <Icon
+                    size={38}
+                    className="text-violet-300"
+                  />
+
+                </div>
+
+                {/* CONTENT */}
+
+                <div className="relative z-10 mt-10">
+
+                  <h3 className="text-3xl font-black">
+
+                    {step.title}
+
+                  </h3>
+
+                  <p className="soft-text leading-relaxed mt-5">
+
+                    {step.description}
+
+                  </p>
+
+                </div>
+
               </div>
 
-              <h3 className="text-xl font-semibold leading-snug">
-                {step}
-              </h3>
+            );
 
-            </div>
-
-          ))}
+          })}
 
         </div>
 
       </div>
 
     </section>
+
   );
+
 };
 
 export default Workflow;

@@ -2,7 +2,7 @@ export default function MaterialCard({ material }) {
 
   return (
 
-    <div className="border border-white/10 bg-white/[0.03] rounded-3xl p-6 hover:border-violet-500/40 transition cursor-pointer group">
+    <div className="border border-white/10 glass-card rounded-3xl p-6 hover:border-violet-500/40 transition cursor-pointer group">
 
       <div className="flex items-start justify-between">
 

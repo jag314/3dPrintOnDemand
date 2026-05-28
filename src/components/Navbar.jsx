@@ -1,43 +1,123 @@
+import { Link } from "react-router-dom";
+
 const Navbar = () => {
 
   return (
 
-    <nav className="fixed top-0 left-0 w-full z-[100]">
+    <nav
+      className="
+      fixed
+      top-0
+      left-0
+      w-full
+      z-50
+      backdrop-blur-2xl
+      bg-[#0b1020]/70
+      border-b
+      border-white/5
+      "
+    >
 
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 h-[88px] flex items-center justify-between">
 
         {/* LOGO */}
 
-        <h1 className="text-4xl font-black tracking-tight text-white">
+        <Link
+          to="/"
+          className="text-4xl font-black tracking-tight"
+        >
 
-          PRINT<span className="text-violet-500">FORGE</span>
+          INITY
+          <span className="text-violet-400">
 
-        </h1>
+            3D
+
+          </span>
+
+        </Link>
 
         {/* MENU */}
 
-        <div className="hidden md:flex items-center gap-14 text-white/70 text-lg">
+        <div className="hidden lg:flex items-center gap-12 text-lg text-white/70">
 
-          <a href="#">Materials</a>
-          <a href="#">Workflow</a>
-          <a href="#">Pricing</a>
-          <a href="#">Contact</a>
+          <Link
+            to="/"
+            className="hover:text-white transition-all duration-300"
+          >
+
+            Home
+
+          </Link>
+
+          <Link
+            to="/about"
+            className="hover:text-white transition-all duration-300"
+          >
+
+            About
+
+          </Link>
+
+          <Link
+            to="/teach"
+            className="hover:text-white transition-all duration-300"
+          >
+
+            We Teach
+
+          </Link>
+
+          <Link
+            to="/designer"
+            className="hover:text-white transition-all duration-300"
+          >
+
+            Need A Designer?
+
+          </Link>
+
+          <Link
+            to="/contact"
+            className="hover:text-white transition-all duration-300"
+          >
+
+            Contact
+
+          </Link>
 
         </div>
 
-        {/* BUTTON */}
+        {/* RIGHT SIDE */}
 
-        <button className="bg-violet-600 hover:bg-violet-500 transition px-8 py-4 rounded-2xl font-semibold text-white">
+        <div className="flex items-center gap-4">
 
-          Upload Model
+         
 
-        </button>
+          {/* CTA */}
+
+          <Link
+            to="/quote"
+            className="
+            primary-button
+            px-8
+            py-4
+            rounded-2xl
+            font-semibold
+            "
+          >
+
+            Upload Model
+
+          </Link>
+
+        </div>
 
       </div>
 
     </nav>
 
   );
+
 };
 
 export default Navbar;

@@ -1,13 +1,17 @@
 import {
   useState,
-  useEffect,
+  useMemo,
 } from "react";
+
+import {
+  Bounds,
+} from "@react-three/drei";
 
 import UploadZone from "../components/upload/UploadZone";
 
 import ViewerCanvas from "../components/upload/ViewerCanvas";
 
-import ModelViewer from "../components/ModelViewer";
+import ModelViewer from "../components/upload/ModelViewer";
 
 const QuotePage = ({
   materials,
@@ -31,374 +35,526 @@ const QuotePage = ({
 
       dimensions: "-",
 
-      materialUsage: "0 g",
+      materialUsage: "0",
 
       complexity: "-",
 
     });
 
   // =========================
-  // MATERIAL
+  // MATERIALS
   // =========================
+
+  const materialNames =
+    Object.keys(
+      materials
+    );
 
   const [selectedMaterial, setSelectedMaterial] =
     useState(
-
-      Object.keys(materials)[0]
-
+      materialNames[0]
     );
 
-  // =========================
-  // COLOR
-  // =========================
+  const selectedColors =
+    materials[
+      selectedMaterial
+    ]?.colors || [];
 
   const [selectedColor, setSelectedColor] =
-    useState(null);
-
-  // =========================
-  // DEBUG
-  // =========================
-
-  useEffect(() => {
-
-    console.log(
-      "QUOTE PAGE FILE:",
-      file
+    useState(
+      selectedColors[0] || null
     );
-
-  }, [file]);
-
-  // =========================
-  // AUTO SELECT FIRST COLOR
-  // =========================
-
-  useEffect(() => {
-
-    const material =
-      materials[
-        selectedMaterial
-      ];
-
-    if (
-      material?.colors?.length > 0
-    ) {
-
-      setSelectedColor(
-
-        material.colors[0]
-
-      );
-
-    }
-
-  }, [
-    selectedMaterial,
-    materials,
-  ]);
 
   // =========================
   // WEIGHT
   // =========================
 
-  const weight = parseFloat(
-
-    modelStats.materialUsage
-
-      ?.replace(" g", "") || 0
-
-  );
+  const parsedWeight =
+    parseFloat(
+      modelStats.materialUsage
+    ) || 0;
 
   // =========================
-  // PRICE
+  // QUOTE ENGINE
   // =========================
 
-  const activePricePerGram =
+  const pricing =
+    useMemo(() => {
 
-    selectedColor?.useMaterialPrice
-
-      ? materials[
+      const materialData =
+        materials[
           selectedMaterial
-        ]?.pricePerGram || 0
+        ];
 
-      : selectedColor?.customPrice || 0;
+      if (
+        !materialData
+      ) {
 
-  const totalPrice =
-    weight *
-    activePricePerGram;
+        return {
+
+          materialCost: 0,
+          supportCost: 0,
+          machineCost: 0,
+          electricityCost: 0,
+          failureMargin: 0,
+          total: 0,
+
+        };
+
+      }
+
+      const materialCost =
+
+        parsedWeight *
+
+        materialData.pricePerGram;
+
+      const supportWeight =
+        parsedWeight * 0.18;
+
+      const supportCost =
+
+        supportWeight *
+
+        materialData.pricePerGram;
+
+      const estimatedHours =
+        parsedWeight / 12;
+
+      const machineCost =
+
+        estimatedHours * 1800;
+
+      const electricityCost =
+
+        estimatedHours * 120;
+
+      const failureMargin =
+
+        (
+          materialCost +
+          supportCost +
+          machineCost
+        ) * 0.12;
+
+      const total =
+        Math.round(
+
+          materialCost +
+          supportCost +
+          machineCost +
+          electricityCost +
+          failureMargin
+
+        );
+
+      return {
+
+        materialCost,
+        supportCost,
+        machineCost,
+        electricityCost,
+        failureMargin,
+        total,
+
+      };
+
+    }, [
+
+      parsedWeight,
+      selectedMaterial,
+      materials,
+
+    ]);
 
   return (
 
-    <main className="min-h-screen bg-[#050816] text-white pt-32 px-6">
+    <main
+      className="
+      section-background
+      min-h-screen
+      pt-36
+      pb-24
+      px-6
+      overflow-hidden
+      "
+    >
 
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
 
-        <div className="mb-10">
+        <div className="mb-16">
 
-          <h1 className="text-6xl font-black leading-none">
+          <p
+            className="
+            uppercase
+            tracking-[0.35em]
+            text-violet-400
+            text-sm
+            "
+          >
 
-            Upload Your
-            <span className="text-violet-500">
+            INSTANT MANUFACTURING
 
-              {" "}3D File
+          </p>
+
+          <h1
+            className="
+            premium-heading
+            text-6xl
+            lg:text-7xl
+            font-black
+            mt-5
+            leading-[0.92]
+            "
+          >
+
+            Upload &
+            <span className="text-violet-400">
+
+              {" "}Analyze
 
             </span>
 
           </h1>
 
-          <p className="text-white/50 mt-4">
+          <p
+            className="
+            soft-text
+            text-xl
+            mt-8
+            max-w-3xl
+            "
+          >
 
-            Upload STL, GLTF or GLB files and instantly preview your object.
+            Upload STL or OBJ files and receive instant manufacturing analysis, material estimates and professional 3D printing quotes.
 
           </p>
 
         </div>
 
-        {/* UPLOAD */}
-
-        <UploadZone
-
-          onFileUpload={(uploadedFile) => {
-
-            console.log(
-              "SETTING FILE:",
-              uploadedFile
-            );
-
-            setFile(
-              uploadedFile
-            );
-
-           setModelStats({
-
-  fileName:
-    uploadedFile.name,
-
-  dimensions:
-    "-",
-
-  materialUsage:
-    "0 g",
-
-  complexity:
-    "-",
-
-});
-
-          }}
-
-        />
-
         {/* MAIN GRID */}
 
-        <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-10">
+        <div
+          className="
+          grid
+          lg:grid-cols-[1.35fr_0.65fr]
+          gap-10
+          items-start
+          "
+        >
 
-          {/* VIEWER */}
+          {/* LEFT SIDE */}
 
-          <div className="relative rounded-3xl border border-white/10 bg-black/20 overflow-hidden h-[700px]">
+          <div
+            className="
+            relative
+            glass-card
+            rounded-[42px]
+            overflow-hidden
+            border
+            border-white/10
+            min-h-[820px]
+            "
+          >
 
             {/* LIVE ANALYSIS */}
 
-            <div className="absolute top-6 right-6 z-10 rounded-3xl border border-white/10 bg-black/60 backdrop-blur-xl p-5 w-[220px]">
+            {file && (
 
-              <p className="text-xs uppercase tracking-widest text-white/40">
+              <div
+                className="
+                absolute
+                top-8
+                right-8
+                z-30
+                bg-black/70
+                backdrop-blur-2xl
+                border
+                border-white/10
+                rounded-3xl
+                p-6
+                w-[250px]
+                "
+              >
 
-                Live Analysis
+                <p className="text-white/40 text-xs uppercase tracking-[0.2em]">
 
-              </p>
+                  LIVE ANALYSIS
 
-              <div className="mt-4 space-y-3 text-sm">
+                </p>
 
-                {/* FILE */}
+                <div className="mt-6 space-y-5">
 
-                <div className="flex justify-between">
+                  <div className="flex justify-between gap-4">
 
-                  <span className="text-white/40">
+                    <span className="text-white/40">
 
-                    File
+                      File
 
-                  </span>
+                    </span>
 
-                  <span className="font-semibold text-right max-w-[120px] truncate">
+                    <span className="font-semibold text-right truncate max-w-[120px]">
 
-                    {
-                      modelStats.fileName
-                    }
+                      {modelStats.fileName}
 
-                  </span>
+                    </span>
 
-                </div>
+                  </div>
 
-                {/* WEIGHT */}
+                  <div className="flex justify-between gap-4">
 
-                <div className="flex justify-between">
+                    <span className="text-white/40">
 
-                  <span className="text-white/40">
+                      Weight
 
-                    Weight
+                    </span>
 
-                  </span>
+                    <span className="font-semibold">
 
-                  <span className="font-semibold">
+                      {parsedWeight} g
 
-                    {
-                      modelStats.materialUsage
-                    }
+                    </span>
 
-                  </span>
+                  </div>
 
-                </div>
+                  <div className="flex justify-between gap-4">
 
-                {/* STATUS */}
+                    <span className="text-white/40">
 
-                <div className="flex justify-between">
+                      Status
 
-                  <span className="text-white/40">
+                    </span>
 
-                    Status
+                    <span className="text-green-400 font-semibold">
 
-                  </span>
+                      Ready
 
-                  <span
-                    className={`font-semibold
+                    </span>
 
-                    ${file
-
-                      ? "text-green-400"
-
-                      : "text-yellow-400"
-
-                    }`}
-                  >
-
-                    {file
-
-                      ? "Ready"
-
-                      : "Awaiting Upload"
-
-                    }
-
-                  </span>
+                  </div>
 
                 </div>
 
               </div>
 
-            </div>
+            )}
 
             {/* VIEWER */}
 
-            <ViewerCanvas>
+            <div
+              className="
+              w-full
+              h-[820px]
+              relative
+              "
+            >
 
-              <ModelViewer
+              {/* EMPTY STATE */}
 
-                file={file}
+              {!file && (
 
-                setModelStats={
-                  setModelStats
-                }
+                <div
+                  className="
+                  absolute
+                  inset-0
+                  z-20
+                  flex
+                  items-center
+                  justify-center
+                  p-10
+                  "
+                >
 
-                selectedColor={
-                  selectedColor
-                }
+                  <div
+                    className="
+                    w-full
+                    max-w-2xl
+                    "
+                  >
 
-              />
+                    <UploadZone
+                      onFileUpload={
+                        setFile
+                      }
+                    />
 
-            </ViewerCanvas>
+                  </div>
+
+                </div>
+
+              )}
+
+              {/* FLOATING BUTTON */}
+
+              {file && (
+
+                <div
+                  className="
+                  absolute
+                  top-8
+                  left-8
+                  z-30
+                  "
+                >
+
+                  <UploadZone
+                    onFileUpload={
+                      setFile
+                    }
+                    compact
+                  />
+
+                </div>
+
+              )}
+
+              <ViewerCanvas>
+
+                <Bounds
+                  fit
+                  clip
+                  observe
+                  margin={1.2}
+                >
+
+                  {file && (
+
+                    <ModelViewer
+  file={file}
+  selectedColor={selectedColor}
+  setModelStats={setModelStats}
+  selectedMaterial={selectedMaterial}
+  materials={materials}
+/>
+
+                  )}
+
+                </Bounds>
+
+              </ViewerCanvas>
+
+            </div>
 
           </div>
 
-          {/* SIDEBAR */}
+          {/* RIGHT SIDE */}
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 h-fit sticky top-28">
+          <div
+            className="
+            glass-card
+            rounded-[42px]
+            border
+            border-white/10
+            p-10
+            sticky
+            top-28
+            "
+          >
 
-            <p className="text-xs uppercase tracking-[0.3em] text-violet-300">
+            {/* TITLE */}
 
-              Summary
+            <p className="text-white/40 text-sm uppercase tracking-[0.2em]">
+
+              SUMMARY
 
             </p>
 
-            <h2 className="text-5xl font-black leading-none mt-4">
+            <h2
+              className="
+              text-6xl
+              font-black
+              leading-[0.9]
+              mt-5
+              "
+            >
 
               Instant
               <br />
+
               Quote
 
             </h2>
 
             {/* MATERIALS */}
 
-            <div className="mt-10">
+            <div className="mt-14">
 
-              <h3 className="text-white/60 text-sm uppercase tracking-widest mb-4">
+              <p className="text-white/40 text-sm uppercase tracking-[0.2em] mb-6">
 
-                Select Material
+                SELECT MATERIAL
 
-              </h3>
+              </p>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-5">
 
-                {Object.keys(
-                  materials
-                ).map(
+                {materialNames.map(
                   (
-                    materialName
-                  ) => {
+                    material
+                  ) => (
 
-                    const material =
-                      materials[
-                        materialName
-                      ];
+                    <button
+                      key={material}
+                      onClick={() => {
 
-                    const isSelected =
-                      selectedMaterial ===
-                      materialName;
+                        setSelectedMaterial(
+                          material
+                        );
 
-                    return (
+                        setSelectedColor(
 
-                      <button
-                        key={
-                          materialName
-                        }
-                        onClick={() =>
-                          setSelectedMaterial(
-                            materialName
-                          )
-                        }
-                        className={`rounded-2xl border p-4 transition text-left
+                          materials[
+                            material
+                          ]?.colors?.[0] ||
 
-                        ${isSelected
+                          null
 
-                          ? "border-violet-500 bg-violet-500/10"
+                        );
 
-                          : "border-white/10 hover:border-violet-500/30"
+                      }}
 
-                        }`}
-                      >
+                      className={`
+                      rounded-3xl
+                      p-6
+                      text-left
+                      transition-all
+                      duration-300
 
-                        <h4 className="font-bold text-lg">
+                      ${selectedMaterial === material
 
-                          {materialName}
+                        ? `
+                          border
+                          border-violet-500
+                          bg-violet-500/10
+                          shadow-[0_0_40px_rgba(139,92,246,0.12)]
+                        `
 
-                        </h4>
+                        : `
+                          bg-white/[0.03]
+                          border
+                          border-white/10
+                          hover:bg-white/[0.05]
+                        `
+                      }
+                      `}
+                    >
 
-                        <p className="text-white/40 text-sm mt-1">
+                      <h3 className="text-2xl font-black">
 
-                          ₡
-                          {
-                            material.pricePerGram
-                          }
-                          /g
+                        {material}
 
-                        </p>
+                      </h3>
 
-                      </button>
+                      <p className="text-white/40 mt-3">
 
-                    );
+                        ₡{materials[material].pricePerGram}/g
 
-                  }
+                      </p>
+
+                    </button>
+
+                  )
                 )}
 
               </div>
@@ -407,90 +563,61 @@ const QuotePage = ({
 
             {/* COLORS */}
 
-            {materials[selectedMaterial]
-              ?.colors?.length > 0 && (
+            {file && selectedColors.length > 0 && (
 
-              <div className="mt-8">
+              <div className="mt-14">
 
-                <h3 className="text-white/60 text-sm uppercase tracking-widest mb-4">
+                <p className="text-white/40 text-sm uppercase tracking-[0.2em] mb-6">
 
-                  Select Color
+                  SELECT COLOR
 
-                </h3>
+                </p>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-wrap gap-5">
 
-                  {materials[
-                    selectedMaterial
-                  ].colors.map(
+                  {selectedColors.map(
                     (
-                      color,
-                      index
-                    ) => {
+                      color
+                    ) => (
 
-                      const isSelected =
-                        selectedColor?.name ===
-                        color.name;
+                      <button
 
-                      return (
+                        key={color.name}
 
-                        <button
-                          key={index}
-                          onClick={() =>
-                            setSelectedColor(
-                              color
-                            )
-                          }
-                          className={`rounded-2xl border p-4 transition text-left
+                        onClick={() =>
+                          setSelectedColor(
+                            color
+                          )
+                        }
 
-                          ${isSelected
+                        className={`
+                        w-16
+                        h-16
+                        rounded-full
+                        border-4
+                        transition-all
 
-                            ? "border-violet-500 bg-violet-500/10"
+                        ${selectedColor?.name === color.name
 
-                            : "border-white/10 hover:border-violet-500/30"
+                          ? `
+                            border-white
+                            scale-110
+                          `
 
-                          }`}
-                        >
+                          : `
+                            border-transparent
+                          `
+                        }
+                        `}
+                        style={{
 
-                          <div className="flex items-center gap-3">
+                          background:
+                            color.hex,
 
-                            <div
-                              className="w-6 h-6 rounded-full border border-white/20"
-                              style={{
-                                background:
-                                  color.hex,
-                              }}
-                            />
+                        }}
+                      />
 
-                            <div>
-
-                              <h4 className="font-semibold text-white">
-
-                                {color.name}
-
-                              </h4>
-
-                              <p className="text-xs text-white/40">
-
-                                {color.useMaterialPrice
-
-                                  ? "Standard"
-
-                                  : "Premium"
-
-                                }
-
-                              </p>
-
-                            </div>
-
-                          </div>
-
-                        </button>
-
-                      );
-
-                    }
+                    )
                   )}
 
                 </div>
@@ -499,145 +626,149 @@ const QuotePage = ({
 
             )}
 
-            {/* DETAILS */}
+            {/* BREAKDOWN */}
 
-            <div className="mt-10 space-y-5 text-sm">
+            <div className="mt-16">
 
-              <div className="flex justify-between">
+              <p className="text-white/40 text-sm uppercase tracking-[0.2em] mb-8">
 
-                <span className="text-white/40">
-
-                  File
-
-                </span>
-
-                <span className="font-semibold">
-
-                  {
-                    modelStats.fileName
-                  }
-
-                </span>
-
-              </div>
-
-              <div className="flex justify-between">
-
-                <span className="text-white/40">
-
-                  Material
-
-                </span>
-
-                <span className="font-semibold">
-
-                  {selectedMaterial}
-
-                </span>
-
-              </div>
-
-              <div className="flex justify-between">
-
-                <span className="text-white/40">
-
-                  Color
-
-                </span>
-
-                <span className="font-semibold">
-
-                  {selectedColor?.name ||
-                    "-"}
-
-                </span>
-
-              </div>
-
-              <div className="flex justify-between">
-
-                <span className="text-white/40">
-
-                  Weight
-
-                </span>
-
-                <span className="font-semibold">
-
-                  {
-                    modelStats.materialUsage
-                  }
-
-                </span>
-
-              </div>
-
-              <div className="flex justify-between">
-
-                <span className="text-white/40">
-
-                  Dimensions
-
-                </span>
-
-                <span className="font-semibold text-right">
-
-                  {
-                    modelStats.dimensions
-                  }
-
-                </span>
-
-              </div>
-
-              <div className="flex justify-between">
-
-                <span className="text-white/40">
-
-                  Complexity
-
-                </span>
-
-                <span className="font-semibold">
-
-                  {
-                    modelStats.complexity
-                  }
-
-                </span>
-
-              </div>
-
-            </div>
-
-            {/* PRICE */}
-
-            <div className="mt-10 pt-8 border-t border-white/10">
-
-              <p className="text-white/40 text-sm">
-
-                Estimated Price
+                PRICE BREAKDOWN
 
               </p>
 
-              <h3 className="text-6xl font-black mt-3">
+              <div className="space-y-6">
 
-                ₡
-                {Math.round(
-                  totalPrice
-                ).toLocaleString()}
+                <div className="flex justify-between text-lg">
 
-              </h3>
+                  <span className="text-white/60">
+
+                    Material Cost
+
+                  </span>
+
+                  <span>
+
+                    ₡{pricing.materialCost.toFixed(0)}
+
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between text-lg">
+
+                  <span className="text-white/60">
+
+                    Support Material
+
+                  </span>
+
+                  <span>
+
+                    ₡{pricing.supportCost.toFixed(0)}
+
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between text-lg">
+
+                  <span className="text-white/60">
+
+                    Machine Usage
+
+                  </span>
+
+                  <span>
+
+                    ₡{pricing.machineCost.toFixed(0)}
+
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between text-lg">
+
+                  <span className="text-white/60">
+
+                    Electricity
+
+                  </span>
+
+                  <span>
+
+                    ₡{pricing.electricityCost.toFixed(0)}
+
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between text-lg">
+
+                  <span className="text-white/60">
+
+                    Failure Margin
+
+                  </span>
+
+                  <span>
+
+                    ₡{pricing.failureMargin.toFixed(0)}
+
+                  </span>
+
+                </div>
+
+              </div>
 
             </div>
 
-            {/* BUTTON */}
+            {/* TOTAL */}
 
-            <button className="mt-8 w-full bg-violet-600 hover:bg-violet-500 transition rounded-2xl py-5 font-bold">
+            <div
+              className="
+              mt-14
+              border-t
+              border-white/10
+              pt-10
+              "
+            >
 
-              Continue to Checkout
+              <p className="text-white/40 uppercase tracking-[0.2em] text-sm">
 
-            </button>
+                Estimated Manufacturing Cost
+
+              </p>
+
+              <h3
+                className="
+                text-6xl
+                font-black
+                text-violet-400
+                mt-5
+                "
+              >
+
+                ₡{pricing.total}
+
+              </h3>
+
+              <button
+                className="
+                mt-10
+                w-full
+                primary-button
+                py-5
+                rounded-3xl
+                text-xl
+                font-bold
+                "
+              >
+
+                Proceed To Checkout
+
+              </button>
+
+            </div>
 
           </div>
 

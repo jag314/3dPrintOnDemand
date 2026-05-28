@@ -23,7 +23,7 @@ export default function UploadZone() {
 
     <div
       onClick={handleClick}
-      className="border border-dashed border-violet-500/30 bg-white/[0.03] rounded-[32px] p-10 backdrop-blur-sm hover:border-violet-500/60 transition cursor-pointer group"
+      className="border border-dashed border-violet-500/30 glass-card rounded-[32px] p-10 backdrop-blur-sm hover:border-violet-500/60 transition cursor-pointer group"
     >
 
       <input

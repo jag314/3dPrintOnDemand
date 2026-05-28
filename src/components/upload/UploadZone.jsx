@@ -2,29 +2,18 @@ import {
   useDropzone,
 } from "react-dropzone";
 
-const UploadZone = (props) => {
-
-  console.log(
-    "UPLOADZONE PROPS:",
-    props
-  );
+const UploadZone = ({
+  onFileUpload,
+  compact = false,
+}) => {
 
   const handleDrop = (
     acceptedFiles
   ) => {
 
-    console.log(
-      "FILES RECEIVED:",
-      acceptedFiles
-    );
-
     if (
       acceptedFiles.length === 0
     ) {
-
-      console.log(
-        "NO FILES"
-      );
 
       return;
 
@@ -33,34 +22,13 @@ const UploadZone = (props) => {
     const uploadedFile =
       acceptedFiles[0];
 
-    console.log(
-      "UPLOADED FILE:",
-      uploadedFile
-    );
-
-    // =========================
-    // IMPORTANT
-    // =========================
-
     if (
-      typeof props.onFileUpload ===
+      typeof onFileUpload ===
       "function"
     ) {
 
-      console.log(
-        "CALLING onFileUpload"
-      );
-
-      props.onFileUpload(
+      onFileUpload(
         uploadedFile
-      );
-
-    }
-
-    else {
-
-      console.log(
-        "onFileUpload IS NOT A FUNCTION"
       );
 
     }
@@ -70,7 +38,6 @@ const UploadZone = (props) => {
   const {
     getRootProps,
     getInputProps,
-    isDragActive,
   } = useDropzone({
 
     onDrop: handleDrop,
@@ -79,15 +46,17 @@ const UploadZone = (props) => {
 
     accept: {
 
-      "application/sla": [
+      "model/stl": [
         ".stl",
       ],
 
-      "application/octet-stream":
-        [".stl"],
+      "model/obj": [
+        ".obj",
+      ],
 
-      "model/stl": [
+      "application/octet-stream": [
         ".stl",
+        ".obj",
       ],
 
     },
@@ -98,42 +67,113 @@ const UploadZone = (props) => {
 
     <div
       {...getRootProps()}
-      className={`border border-dashed rounded-3xl min-h-[260px] flex items-center justify-center cursor-pointer transition
+      className={`
 
-      ${isDragActive
+      ${compact
 
-        ? "border-violet-500 bg-violet-500/10"
+        ? `
+          w-[74px]
+          h-[74px]
+          rounded-3xl
+          flex
+          items-center
+          justify-center
+          bg-violet-500/10
+          border
+          border-violet-500/20
+          backdrop-blur-xl
+          hover:bg-violet-500/20
+          transition-all
+          cursor-pointer
+        `
 
-        : "border-white/10 bg-white/[0.02]"
-
-      }`}
+        : `
+          border
+          border-dashed
+          border-white/10
+          rounded-[42px]
+          min-h-[320px]
+          flex
+          items-center
+          justify-center
+          cursor-pointer
+          transition
+          bg-black/20
+          backdrop-blur-xl
+        `
+      }
+      `}
     >
 
       <input
         {...getInputProps()}
       />
 
-      <div className="text-center">
+      {compact ? (
 
-        <div className="w-20 h-20 rounded-3xl bg-violet-500/10 flex items-center justify-center mx-auto text-violet-400 text-5xl">
+        <div className="text-violet-400 text-4xl">
 
           ↑
 
         </div>
 
-        <h2 className="mt-8 text-5xl font-black text-white">
+      ) : (
 
-          Drop your 3D files here
+        <div className="text-center">
 
-        </h2>
+          <div
+            className="
+            w-24
+            h-24
+            rounded-3xl
+            bg-violet-500/10
+            border
+            border-violet-500/20
+            flex
+            items-center
+            justify-center
+            mx-auto
+            text-violet-400
+            text-5xl
+            "
+          >
 
-        <p className="mt-4 text-white/50 max-w-lg">
+            ↑
 
-          Upload STL files to preview your model instantly.
+          </div>
 
-        </p>
+          <h2
+            className="
+            mt-10
+            text-6xl
+            font-black
+            "
+          >
 
-      </div>
+            Upload Your
+            <span className="text-violet-400">
+
+              {" "}3D Files
+
+            </span>
+
+          </h2>
+
+          <p
+            className="
+            mt-6
+            text-white/50
+            text-lg
+            "
+          >
+
+            Supports STL and OBJ files for instant manufacturing analysis.
+
+          </p>
+
+        </div>
+
+      )}
 
     </div>
 
