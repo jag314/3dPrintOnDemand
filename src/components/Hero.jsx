@@ -10,21 +10,21 @@ const Hero = () => {
 
     <section className="relative w-full min-h-screen overflow-hidden pt-32 lg:pt-40">
 
-      {/* BACKGROUND */}
+      {/* BACKGROUND — fixed so it never moves on scroll */}
 
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e1b4b]" />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e1b4b] pointer-events-none" />
 
       {/* GRID */}
 
       <div className="grid-background" />
 
-      {/* BIG GLOW */}
+      {/* BIG GLOW — fixed so it stays put while user scrolls */}
 
-      <div className="hero-glow" />
+      <div className="fixed top-[-200px] right-[-200px] w-[900px] h-[900px] bg-violet-600/[0.18] blur-[180px] rounded-full -z-10 pointer-events-none" />
 
-      {/* EXTRA ATMOSPHERE */}
+      {/* EXTRA ATMOSPHERE — fixed */}
 
-      <div className="absolute top-0 right-0 w-[900px] h-[900px] bg-violet-500/10 blur-[180px] rounded-full" />
+      <div className="fixed top-0 right-0 w-[900px] h-[900px] bg-violet-500/[0.08] blur-[180px] rounded-full -z-10 pointer-events-none" />
 
       {/* CONTENT */}
 

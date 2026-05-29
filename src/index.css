@@ -13,6 +13,18 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
+  /* Solid fallback — the fixed ::before layer provides the gradient */
+  background: #0b1020;
+  color: white;
+  font-family: "Inter", sans-serif;
+}
+
+/* Fixed background — stays steady while page scrolls */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
   background:
     radial-gradient(circle at top right, rgba(124,58,237,0.18), transparent 30%),
     radial-gradient(circle at bottom left, rgba(59,130,246,0.12), transparent 25%),
@@ -22,9 +34,7 @@ body {
       #0f172a 40%,
       #111827 100%
     );
-
-  color: white;
-  font-family: "Inter", sans-serif;
+  pointer-events: none;
 }
 
 /* GLOBAL SECTION BACKGROUND */
@@ -34,8 +44,9 @@ body {
   background: transparent;
 }
 .section-glow {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  z-index: -1;
 
   background:
     radial-gradient(circle at top right, rgba(124,58,237,0.10), transparent 30%),
@@ -44,12 +55,13 @@ body {
   pointer-events: none;
 }
 
-/* HERO GLOW */
+/* HERO GLOW — fixed so it never moves while scrolling */
 
 .hero-glow {
-  position: absolute;
+  position: fixed;
   top: -200px;
   right: -200px;
+  z-index: -1;
 
   width: 900px;
   height: 900px;
@@ -59,6 +71,8 @@ body {
   filter: blur(180px);
 
   border-radius: 9999px;
+
+  pointer-events: none;
 }
 
 /* GRID */
@@ -128,4 +142,22 @@ body {
 
   box-shadow:
     0 0 40px rgba(124,58,237,0.12);
+}
+/* VIEW CUBE — rounds the Three.js gizmo canvas corners */
+.view-cube-wrapper canvas {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+/* Target the drei GizmoHelper portal */
+[data-testid="gizmo-helper"] > div {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Fallback — clip the bottom-left gizmo area */
+.gizmo-cube-clip {
+  border-radius: 14px;
+  overflow: hidden;
+  display: inline-block;
 }
