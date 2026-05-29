@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useMemo } from "react";
 import ViewerCanvas from "../components/upload/ViewerCanvas";
 import ModelViewer from "../components/upload/ModelViewer";
+import { useMaterials } from "../context/MaterialsContext";
 
 const InlineUpload = ({ onFileUpload }) => {
   const [hovered, setHovered] = React.useState(false);
@@ -177,8 +178,10 @@ const TechnologySelector = ({ technology, setTechnology }) => {
                   padding:"7px 10px 7px 11px", borderRadius:"12px 0 0 12px", cursor:"pointer",
                   transition:"all 0.2s ease",
                   background: technology === id ? "linear-gradient(135deg,rgba(139,92,246,0.3),rgba(109,40,217,0.18))" : "rgba(255,255,255,0.03)",
-                  border: technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
-                  borderRight:"none",
+                  borderTop:    technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                  borderBottom: technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                  borderLeft:   technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                  borderRight: "none",
                   boxShadow: technology === id ? "0 0 16px rgba(139,92,246,0.2)" : "none",
                   color: technology === id ? "#ede9fe" : "rgba(255,255,255,0.3)",
                   display:"flex", alignItems:"center", gap:8,
@@ -196,7 +199,9 @@ const TechnologySelector = ({ technology, setTechnology }) => {
                 style={{
                   width:26, borderRadius:"0 12px 12px 0", cursor:"pointer",
                   background: technology === id ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.04)",
-                  border: technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                  borderTop:    technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                  borderBottom: technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
+                  borderRight:  technology === id ? "1px solid rgba(139,92,246,0.55)" : "1px solid rgba(255,255,255,0.06)",
                   borderLeft: `1px solid ${technology === id ? "rgba(139,92,246,0.25)" : "rgba(255,255,255,0.04)"}`,
                   color: technology === id ? "rgba(196,181,253,0.9)" : "rgba(255,255,255,0.3)",
                   fontSize:10, fontWeight:800,
@@ -353,7 +358,8 @@ const TechnologySelector = ({ technology, setTechnology }) => {
   );
 };
 
-const QuotePage = ({ materials }) => {
+const QuotePage = () => {
+  const { materials } = useMaterials();
   const [file, setFile] = useState(null);
   const [technology, setTechnology] = useState("fdm");
   const [modelSize, setModelSize] = useState(null);
@@ -367,23 +373,26 @@ const QuotePage = ({ materials }) => {
   const [selectedMaterial, setSelectedMaterial] = useState(materialNames[0]);
   const [selectedColor, setSelectedColor] = useState(materials[materialNames[0]]?.colors?.[0] || null);
 
+  // Sync selection whenever materials or technology changes (Dashboard edits propagate here)
   React.useEffect(() => {
+    // If the current material was deleted or switched to a different technology, reset
     if (!materialNames.includes(selectedMaterial)) {
-      setSelectedMaterial(materialNames[0]);
-      setSelectedColor(materials[materialNames[0]]?.colors?.[0] || null);
+      const first = materialNames[0] ?? null;
+      setSelectedMaterial(first);
+      setSelectedColor(first ? (materials[first]?.colors?.find(c => !c.hidden) ?? null) : null);
+      return;
     }
-  }, [technology]);
-
-  // Keep selectedColor in sync when materials are edited externally (Dashboard)
-  React.useEffect(() => {
-    if (!selectedMaterial || !selectedColor) return;
-    const colors = materials[selectedMaterial]?.colors;
-    if (!colors) return;
-    const fresh = colors.find(c => c.name === selectedColor.name);
-    if (fresh && (fresh.hex !== selectedColor.hex || fresh.finish !== selectedColor.finish)) {
-      setSelectedColor(fresh);
+    // Material still valid — sync selectedColor if it was edited or removed
+    if (selectedColor) {
+      const colors = materials[selectedMaterial]?.colors ?? [];
+      const fresh = colors.find(c => c.name === selectedColor.name);
+      if (!fresh) {
+        setSelectedColor(colors.find(c => !c.hidden) ?? null);
+      } else if (fresh.hex !== selectedColor.hex || fresh.finish !== selectedColor.finish) {
+        setSelectedColor(fresh);
+      }
     }
-  }, [materials, selectedMaterial]);
+  }, [technology, materials]);
 
   const selectedColors = materials[selectedMaterial]?.colors || [];
   const parsedWeight = parseFloat(modelStats.materialUsage) || 0;
@@ -462,8 +471,14 @@ const QuotePage = ({ materials }) => {
                   <span style={{ fontSize:"11px", fontWeight:600, color:"rgba(255,255,255,0.82)", maxWidth:"108px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{modelStats.fileName}</span>
                 </div>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <span style={{ fontSize:"11px", color:"rgba(255,255,255,0.32)" }}>Weight</span>
-                  <span style={{ fontSize:"11px", fontWeight:700, color:"rgba(255,255,255,0.88)" }}>{parsedWeight} g</span>
+                  <span style={{ fontSize:"11px", color:"rgba(255,255,255,0.32)" }}>
+                    {technology === "sla" ? "Volume" : "Weight"}
+                  </span>
+                  <span style={{ fontSize:"11px", fontWeight:700, color:"rgba(255,255,255,0.88)" }}>
+                    {technology === "sla"
+                      ? `${pricing.volumeCM3 > 0 ? pricing.volumeCM3.toFixed(1) : "0.0"} ml`
+                      : `${parsedWeight} g`}
+                  </span>
                 </div>
                 {modelStats.dimensions !== "-" && (() => {
                   const parts = modelStats.dimensions.split(" × ");

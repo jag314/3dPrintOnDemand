@@ -52,7 +52,7 @@ const DimensionLines = ({ size }) => {
   const hw = W / 2, hd = D / 2;
   const max = Math.max(W, H, D);
   const L = max * 0.52, T = max * 0.026;
-  const mat = new THREE.LineBasicMaterial({ color:"#c4b5fd", transparent:true, opacity:0.85 });
+  const mat = new THREE.LineBasicMaterial({ color:"#ffffff", transparent:true, opacity:0.35 });
   const seg = (x1,y1,z1,x2,y2,z2,key) => {
     const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,y1,z1), new THREE.Vector3(x2,y2,z2)]);
     return <primitive key={key} object={new THREE.Line(geo, mat)} />;
@@ -80,21 +80,21 @@ const DimensionLines = ({ size }) => {
       {seg(-hw,xExtY-T,hd, -hw,xExtY+T,hd, "xt1")}{seg(hw,xExtY-T,hd, hw,xExtY+T,hd, "xt2")}
       {seg(0,xExtY,hd, ...xE, "xl")}
       <Html position={xE} center zIndexRange={[20,0]} occlude={false}>
-        <div style={pill}><span style={dot("#a78bfa")} />X &nbsp;{W.toFixed(2)} mm</div>
+        <div style={pill}><span style={dot("#ef4444")} />X &nbsp;{W.toFixed(2)} mm</div>
       </Html>
       {seg(hw,0,hd, zExtX,0,hd, "ze1")}{seg(hw,H,hd, zExtX,H,hd, "ze2")}
       {seg(zExtX,0,hd, zExtX,H,hd, "zs")}
       {seg(zExtX-T,0,hd, zExtX+T,0,hd, "zt1")}{seg(zExtX-T,H,hd, zExtX+T,H,hd, "zt2")}
       {seg(zExtX,H/2,hd, ...zE, "zl")}
       <Html position={zE} center zIndexRange={[20,0]} occlude={false}>
-        <div style={pill}><span style={dot("#34d399")} />Z &nbsp;{H.toFixed(2)} mm</div>
+        <div style={pill}><span style={dot("#3b82f6")} />Z &nbsp;{H.toFixed(2)} mm</div>
       </Html>
       {seg(hw,0,hd, yExtX,0,hd, "ye1")}{seg(hw,0,-hd, yExtX,0,-hd, "ye2")}
       {seg(yExtX,0,-hd, yExtX,0,hd, "ys")}
       {seg(yExtX-T,0,hd, yExtX+T,0,hd, "yt1")}{seg(yExtX-T,0,-hd, yExtX+T,0,-hd, "yt2")}
       {seg(yExtX,0,0, ...yE, "yl")}
       <Html position={yE} center zIndexRange={[20,0]} occlude={false}>
-        <div style={pill}><span style={dot("#60a5fa")} />Y &nbsp;{D.toFixed(2)} mm</div>
+        <div style={pill}><span style={dot("#22c55e")} />Y &nbsp;{D.toFixed(2)} mm</div>
       </Html>
     </group>
   );
@@ -189,7 +189,7 @@ const buildHalo = (model, colorHex) => {
     const halo = new THREE.Mesh(model.geometry, mat);
     halo.position.copy(model.position);
     halo.rotation.copy(model.rotation);
-    halo.scale.setScalar(1.06);
+    halo.scale.setScalar(1.02);
     return halo;
   }
 
@@ -205,7 +205,7 @@ const buildHalo = (model, colorHex) => {
     hm.scale.copy(child.scale);
     group.add(hm);
   });
-  group.scale.setScalar(1.06);
+  group.scale.setScalar(1.02);
   return group;
 };
 

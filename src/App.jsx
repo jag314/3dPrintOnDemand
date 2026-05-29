@@ -8,6 +8,8 @@ import {
   useEffect,
 } from "react";
 
+import { MaterialsContext } from "./context/MaterialsContext";
+
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import QuotePage from "./pages/QuotePage";
@@ -132,18 +134,18 @@ const App = () => {
   }, [materials]);
 
   return (
-    <>
+    <MaterialsContext.Provider value={{ materials, setMaterials }}>
       <Navbar />
       <Routes>
         <Route path="/"          element={<Home />} />
-        <Route path="/quote"     element={<QuotePage materials={materials} />} />
-        <Route path="/dashboard" element={<Dashboard materials={materials} setMaterials={setMaterials} />} />
+        <Route path="/quote"     element={<QuotePage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about"     element={<About />} />
         <Route path="/teach"     element={<Teach />} />
         <Route path="/designer"  element={<Designer />} />
         <Route path="/contact"   element={<Contact />} />
       </Routes>
-    </>
+    </MaterialsContext.Provider>
   );
 
 };

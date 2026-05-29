@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Save, Trash2, Eye, EyeOff, Palette, Crown, Layers } from "lucide-react";
+import { useMaterials } from "../context/MaterialsContext";
 
 const TECH_STYLES = {
   fdm: {
@@ -38,7 +39,8 @@ const TechnologyPicker = ({ value, onChange, disabled }) => (
   </div>
 );
 
-const Dashboard = ({ materials, setMaterials }) => {
+const Dashboard = () => {
+  const { materials, setMaterials } = useMaterials();
   const [expandedMaterial, setExpandedMaterial] = useState(null);
   const [editingMaterial, setEditingMaterial] = useState(null);
   const [newMaterialName, setNewMaterialName] = useState("");
