@@ -1,6 +1,6 @@
 import React from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, GizmoHelper, GizmoViewcube } from "@react-three/drei";
+import { OrbitControls, GizmoHelper, GizmoViewcube } from "@react-three/drei";
 import { useState, useEffect } from "react";
 
 const ViewerLoader = ({ visible }) => (
@@ -78,6 +78,9 @@ const ViewerCanvas = ({ children, loading, hasFile, glowMode, glowColor }) => {
       style={{
         position:"relative", cursor,
         transition:"box-shadow 0.5s ease",
+        background: glowMode
+          ? "#000000"
+          : "radial-gradient(ellipse at 40% 40%, #3a4a7a 0%, #252f5a 50%, #1a2040 100%)",
         boxShadow: glowMode && glowColor ? `0 0 60px 8px ${glowColor}55, inset 0 0 40px 4px ${glowColor}22` : "none",
       }}
       onMouseEnter={() => { if (hasFile) setCursor("grab"); }}
@@ -91,17 +94,34 @@ const ViewerCanvas = ({ children, loading, hasFile, glowMode, glowColor }) => {
       <Canvas
         shadows
         camera={{ position:[0,80,200], fov:42, near:0.1, far:10000 }}
-        gl={{ antialias:true, alpha:false, powerPreference:"high-performance" }}
+        gl={{ antialias:true, alpha:true, powerPreference:"high-performance" }}
         style={{ cursor:"inherit" }}
       >
-        <color attach="background" args={[glowMode ? "#000000" : "#080a12"]} />
-
-        {/* Normal scene lighting — dimmed in glow mode so the emissive + halo dominate */}
-        <ambientLight intensity={glowMode ? 0.06 : 1.1} />
-        {!glowMode && <directionalLight position={[100,200,100]} intensity={2.5} castShadow shadow-mapSize={[2048,2048]} />}
-        {!glowMode && <directionalLight position={[-80,100,-60]} intensity={0.8} color="#c0d0ff" />}
-        {!glowMode && <pointLight position={[0,200,-200]} color="#7c3aed" intensity={1.2} distance={1200} />}
-        {!glowMode && <Environment preset="studio" />}
+        <color attach="background" args={["#1e2235"]} />
+        <ambientLight intensity={glowMode ? 0.06 : 0.5} />
+        {!glowMode && (
+          <>
+            {/* Key light — top-front-right, main shadow caster */}
+            <directionalLight
+              position={[120, 200, 80]}
+              intensity={1.8}
+              castShadow
+              shadow-mapSize={[4096, 4096]}
+              shadow-camera-near={0.1}
+              shadow-camera-far={2000}
+              shadow-camera-left={-500}
+              shadow-camera-right={500}
+              shadow-camera-top={500}
+              shadow-camera-bottom={-500}
+            />
+            {/* Fill light — soft blue-white from opposite side, no pure-black shadows */}
+            <directionalLight position={[-100, 80, -60]} intensity={0.45} color="#d0d8ff" />
+            {/* Rim light — behind model, sharpens silhouette edges */}
+            <directionalLight position={[0, -50, -200]} intensity={0.3} color="#ffffff" />
+            {/* Dark-model rim — cool backlight that outlines black/dark objects */}
+            <directionalLight position={[-50, 100, -150]} intensity={0.7} color="#4060ff" />
+          </>
+        )}
 
         {children}
         {hasFile && (

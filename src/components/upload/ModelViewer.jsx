@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader";
 import { useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
@@ -21,9 +22,9 @@ const calcVolume = (geo) => {
 
 const detectScale = (sz) => {
   const m = Math.max(sz.x, sz.y, sz.z);
-  if (m < 0.1) return 1000;
-  if (m < 2)   return 10;
-  return 1;
+  if (m < 1)  return 1000;  // meters → mm (covers prints up to 1 m stored in meters)
+  if (m < 25) return 10;    // cm → mm (covers prints up to 25 cm stored in cm)
+  return 1;                  // already in mm
 };
 
 const CameraFit = ({ size }) => {
@@ -100,17 +101,32 @@ const DimensionLines = ({ size }) => {
   );
 };
 
+const ensureVisibleColor = (hexColor) => {
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+  const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+  if (brightness < 40) {
+    const lift = 35;
+    const nr = Math.min(255, r + lift);
+    const ng = Math.min(255, g + lift);
+    const nb = Math.min(255, b + lift);
+    return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
+  }
+  return hexColor;
+};
+
 const createMaterial = (colorHex, technology, finish) => {
-  const col = new THREE.Color(colorHex);
+  const col = new THREE.Color(ensureVisibleColor(colorHex));
 
   // Explicit finish overrides technology defaults
   if (finish === "matte") {
-    return new THREE.MeshStandardMaterial({ color: col, metalness: 0.0, roughness: 0.85 });
+    return new THREE.MeshStandardMaterial({ color: col, metalness: 0.0, roughness: 0.78 });
   }
   if (finish === "glossy") {
     return new THREE.MeshPhysicalMaterial({
-      color: col, metalness: 0.05, roughness: 0.1,
-      clearcoat: 0.8, clearcoatRoughness: 0.15,
+      color: col, metalness: 0.0, roughness: 0.12,
+      clearcoat: 1.0, clearcoatRoughness: 0.08,
     });
   }
   if (finish === "translucent") {
@@ -139,7 +155,7 @@ const createMaterial = (colorHex, technology, finish) => {
     });
   }
   // FDM default — rough matte plastic, visible texture, no shine
-  return new THREE.MeshStandardMaterial({ color: col, metalness: 0.0, roughness: 0.85 });
+  return new THREE.MeshStandardMaterial({ color: col, metalness: 0.0, roughness: 0.78 });
 };
 
 const applyTechnologyMaterial = (model, colorHex, technology, finish) => {
@@ -322,6 +338,53 @@ const ModelViewer = ({
         const weight = ((totalVol / 1000) * density).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
         setModel(obj);
+        setModelSize(sz);
+        onModelSizeChange?.(sz);
+        onLoadingChange?.(false);
+        setModelStats({
+          fileName: file.name,
+          dimensions: `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          materialUsage: weight,
+          complexity,
+        });
+      });
+    }
+
+    if (ext === "3mf") {
+      new ThreeMFLoader().load(url, (object) => {
+        const rotMat = new THREE.Matrix4().makeRotationX(-Math.PI / 2);
+        object.traverse((child) => {
+          if (child.isMesh) { child.geometry.applyMatrix4(rotMat); child.geometry.computeVertexNormals(); }
+        });
+        const rawBox = new THREE.Box3().setFromObject(object);
+        const rawSz = new THREE.Vector3();
+        rawBox.getSize(rawSz);
+        const scale = detectScale(rawSz);
+        if (scale !== 1) {
+          object.traverse((child) => { if (child.isMesh) child.geometry.scale(scale, scale, scale); });
+        }
+        let totalTris = 0;
+        const allPositions = [];
+        object.traverse((child) => {
+          if (child.isMesh) {
+            const geo = child.geometry.index ? child.geometry.toNonIndexed() : child.geometry;
+            const pos = geo.attributes.position;
+            for (let i = 0; i < pos.count; i++) allPositions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+            totalTris += pos.count;
+            child.material = createMaterial(colorHex, technology, colorFinish);
+            child.castShadow = true;
+          }
+        });
+        const mergedGeo = new THREE.BufferGeometry();
+        mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
+        const totalVol = calcVolume(mergedGeo);
+        const finalBox = new THREE.Box3().setFromObject(object);
+        const sz = finalBox.getSize(new THREE.Vector3());
+        const ctr = finalBox.getCenter(new THREE.Vector3());
+        object.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
+        const weight = ((totalVol / 1000) * density).toFixed(1);
+        const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
+        setModel(object);
         setModelSize(sz);
         onModelSizeChange?.(sz);
         onLoadingChange?.(false);

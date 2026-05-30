@@ -1,438 +1,768 @@
-import { Link } from "react-router-dom";
+import React, { useState, useRef } from "react";
 
-import { useState } from "react";
+// ── DATA ──────────────────────────────────────────────────────────────────────
 
-const services = [
-
-  "CAD Modeling",
-  "Product Design",
-  "3D Visualization",
-  "Rapid Prototyping",
-  "STL Repair",
-  "Reverse Engineering",
-  "3D Printer Maintenance",
-  "Printer Calibration",
-
+const PORTFOLIO_CARDS = [
+  {
+    url: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=600&q=80",
+    label: "3D Printed Parts",
+    category: "FDM · PLA",
+    position: "center center",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
+    label: "Mechanical Parts",
+    category: "Engineering",
+    position: "center 40%",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1563457718-2a2e48f37b66?w=600&q=80",
+    label: "Precision Gears",
+    category: "SLA Resin",
+    position: "center center",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?w=600&q=80",
+    label: "Custom Prototypes",
+    category: "High Detail",
+    position: "center 30%",
+  },
 ];
 
-const Designer = () => {
+const MY_WORK = [
+  {
+    url: "/images/1.png",
+    title: "Custom Mechanical Part",
+    tech: "FDM · PLA",
+  },
+  {
+    url: "/images/2.png",
+    title: "Prototype Design",
+    tech: "FDM · PETG",
+  },
+  {
+    url: "/images/3.png",
+    title: "Artistic Model",
+    tech: "SLA · Resin",
+  },
+  {
+    url: "/images/4.png",
+    title: "Functional Component",
+    tech: "FDM · ABS",
+  },
+  {
+    url: "/images/5.png",
+    title: "Detail Part",
+    tech: "SLA · High Detail",
+  },
+  {
+    url: "/images/6.png",
+    title: "Custom Design",
+    tech: "FDM · PLA+",
+  },
+];
 
-  const [selectedImage, setSelectedImage] =
-    useState(null);
+const STEPS = [
+  {
+    number: "01",
+    icon: "💬",
+    title: "Tell Us Your Idea",
+    description: "Send us a description, sketch, photo or reference image. The more detail the better — but even a napkin sketch works.",
+  },
+  {
+    number: "02",
+    icon: "✏️",
+    title: "We Design It",
+    description: "Our designers create your 3D model in Onshape. You get a first draft within 24 hours and we refine until you are 100% satisfied.",
+  },
+  {
+    number: "03",
+    icon: "📦",
+    title: "Print-Ready Files",
+    description: "Receive your STL, STEP and OBJ files optimized for 3D printing. We can also print it for you directly through our quote system.",
+  },
+];
+
+const SERVICES = [
+  { emoji:"🔩", title:"Mechanical Parts",      description:"Brackets, enclosures, gears, mounts, fixtures and functional components." },
+  { emoji:"🏠", title:"Architectural Models",  description:"Scale models of buildings, rooms, urban planning and real estate presentations." },
+  { emoji:"💍", title:"Jewelry & Art",          description:"Custom rings, pendants, sculptures and artistic pieces for SLA printing." },
+  { emoji:"📱", title:"Product Prototypes",    description:"Turn your product idea into a physical prototype. Perfect for investor demos." },
+  { emoji:"🎮", title:"Gaming & Collectibles", description:"Miniatures, figurines, cosplay props and custom gaming accessories." },
+  { emoji:"🏭", title:"Industrial Components", description:"Replacement parts, jigs, tools and custom industrial solutions." },
+];
+
+const PRICING = [
+  {
+    tier: "Basic",
+    label: "Simple Parts",
+    price: "From ₡15,000",
+    highlighted: false,
+    isGold: false,
+    badge: null,
+    features: [
+      { text:"Single component design", included:true  },
+      { text:"Up to 3 revisions",       included:true  },
+      { text:"STL file delivery",        included:true  },
+      { text:"48h turnaround",           included:true  },
+      { text:"STEP file",               included:false },
+      { text:"Assembly design",          included:false },
+    ],
+    cta: "Get Started",
+  },
+  {
+    tier: "Standard",
+    label: "Complex Parts",
+    price: "From ₡35,000",
+    highlighted: true,
+    isGold: false,
+    badge: "MOST POPULAR",
+    features: [
+      { text:"Multi-component design",  included:true  },
+      { text:"Unlimited revisions",     included:true  },
+      { text:"STL + STEP files",        included:true  },
+      { text:"24h turnaround",          included:true  },
+      { text:"Print optimization",      included:true  },
+      { text:"Assembly design",         included:false },
+    ],
+    cta: "Most Popular",
+  },
+  {
+    tier: "Premium",
+    label: "Full Assembly",
+    price: "From ₡75,000",
+    highlighted: false,
+    isGold: true,
+    badge: null,
+    features: [
+      { text:"Full assembly with parts",  included:true },
+      { text:"Unlimited revisions",       included:true },
+      { text:"All file formats",          included:true },
+      { text:"Priority 12h turnaround",   included:true },
+      { text:"Print optimization",        included:true },
+      { text:"Free first print included", included:true },
+    ],
+    cta: "Get Premium",
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "Do I need to know anything about 3D design?",
+    a: "Not at all. Just send us your idea in any format — text, photo, sketch or even a voice note. We handle all the technical work.",
+  },
+  {
+    q: "How long does a design take?",
+    a: "Simple parts are delivered within 24-48 hours. Complex assemblies may take 3-5 business days. We always give you a timeline before starting.",
+  },
+  {
+    q: "What if I don't like the design?",
+    a: "We offer revisions until you are completely satisfied. Standard and Premium tiers include unlimited revisions.",
+  },
+  {
+    q: "What files will I receive?",
+    a: "You always receive STL files ready for printing. Standard and Premium tiers also include STEP and OBJ files compatible with all major CAD software.",
+  },
+  {
+    q: "Can you print the design too?",
+    a: "Yes! Once your design is approved, you can send it directly to our quote system and we'll print it for you.",
+  },
+];
+
+// ── PAGE ──────────────────────────────────────────────────────────────────────
+
+const Designer = () => {
+  const formRef     = useRef(null);
+  const servicesRef = useRef(null);
+  const portfolioRef = useRef(null);
+
+  const [form, setForm]               = useState({ name:"", email:"", phone:"", projectType:"", budget:"", description:"" });
+  const [submitted, setSubmitted]     = useState(false);
+  const [openFaq, setOpenFaq]         = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredWork, setHoveredWork] = useState(null);
+  const [lightbox, setLightbox]       = useState(null);
+
+  const scrollToForm      = () => formRef.current?.scrollIntoView({ behavior:"smooth", block:"start" });
+  const scrollToServices  = () => portfolioRef.current?.scrollIntoView({ behavior:"smooth", block:"start" });
+  const handleChange      = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const handleSubmit      = (e) => { e.preventDefault(); setSubmitted(true); };
+
+  const inputCls  = "w-full rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 outline-none text-white focus:border-violet-500 transition-all text-sm placeholder:text-white/25";
+  const selectCls = inputCls + " appearance-none cursor-pointer";
 
   return (
-
-    <main className="section-background min-h-screen pt-40 pb-32 px-6 relative overflow-hidden">
-
-      {/* BACKGROUND */}
-
+    <main className="section-background min-h-screen pt-24 sm:pt-32 pb-20 px-4 sm:px-6 relative overflow-hidden">
       <div className="section-glow" />
-
       <div className="max-w-7xl mx-auto relative z-10">
 
-        {/* HERO */}
+        {/* ══ S1 — HERO ══ */}
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center py-8 sm:py-12">
 
-        <div className="text-center max-w-5xl mx-auto">
-
-          <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
-
-            DESIGN SERVICES
-
-          </p>
-
-          <h1 className="text-6xl lg:text-7xl font-black mt-6 leading-[0.95]">
-
-            Need A
-            <span className="text-violet-400">
-
-              {" "}Designer?
-
-            </span>
-
-          </h1>
-
-          <p className="soft-text text-xl leading-relaxed mt-10">
-
-            From concept development to functional prototypes, INITY 3D provides professional design and additive manufacturing services for creators, startups and institutions.
-
-          </p>
-
-          {/* CTA */}
-
-          <div className="mt-14">
-
-            <Link
-              to="/contact"
-              className="
-              primary-button
-              inline-flex
-              items-center
-              justify-center
-              px-10
-              py-5
-              rounded-2xl
-              text-lg
-              font-semibold
-              "
-            >
-
-              Start Your Design Project
-
-            </Link>
-
-          </div>
-
-        </div>
-
-        {/* SERVICES */}
-
-        <div className="mt-32">
-
-          <div className="text-center max-w-3xl mx-auto">
-
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
-
-              WHAT WE OFFER
-
+          {/* Left */}
+          <div>
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">
+              PROFESSIONAL 3D DESIGN SERVICES
             </p>
-
-            <h2 className="text-5xl font-black mt-6">
-
-              Design & Engineering Services
-
-            </h2>
-
-            <p className="soft-text text-lg leading-relaxed mt-8">
-
-              Professional 3D design, prototyping and technical support services for creators, businesses and institutions.
-
+            <h1 className="premium-heading text-5xl sm:text-6xl lg:text-7xl font-black mt-6 leading-[0.92]">
+              From Your{" "}
+              <span className="text-violet-400">Idea</span>
+              <br />
+              To A Printable
+              <br />
+              <span className="text-violet-400">3D Model</span>
+            </h1>
+            <p className="soft-text text-lg sm:text-xl mt-8 leading-relaxed max-w-xl">
+              We design custom 3D models ready for FDM and SLA printing.
+              Send us a sketch, photo, or description — we handle the rest.
             </p>
-
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-20">
-
-            {services.map((service) => (
-
-              <div
-                key={service}
-                className="
-                group
-                relative
-                glass-card
-                rounded-[32px]
-                p-10
-                overflow-hidden
-                transition-all
-                duration-500
-                hover:-translate-y-2
-                hover:border-violet-500/30
-                "
-              >
-
-                {/* HOVER GLOW */}
-
-                <div
-                  className="
-                  absolute
-                  inset-0
-                  opacity-0
-                  group-hover:opacity-100
-                  transition-all
-                  duration-700
-                  bg-violet-500/5
-                  blur-3xl
-                  "
-                />
-
-                <h3 className="relative z-10 text-2xl font-bold">
-
-                  {service}
-
-                </h3>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        </div>
-
-        {/* SHOWCASE */}
-
-        <div className="mt-40">
-
-          <div className="text-center max-w-4xl mx-auto">
-
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
-
-              PORTFOLIO
-
-            </p>
-
-            <h2 className="text-5xl lg:text-6xl font-black mt-6">
-
-              Previous Design Work
-
-            </h2>
-
-            <p className="soft-text text-lg leading-relaxed mt-8">
-
-              A selection of prototypes, product concepts and additive manufacturing projects developed by INITY 3D.
-
-            </p>
-
-          </div>
-
-          {/* PROJECT GRID */}
-
-          <div className="grid md:grid-cols-3 gap-8 mt-20">
-
-            {[1,2,3,4,5,6].map((item) => (
-
-              <button
-                key={item}
-                onClick={() =>
-                  setSelectedImage(
-                    `/images/${item}.png`
-                  )
-                }
-                className="
-                group
-                relative
-                glass-card
-                rounded-[36px]
-                overflow-hidden
-                transition-all
-                duration-700
-                hover:-translate-y-3
-                hover:border-violet-500/30
-                text-left
-                "
-              >
-
-                {/* IMAGE */}
-
-                <div className="overflow-hidden">
-
-                  <img
-                    src={`/images/${item}.png`}
-                    alt="Design Project"
-                    className="
-                    w-full
-                    h-[340px]
-                    object-cover
-                    transition-all
-                    duration-700
-                    group-hover:scale-110
-                    "
-                  />
-
-                </div>
-
-                {/* OVERLAY */}
-
-                <div
-                  className="
-                  absolute
-                  inset-0
-                  bg-gradient-to-t
-                  from-black/70
-                  via-transparent
-                  to-transparent
-                  opacity-0
-                  group-hover:opacity-100
-                  transition-all
-                  duration-500
-                  "
-                />
-
-                {/* TEXT */}
-
-                <div
-                  className="
-                  absolute
-                  bottom-0
-                  left-0
-                  p-8
-                  opacity-0
-                  group-hover:opacity-100
-                  transition-all
-                  duration-500
-                  "
-                >
-
-                  <h3 className="text-2xl font-black">
-
-                    Design Project
-
-                  </h3>
-
-                  <p className="text-white/70 mt-2">
-
-                    Click To Expand
-
-                  </p>
-
-                </div>
-
+            <div className="flex flex-col sm:flex-row gap-4 mt-10">
+              <button onClick={scrollToForm}
+                className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold">
+                Start My Project →
               </button>
-
-            ))}
-
+              <button onClick={scrollToServices}
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
+                style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.28)", color:"#c4b5fd" }}>
+                See Our Work
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-8">
+              {["⚡ 24h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + STEP included"].map((b,i) => (
+                <React.Fragment key={b}>
+                  {i > 0 && <span className="text-white/20">·</span>}
+                  <span className="text-white/55 text-sm font-semibold">{b}</span>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
 
-        </div>
-
-        {/* FINAL CTA */}
-
-        <div className="mt-40">
-
-          <div
-            className="
-            relative
-            overflow-hidden
-            rounded-[42px]
-            border
-            border-white/10
-            glass-card
-            p-14
-            text-center
-            "
-          >
-
-            {/* GLOW */}
-
-            <div
-              className="
-              absolute
-              inset-0
-              bg-violet-500/10
-              blur-3xl
-              "
-            />
-
-            <div className="relative z-10">
-
-              <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
-
-                START A PROJECT
-
-              </p>
-
-              <h2 className="text-5xl lg:text-6xl font-black mt-6 leading-tight">
-
-                Let's Turn Your
-                <br />
-
-                Ideas Into Reality
-
-              </h2>
-
-              <p className="soft-text text-xl leading-relaxed mt-8 max-w-3xl mx-auto">
-
-                Whether you need product development, CAD modeling, prototyping or technical support, INITY 3D is ready to help build your next project.
-
-              </p>
-
-              <div className="mt-12">
-
-                <Link
-                  to="/contact"
-                  className="
-                  primary-button
-                  inline-flex
-                  items-center
-                  justify-center
-                  px-12
-                  py-5
-                  rounded-2xl
-                  text-lg
-                  font-semibold
-                  "
-                >
-
-                  Contact INITY 3D
-
-                </Link>
-
-              </div>
-
+          {/* Right — photo grid */}
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3" style={{ height:"clamp(280px,42vw,480px)" }}>
+              {PORTFOLIO_CARDS.map((card, i) => (
+                <div key={i}
+                  onMouseEnter={() => setHoveredCard(i)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  className="relative overflow-hidden cursor-pointer"
+                  style={{
+                    borderRadius:20,
+                    border: hoveredCard === i ? "1px solid rgba(139,92,246,0.6)" : "1px solid rgba(255,255,255,0.1)",
+                    transform: hoveredCard === i ? "scale(1.03)" : "scale(1)",
+                    boxShadow: hoveredCard === i ? "0 20px 40px rgba(0,0,0,0.5)" : "0 4px 20px rgba(0,0,0,0.3)",
+                    transition:"all 0.3s ease",
+                  }}>
+                  <div style={{
+                    position:"absolute", inset:0,
+                    backgroundImage:`url(${card.url})`,
+                    backgroundSize:"cover",
+                    backgroundPosition:card.position,
+                    transform: hoveredCard === i ? "scale(1.06)" : "scale(1)",
+                    transition:"transform 0.5s ease",
+                  }} />
+                  <div style={{
+                    position:"absolute", inset:0,
+                    background: hoveredCard === i
+                      ? "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.1) 100%)"
+                      : "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)",
+                    transition:"all 0.3s ease",
+                  }} />
+                  <div style={{
+                    position:"absolute", top:12, right:12,
+                    background:"rgba(255,255,255,0.12)",
+                    backdropFilter:"blur(8px)",
+                    WebkitBackdropFilter:"blur(8px)",
+                    border:"1px solid rgba(255,255,255,0.2)",
+                    borderRadius:999, padding:"3px 10px",
+                    fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.9)",
+                    letterSpacing:"0.04em",
+                  }}>{card.category}</div>
+                  <div style={{
+                    position:"absolute", bottom:0, left:0, right:0,
+                    padding:"12px 14px",
+                    display:"flex", alignItems:"center", justifyContent:"space-between",
+                    transform: hoveredCard === i ? "translateY(-3px)" : "translateY(0)",
+                    transition:"transform 0.3s ease",
+                  }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,0.95)" }}>{card.label}</span>
+                    <span style={{
+                      fontSize:14, color:"#a78bfa",
+                      opacity: hoveredCard === i ? 1 : 0,
+                      transform: hoveredCard === i ? "translateX(0)" : "translateX(-6px)",
+                      transition:"all 0.3s ease",
+                    }}>→</span>
+                  </div>
+                </div>
+              ))}
             </div>
 
+            {/* Social proof banner */}
+            <div className="flex items-center justify-between px-5"
+              style={{
+                height:64, borderRadius:16,
+                background:"rgba(139,92,246,0.08)",
+                border:"1px solid rgba(139,92,246,0.22)",
+              }}>
+              <span style={{ fontSize:13, color:"rgba(255,255,255,0.55)", fontWeight:600 }}>
+                ✦ Trusted by engineers, artists and entrepreneurs
+              </span>
+              <span style={{ fontSize:13, color:"#a78bfa", fontWeight:700, whiteSpace:"nowrap" }}>
+                50+ Projects Delivered
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ REAL PORTFOLIO SECTION ══ */}
+        <div ref={portfolioRef} className="mt-20 sm:mt-28" id="portfolio">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+            <div>
+              <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">OUR WORK</p>
+              <h2 className="text-3xl sm:text-4xl font-black mt-3">Real Projects We've Built</h2>
+              <p className="soft-text text-base mt-2">
+                Every model designed and printed by our team in Costa Rica
+              </p>
+            </div>
+            <button onClick={scrollToForm}
+              className="primary-button px-6 py-3 rounded-2xl font-bold text-sm whitespace-nowrap self-start sm:self-auto">
+              Start Your Project →
+            </button>
           </div>
 
+          {/* 3x2 masonry-style grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {MY_WORK.map((item, i) => (
+              <div key={i}
+                onMouseEnter={() => setHoveredWork(i)}
+                onMouseLeave={() => setHoveredWork(null)}
+                onClick={() => setLightbox(i)}
+                className="relative overflow-hidden cursor-pointer group"
+                style={{
+                  borderRadius:20,
+                  aspectRatio: i === 0 || i === 3 ? "4/3" : "1/1",
+                  border: hoveredWork === i ? "1px solid rgba(139,92,246,0.6)" : "1px solid rgba(255,255,255,0.08)",
+                  transform: hoveredWork === i ? "scale(1.02)" : "scale(1)",
+                  boxShadow: hoveredWork === i
+                    ? "0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.3)"
+                    : "0 4px 20px rgba(0,0,0,0.3)",
+                  transition:"all 0.35s ease",
+                }}>
+
+                {/* Image */}
+                <img
+                  src={item.url}
+                  alt={item.title}
+                  style={{
+                    width:"100%", height:"100%",
+                    objectFit:"cover",
+                    transform: hoveredWork === i ? "scale(1.06)" : "scale(1)",
+                    transition:"transform 0.5s ease",
+                    display:"block",
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.parentElement.style.background = "linear-gradient(135deg,#1a1a2e,#2d1b69)";
+                  }}
+                />
+
+                {/* Hover overlay */}
+                <div style={{
+                  position:"absolute", inset:0,
+                  background: hoveredWork === i
+                    ? "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.0) 100%)"
+                    : "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0) 100%)",
+                  transition:"all 0.35s ease",
+                }} />
+
+                {/* Zoom icon on hover */}
+                <div style={{
+                  position:"absolute", top:14, right:14,
+                  width:36, height:36, borderRadius:"50%",
+                  background:"rgba(255,255,255,0.12)",
+                  backdropFilter:"blur(8px)",
+                  border:"1px solid rgba(255,255,255,0.2)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:16,
+                  opacity: hoveredWork === i ? 1 : 0,
+                  transform: hoveredWork === i ? "scale(1)" : "scale(0.8)",
+                  transition:"all 0.3s ease",
+                }}>🔍</div>
+
+                {/* Bottom info */}
+                <div style={{
+                  position:"absolute", bottom:0, left:0, right:0,
+                  padding:"16px",
+                  transform: hoveredWork === i ? "translateY(0)" : "translateY(4px)",
+                  transition:"transform 0.3s ease",
+                }}>
+                  <div style={{
+                    display:"inline-block",
+                    background:"rgba(139,92,246,0.25)",
+                    backdropFilter:"blur(8px)",
+                    border:"1px solid rgba(139,92,246,0.4)",
+                    borderRadius:999, padding:"2px 10px",
+                    fontSize:9, fontWeight:700,
+                    letterSpacing:"0.1em", textTransform:"uppercase",
+                    color:"#c4b5fd", marginBottom:6,
+                  }}>{item.tech}</div>
+                  <p style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.95)" }}>{item.title}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom CTA strip */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 rounded-2xl"
+            style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.2)" }}>
+            <div>
+              <p className="font-bold text-white text-base">Like what you see?</p>
+              <p className="text-white/50 text-sm mt-0.5">We can design and print something just like this for you.</p>
+            </div>
+            <button onClick={scrollToForm}
+              className="primary-button px-8 py-3 rounded-2xl font-bold text-sm whitespace-nowrap">
+              Get A Custom Quote →
+            </button>
+          </div>
+        </div>
+
+        {/* ══ LIGHTBOX ══ */}
+        {lightbox !== null && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background:"rgba(0,0,0,0.9)", backdropFilter:"blur(12px)" }}
+            onClick={() => setLightbox(null)}
+          >
+            <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setLightbox(null)}
+                style={{
+                  position:"absolute", top:-16, right:-16, zIndex:10,
+                  width:36, height:36, borderRadius:"50%",
+                  background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)",
+                  color:"white", fontSize:18, cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                }}>×</button>
+              <img
+                src={MY_WORK[lightbox].url}
+                alt={MY_WORK[lightbox].title}
+                style={{ width:"100%", borderRadius:20, display:"block", maxHeight:"80vh", objectFit:"contain" }}
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-white">{MY_WORK[lightbox].title}</p>
+                  <p className="text-white/50 text-sm mt-1">{MY_WORK[lightbox].tech}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setLightbox((lightbox - 1 + MY_WORK.length) % MY_WORK.length)}
+                    style={{
+                      width:40, height:40, borderRadius:"50%",
+                      background:"rgba(139,92,246,0.2)", border:"1px solid rgba(139,92,246,0.4)",
+                      color:"#c4b5fd", fontSize:18, cursor:"pointer",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                    }}>‹</button>
+                  <button
+                    onClick={() => setLightbox((lightbox + 1) % MY_WORK.length)}
+                    style={{
+                      width:40, height:40, borderRadius:"50%",
+                      background:"rgba(139,92,246,0.2)", border:"1px solid rgba(139,92,246,0.4)",
+                      color:"#c4b5fd", fontSize:18, cursor:"pointer",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                    }}>›</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ S2 — HOW IT WORKS ══ */}
+        <div className="mt-20 sm:mt-28">
+          <div className="text-center mb-14">
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">PROCESS</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">How It Works</h2>
+            <p className="soft-text text-base mt-3">From idea to printed part in 3 simple steps</p>
+          </div>
+          <div className="flex flex-col md:flex-row items-start gap-10 md:gap-0">
+            {STEPS.map((step, i) => (
+              <React.Fragment key={i}>
+                <div className="flex-1 flex flex-col items-center text-center px-4">
+                  <div className="relative flex items-center justify-center" style={{ width:90, height:72 }}>
+                    <span className="absolute inset-0 flex items-center justify-center"
+                      style={{ fontSize:72, fontWeight:900, lineHeight:1, color:"rgba(139,92,246,0.13)", userSelect:"none" }}>
+                      {step.number}
+                    </span>
+                    <div className="relative z-10" style={{
+                      width:52, height:52, borderRadius:"50%",
+                      background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.38)",
+                      display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.35rem",
+                    }}>{step.icon}</div>
+                  </div>
+                  <h3 className="font-black text-white text-xl mt-5">{step.title}</h3>
+                  <p className="text-white/55 text-sm mt-3 leading-relaxed max-w-[220px]">{step.description}</p>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className="hidden md:flex items-center self-start flex-shrink-0" style={{ paddingTop:34, width:48 }}>
+                    <svg width="48" height="2" viewBox="0 0 48 2">
+                      <line x1="0" y1="1" x2="48" y2="1" stroke="rgba(139,92,246,0.35)" strokeWidth="1.5" strokeDasharray="4,4"/>
+                    </svg>
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* ══ S3 — WHAT WE DESIGN ══ */}
+        <div ref={servicesRef} className="mt-20 sm:mt-28" id="services">
+          <div className="text-center sm:text-left mb-10">
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">SERVICES</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">What We Can Design For You</h2>
+            <p className="soft-text text-base mt-3">No project too small or too complex</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {SERVICES.map((svc) => (
+              <div key={svc.title}
+                className="rounded-[20px] p-6 border border-white/[0.08] hover:border-violet-500/50 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all duration-300"
+                style={{ background:"rgba(255,255,255,0.04)" }}>
+                <div style={{
+                  width:52, height:52, borderRadius:"50%",
+                  background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.25)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:"1.5rem", marginBottom:16,
+                }}>{svc.emoji}</div>
+                <h3 className="font-black text-white text-lg leading-tight">{svc.title}</h3>
+                <p className="text-white/55 text-sm mt-2 leading-relaxed">{svc.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ══ S4 — PRICING ══ */}
+        <div className="mt-20 sm:mt-28">
+          <div className="text-center mb-12">
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">PRICING</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Simple Transparent Pricing</h2>
+            <p className="soft-text text-base mt-3">Pay per project, no subscriptions</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {PRICING.map((p) => (
+              <div key={p.tier}
+                className="rounded-[24px] p-6 sm:p-8 flex flex-col relative"
+                style={{
+                  background: p.highlighted
+                    ? "linear-gradient(145deg, rgba(109,40,217,0.28), rgba(75,29,181,0.18))"
+                    : "rgba(255,255,255,0.04)",
+                  border: p.highlighted
+                    ? "1px solid rgba(139,92,246,0.55)"
+                    : p.isGold
+                    ? "1px solid rgba(245,158,11,0.28)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: p.highlighted ? "0 0 60px rgba(139,92,246,0.12)" : "none",
+                }}>
+                {p.badge && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span style={{
+                      background:"linear-gradient(135deg,#7c3aed,#9333ea)",
+                      borderRadius:999, padding:"3px 14px",
+                      fontSize:9, fontWeight:800, letterSpacing:"0.12em", color:"#fff",
+                    }}>{p.badge}</span>
+                  </div>
+                )}
+                <div className="mb-6">
+                  <p className="text-white/50 text-sm">{p.label}</p>
+                  <h3 className="text-3xl font-black mt-1" style={{ color: p.isGold ? "#f59e0b" : "#fff" }}>
+                    {p.price}
+                  </h3>
+                </div>
+                <ul className="space-y-3 flex-1">
+                  {p.features.map((f) => (
+                    <li key={f.text} className="flex items-center gap-3">
+                      <span style={{ color: f.included ? "#10b981" : "rgba(255,255,255,0.22)", flexShrink:0, fontWeight:800, fontSize:14 }}>
+                        {f.included ? "✓" : "✗"}
+                      </span>
+                      <span className={`text-sm ${f.included ? "text-white/80" : "text-white/30 line-through"}`}>
+                        {f.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={scrollToForm}
+                  className="mt-8 w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{
+                    background: p.highlighted
+                      ? "linear-gradient(135deg,#7c3aed,#9333ea)"
+                      : p.isGold ? "rgba(245,158,11,0.12)" : "rgba(139,92,246,0.12)",
+                    color: p.highlighted ? "#fff" : p.isGold ? "#f59e0b" : "#a78bfa",
+                    border: p.highlighted ? "none"
+                      : p.isGold ? "1px solid rgba(245,158,11,0.35)" : "1px solid rgba(139,92,246,0.3)",
+                  }}>
+                  {p.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-white/35 text-sm mt-6 text-center">
+            Not sure which tier?{" "}
+            <button onClick={scrollToForm} className="text-violet-400 font-semibold hover:text-violet-300 transition-colors">
+              Describe my project →
+            </button>{" "}
+            and we'll recommend the right option.
+          </p>
+        </div>
+
+        {/* ══ S5 — FORM ══ */}
+        <div ref={formRef} className="mt-20 sm:mt-28" id="design-form">
+          <div className="grid lg:grid-cols-[1fr_280px] gap-8 items-start">
+            <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden"
+              style={{
+                background:"linear-gradient(145deg, rgba(109,40,217,0.08) 0%, rgba(12,12,24,0.96) 100%)",
+                border:"1px solid rgba(139,92,246,0.22)",
+              }}>
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ background:"radial-gradient(ellipse at 50% -8%, rgba(124,58,237,0.2) 0%, transparent 55%)" }} />
+              <div className="relative z-10 px-6 sm:px-10 py-12 sm:py-16">
+                <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">GET A QUOTE</p>
+                <h2 className="text-3xl sm:text-4xl font-black mt-3 leading-tight">Start Your Project</h2>
+                <p className="soft-text text-base mt-3 leading-relaxed mb-8">
+                  Tell us about your idea and we'll get back to you within 2 hours during business hours.
+                </p>
+                {submitted ? (
+                  <div className="text-center py-12">
+                    <div style={{ fontSize:56, marginBottom:16 }}>🎉</div>
+                    <h3 className="text-2xl font-black">Project brief received!</h3>
+                    <p className="soft-text text-base mt-4 leading-relaxed max-w-sm mx-auto">
+                      We'll contact you within 2 hours on WhatsApp or email. Get ready to see your idea come to life.
+                    </p>
+                    <button onClick={() => setSubmitted(false)} className="mt-8 text-violet-400 text-sm font-semibold hover:text-violet-300 transition-colors">
+                      Submit another project
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-white/55 text-sm mb-2">Full Name *</label>
+                        <input type="text" name="name" value={form.name} onChange={handleChange}
+                          placeholder="Your name" required className={inputCls} />
+                      </div>
+                      <div>
+                        <label className="block text-white/55 text-sm mb-2">Email *</label>
+                        <input type="email" name="email" value={form.email} onChange={handleChange}
+                          placeholder="you@email.com" required className={inputCls} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-white/55 text-sm mb-2">WhatsApp / Phone</label>
+                      <input type="tel" name="phone" value={form.phone} onChange={handleChange}
+                        placeholder="+506 XXXX-XXXX" className={inputCls} />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-white/55 text-sm mb-2">Project Type *</label>
+                        <select name="projectType" value={form.projectType} onChange={handleChange} required className={selectCls}>
+                          <option value="" disabled className="bg-[#111827]">Select type</option>
+                          <option value="mechanical"    className="bg-[#111827]">Mechanical Part</option>
+                          <option value="prototype"     className="bg-[#111827]">Product Prototype</option>
+                          <option value="artistic"      className="bg-[#111827]">Artistic / Jewelry</option>
+                          <option value="architectural" className="bg-[#111827]">Architectural Model</option>
+                          <option value="gaming"        className="bg-[#111827]">Gaming / Collectible</option>
+                          <option value="industrial"    className="bg-[#111827]">Industrial Component</option>
+                          <option value="other"         className="bg-[#111827]">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-white/55 text-sm mb-2">Budget Range</label>
+                        <select name="budget" value={form.budget} onChange={handleChange} className={selectCls}>
+                          <option value="" disabled className="bg-[#111827]">Select budget</option>
+                          <option value="under15" className="bg-[#111827]">Under ₡15,000</option>
+                          <option value="15to35"  className="bg-[#111827]">₡15,000–₡35,000</option>
+                          <option value="35to75"  className="bg-[#111827]">₡35,000–₡75,000</option>
+                          <option value="over75"  className="bg-[#111827]">Over ₡75,000</option>
+                          <option value="notsure" className="bg-[#111827]">Not sure yet</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-white/55 text-sm mb-2">Project Description *</label>
+                      <textarea name="description" value={form.description} onChange={handleChange}
+                        placeholder="Describe your idea in as much detail as possible. You can mention size, material, purpose, reference images you can send later..."
+                        rows={5} required className={inputCls + " resize-none"} />
+                    </div>
+                    <p className="text-white/40 text-xs leading-relaxed">
+                      📎 After submitting, we'll send you a WhatsApp link to share reference images or sketches.
+                    </p>
+                    <button type="submit" className="primary-button w-full py-5 rounded-2xl text-lg font-bold mt-2">
+                      Send My Project Brief →
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] p-6 lg:sticky lg:top-28"
+              style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}>
+              <h3 className="font-black text-white text-xl mb-6">Prefer to talk first?</h3>
+              <div className="space-y-5">
+                {[
+                  { icon:"📱", title:"+506 XXXX-XXXX", sub:"Chat with a designer right now" },
+                  { icon:"📧", title:"design@inity3d.com", sub:"Email us anytime" },
+                  { icon:"⏰", title:"Under 2 hours", sub:"Average response time" },
+                ].map(({ icon, title, sub }) => (
+                  <div key={title} className="flex items-start gap-3">
+                    <span className="text-xl">{icon}</span>
+                    <div>
+                      <p className="font-bold text-white text-sm">{title}</p>
+                      <p className="text-white/40 text-xs mt-0.5">{sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 pt-6 space-y-3" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+                {[
+                  { icon:"🔒", text:"Your idea is confidential" },
+                  { icon:"💯", text:"Satisfaction guaranteed" },
+                  { icon:"🖨️", text:"We can also print it for you" },
+                ].map(({ icon, text }) => (
+                  <div key={text} className="flex items-center gap-3">
+                    <span style={{ fontSize:"1.1rem", flexShrink:0 }}>{icon}</span>
+                    <span className="text-white/55 text-sm">{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ S6 — FAQ ══ */}
+        <div className="mt-20 sm:mt-28">
+          <div className="text-center mb-10">
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">FAQ</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Common Questions</h2>
+          </div>
+          <div className="max-w-3xl mx-auto" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+            {FAQ_ITEMS.map((item, i) => (
+              <div key={i} style={{ borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between gap-4 py-5 text-left">
+                  <span className={`font-semibold text-base sm:text-lg leading-snug transition-colors ${openFaq === i ? "text-violet-400" : "text-white"}`}>
+                    {item.q}
+                  </span>
+                  <span className="text-violet-400 flex-shrink-0 transition-transform duration-300 font-light"
+                    style={{ transform: openFaq === i ? "rotate(45deg)" : "rotate(0deg)", fontSize:24, lineHeight:1 }}>
+                    +
+                  </span>
+                </button>
+                <div style={{ maxHeight: openFaq === i ? 300 : 0, overflow:"hidden", transition:"max-height 0.35s ease" }}>
+                  <p className="text-white/60 text-sm sm:text-base leading-relaxed pb-5">{item.a}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
-
-      {/* IMAGE MODAL */}
-
-      {selectedImage && (
-
-        <div
-          className="
-          fixed
-          inset-0
-          z-[999]
-          bg-black/90
-          backdrop-blur-xl
-          flex
-          items-center
-          justify-center
-          p-6
-          "
-          onClick={() =>
-            setSelectedImage(null)
-          }
-        >
-
-          {/* IMAGE */}
-
-          <img
-            src={selectedImage}
-            alt="Expanded Project"
-            className="
-            max-w-full
-            max-h-full
-            rounded-[32px]
-            shadow-[0_0_120px_rgba(124,58,237,0.25)]
-            "
-          />
-
-          {/* CLOSE BUTTON */}
-
-          <button
-            className="
-            absolute
-            top-8
-            right-8
-            w-14
-            h-14
-            rounded-full
-            bg-white/10
-            border
-            border-white/10
-            text-white
-            text-2xl
-            hover:bg-white/20
-            transition-all
-            "
-          >
-
-            ×
-
-          </button>
-
-        </div>
-
-      )}
-
     </main>
-
   );
-
 };
 
 export default Designer;

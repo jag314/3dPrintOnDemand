@@ -1,9 +1,18 @@
 import {
   GraduationCap,
-  Printer,
   Lightbulb,
   Wrench,
 } from "lucide-react";
+
+const PrinterIcon3D = ({ size = 38 }) => (
+  <img
+    src="/materials/3d-printer.png"
+    alt="3D Printer"
+    width={size}
+    height={size}
+    style={{ objectFit: "contain", filter: "invert(72%) sepia(40%) saturate(600%) hue-rotate(215deg) brightness(110%)" }}
+  />
+);
 
 import { Link } from "react-router-dom";
 
@@ -13,7 +22,7 @@ const timeline = [
     title: "Started With An Ender 3 Pro",
     description:
       "The journey began exploring additive manufacturing, prototyping and advanced 3D printing workflows.",
-    icon: Printer,
+    icon: PrinterIcon3D,
   },
 
   {

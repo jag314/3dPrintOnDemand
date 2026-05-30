@@ -4,7 +4,6 @@ import {
   MapPin,
   GraduationCap,
   PenTool,
-  Printer,
   Wrench,
 } from "lucide-react";
 
@@ -397,7 +396,7 @@ const Contact = () => {
 
                 <div className="rounded-3xl border border-white/10 p-6 bg-white/[0.03]">
 
-                  <Printer className="text-violet-400" size={34} />
+                  <img src="/materials/3d-printer.png" alt="3D Printer" width={34} height={34} style={{ objectFit: "contain", filter: "invert(72%) sepia(40%) saturate(600%) hue-rotate(215deg) brightness(110%)" }} />
 
                   <h3 className="text-xl font-bold mt-5">
 
