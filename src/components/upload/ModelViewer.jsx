@@ -22,10 +22,63 @@ const calcVolume = (geo) => {
 
 const detectScale = (sz) => {
   const m = Math.max(sz.x, sz.y, sz.z);
-  if (m < 1)  return 1000;  // meters → mm (covers prints up to 1 m stored in meters)
-  if (m < 25) return 10;    // cm → mm (covers prints up to 25 cm stored in cm)
-  return 1;                  // already in mm
+  if (m < 1)  return 1000;
+  if (m < 25) return 10;
+  return 1;
 };
+
+// ── Support detection ────────────────────────────────────────────────────────
+
+const analyzeSupportNeeds = (geometry) => {
+  const pos = geometry.attributes.position;
+  if (!geometry.attributes.normal) geometry.computeVertexNormals();
+  const nor = geometry.attributes.normal;
+
+  const bbox = new THREE.Box3().setFromBufferAttribute(pos);
+  const modelHeight = bbox.max.y - bbox.min.y;
+  const modelBottom = bbox.min.y;
+  const GROUND_THRESHOLD = modelHeight * 0.03;
+
+  let totalFaces = 0;
+  let overhangFaces = 0;
+
+  for (let i = 0; i < pos.count; i += 3) {
+    const y1 = pos.getY(i), y2 = pos.getY(i + 1), y3 = pos.getY(i + 2);
+    const avgY = (y1 + y2 + y3) / 3;
+    if (avgY - modelBottom < GROUND_THRESHOLD) continue;
+
+    const ny1 = nor.getY(i), ny2 = nor.getY(i + 1), ny3 = nor.getY(i + 2);
+    const avgNY = (ny1 + ny2 + ny3) / 3;
+
+    totalFaces++;
+    if (avgNY < -0.5) overhangFaces++;
+  }
+
+  const overhangRatio = totalFaces > 0 ? overhangFaces / totalFaces : 0;
+
+  let supportLevel;
+  if      (overhangRatio < 0.03) supportLevel = "none";
+  else if (overhangRatio < 0.10) supportLevel = "light";
+  else if (overhangRatio < 0.25) supportLevel = "moderate";
+  else                            supportLevel = "heavy";
+
+  const EXTRA = {
+    none:     { material: 0.00, time: 0.00 },
+    light:    { material: 0.05, time: 0.08 },
+    moderate: { material: 0.15, time: 0.20 },
+    heavy:    { material: 0.30, time: 0.40 },
+  };
+
+  return {
+    supportLevel,
+    needsSupports:        supportLevel !== "none",
+    overhangRatio,
+    supportExtraMaterial: EXTRA[supportLevel].material,
+    supportExtraTime:     EXTRA[supportLevel].time,
+  };
+};
+
+// ── Camera / dimension helpers ───────────────────────────────────────────────
 
 const CameraFit = ({ size }) => {
   const { camera, controls } = useThree();
@@ -101,6 +154,8 @@ const DimensionLines = ({ size }) => {
   );
 };
 
+// ── Material helpers ─────────────────────────────────────────────────────────
+
 const ensureVisibleColor = (hexColor) => {
   const r = parseInt(hexColor.slice(1, 3), 16);
   const g = parseInt(hexColor.slice(3, 5), 16);
@@ -119,7 +174,6 @@ const ensureVisibleColor = (hexColor) => {
 const createMaterial = (colorHex, technology, finish) => {
   const col = new THREE.Color(ensureVisibleColor(colorHex));
 
-  // Explicit finish overrides technology defaults
   if (finish === "matte") {
     return new THREE.MeshStandardMaterial({ color: col, metalness: 0.0, roughness: 0.78 });
   }
@@ -138,23 +192,18 @@ const createMaterial = (colorHex, technology, finish) => {
     });
   }
   if (finish === "glow") {
-    // Layer 1: main model — readable detail with low emissive glow
     return new THREE.MeshStandardMaterial({
       color: col, emissive: col.clone(), emissiveIntensity: 0.35,
       roughness: 0.4, metalness: 0.0,
     });
   }
-
-  // Technology defaults — no finish set
   if (technology === "sla") {
-    // Smooth glossy resin — opaque, soft sheen, like real cured SLA print
     return new THREE.MeshPhysicalMaterial({
       color: col, metalness: 0.0, roughness: 0.15,
       clearcoat: 0.6, clearcoatRoughness: 0.2,
       envMapIntensity: 1.0,
     });
   }
-  // FDM default — rough matte plastic, visible texture, no shine
   return new THREE.MeshStandardMaterial({ color: col, metalness: 0.0, roughness: 0.78 });
 };
 
@@ -190,17 +239,12 @@ const GlowToneMap = ({ enabled }) => {
   return null;
 };
 
-// Layer 2 — BackSide halo: scales geometry up 4%, renders only back faces,
-// which peek out around the silhouette as a soft colored outline.
 const buildHalo = (model, colorHex) => {
   const mat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(colorHex),
-    transparent: true,
-    opacity: 0.22,
-    side: THREE.BackSide,
-    depthWrite: false,
+    transparent: true, opacity: 0.22,
+    side: THREE.BackSide, depthWrite: false,
   });
-
   if (model.isMesh) {
     const halo = new THREE.Mesh(model.geometry, mat);
     halo.position.copy(model.position);
@@ -208,8 +252,6 @@ const buildHalo = (model, colorHex) => {
     halo.scale.setScalar(1.02);
     return halo;
   }
-
-  // OBJ — group of meshes
   const group = new THREE.Group();
   group.position.copy(model.position);
   group.rotation.copy(model.rotation);
@@ -225,15 +267,19 @@ const buildHalo = (model, colorHex) => {
   return group;
 };
 
+// ── Main component ───────────────────────────────────────────────────────────
+
 const ModelViewer = ({
   file, selectedColor, setModelStats,
   selectedMaterial, materials, onModelSizeChange, onLoadingChange,
   technology = "fdm",
+  modelScale = 1,
 }) => {
   const [model, setModel] = useState(null);
   const [modelSize, setModelSize] = useState(null);
   const [haloModel, setHaloModel] = useState(null);
   const prevUrlRef = useRef(null);
+  const originalSizeRef = useRef(null);
 
   useEffect(() => {
     if (!model) return;
@@ -242,18 +288,13 @@ const ModelViewer = ({
     applyTechnologyMaterial(model, colorHex, technology, finish);
   }, [selectedColor, technology, model]);
 
-  // Build / destroy halo whenever model or glow status changes
   useEffect(() => {
-    if (!model || selectedColor?.finish !== "glow") {
-      setHaloModel(null);
-      return;
-    }
+    if (!model || selectedColor?.finish !== "glow") { setHaloModel(null); return; }
     const halo = buildHalo(model, selectedColor?.hex || "#00ff88");
     setHaloModel(halo);
     return () => setHaloModel(null);
   }, [model, selectedColor?.finish]);
 
-  // Update halo color live when hex changes (no full rebuild needed)
   useEffect(() => {
     if (!haloModel) return;
     const col = new THREE.Color(selectedColor?.hex || "#00ff88");
@@ -262,6 +303,14 @@ const ModelViewer = ({
     });
     if (haloModel.isMesh && haloModel.material) haloModel.material.color.set(col);
   }, [selectedColor?.hex, haloModel]);
+
+  // Apply visual scale when slider changes; update DimensionLines without repositioning camera
+  useEffect(() => {
+    if (!model || !originalSizeRef.current) return;
+    model.scale.setScalar(modelScale);
+    const o = originalSizeRef.current;
+    setModelSize({ x: o.x * modelScale, y: o.y * modelScale, z: o.z * modelScale });
+  }, [model, modelScale]);
 
   useEffect(() => {
     if (!file) return;
@@ -276,20 +325,26 @@ const ModelViewer = ({
     setModel(null);
     setModelSize(null);
 
-    const finish = (mesh, sz, volumeMM3, complexity) => {
+    const finish = (mesh, sz, volumeMM3, complexity, support) => {
       mesh.position.y = sz.y / 2;
       mesh.castShadow = true;
       applyTechnologyMaterial(mesh, colorHex, technology, colorFinish);
       const weight = ((volumeMM3 / 1000) * density).toFixed(1);
+      originalSizeRef.current = sz;
       setModel(mesh);
       setModelSize(sz);
       onModelSizeChange?.(sz);
       onLoadingChange?.(false);
       setModelStats({
-        fileName: file.name,
-        dimensions: `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-        materialUsage: weight,
+        fileName:             file.name,
+        dimensions:           `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+        materialUsage:        weight,
         complexity,
+        supportLevel:         support.supportLevel,
+        needsSupports:        support.needsSupports,
+        overhangRatio:        support.overhangRatio,
+        supportExtraMaterial: support.supportExtraMaterial,
+        supportExtraTime:     support.supportExtraTime,
       });
     };
 
@@ -297,9 +352,10 @@ const ModelViewer = ({
       new STLLoader().load(url, (geo) => {
         geo.computeVertexNormals();
         const { sz, volumeMM3 } = prepareGeometry(geo);
+        const support = analyzeSupportNeeds(geo);
         const mesh = new THREE.Mesh(geo, createMaterial(colorHex, technology, colorFinish));
         const complexity = geo.attributes.position.count > 200000 ? "High" : geo.attributes.position.count > 80000 ? "Medium" : "Low";
-        finish(mesh, sz, volumeMM3, complexity);
+        finish(mesh, sz, volumeMM3, complexity, support);
       });
     }
 
@@ -330,6 +386,8 @@ const ModelViewer = ({
         });
         const mergedGeo = new THREE.BufferGeometry();
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
+        mergedGeo.computeVertexNormals();
+        const support = analyzeSupportNeeds(mergedGeo);
         const totalVol = calcVolume(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(obj);
         const sz = finalBox.getSize(new THREE.Vector3());
@@ -337,15 +395,21 @@ const ModelViewer = ({
         obj.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
         const weight = ((totalVol / 1000) * density).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
+        originalSizeRef.current = sz;
         setModel(obj);
         setModelSize(sz);
         onModelSizeChange?.(sz);
         onLoadingChange?.(false);
         setModelStats({
-          fileName: file.name,
-          dimensions: `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-          materialUsage: weight,
+          fileName:             file.name,
+          dimensions:           `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          materialUsage:        weight,
           complexity,
+          supportLevel:         support.supportLevel,
+          needsSupports:        support.needsSupports,
+          overhangRatio:        support.overhangRatio,
+          supportExtraMaterial: support.supportExtraMaterial,
+          supportExtraTime:     support.supportExtraTime,
         });
       });
     }
@@ -377,6 +441,8 @@ const ModelViewer = ({
         });
         const mergedGeo = new THREE.BufferGeometry();
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
+        mergedGeo.computeVertexNormals();
+        const support = analyzeSupportNeeds(mergedGeo);
         const totalVol = calcVolume(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(object);
         const sz = finalBox.getSize(new THREE.Vector3());
@@ -384,15 +450,21 @@ const ModelViewer = ({
         object.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
         const weight = ((totalVol / 1000) * density).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
+        originalSizeRef.current = sz;
         setModel(object);
         setModelSize(sz);
         onModelSizeChange?.(sz);
         onLoadingChange?.(false);
         setModelStats({
-          fileName: file.name,
-          dimensions: `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-          materialUsage: weight,
+          fileName:             file.name,
+          dimensions:           `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          materialUsage:        weight,
           complexity,
+          supportLevel:         support.supportLevel,
+          needsSupports:        support.needsSupports,
+          overhangRatio:        support.overhangRatio,
+          supportExtraMaterial: support.supportExtraMaterial,
+          supportExtraTime:     support.supportExtraTime,
         });
       });
     }
@@ -410,9 +482,7 @@ const ModelViewer = ({
     <>
       <GlowToneMap enabled={isGlow} />
       <CameraFit size={modelSize} />
-      {/* Layer 2 — BackSide halo mesh renders as sibling, not child */}
       {haloModel && <primitive object={haloModel} />}
-      {/* Layer 3 — subtle colored point light so glow spills onto the scene */}
       {isGlow && modelSize && (
         <pointLight
           position={[0, modelSize.y * 0.5, 0]}
