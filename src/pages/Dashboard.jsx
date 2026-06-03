@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   ChevronDown, ChevronUp, Pencil, Save, Trash2,
   Eye, EyeOff, Palette, Crown, Plus,
@@ -13,6 +13,7 @@ import { DEFAULT_SETTINGS } from "../App";
 // ── Shared constants ──────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
+  pending_verification: { label:"Verif. SINPE",  dot:"#fb923c", bg:"rgba(251,146,60,0.15)",  border:"rgba(251,146,60,0.4)"  },
   pending:   { label:"Pendiente",    dot:"#f59e0b", bg:"rgba(245,158,11,0.15)",   border:"rgba(245,158,11,0.4)"  },
   quoted:    { label:"Cotizado",     dot:"#3b82f6", bg:"rgba(59,130,246,0.15)",   border:"rgba(59,130,246,0.4)"  },
   confirmed: { label:"Confirmado",   dot:"#8b5cf6", bg:"rgba(139,92,246,0.15)",   border:"rgba(139,92,246,0.4)"  },
@@ -203,6 +204,7 @@ const ResumenSection = ({ orders, materials, printers, settings }) => {
 // ── SECTION 2: Pedidos ────────────────────────────────────────────────────────
 
 const NEXT_STATUSES = {
+  pending_verification: ["confirmed","cancelled"],
   pending:   ["quoted","confirmed","cancelled"],
   quoted:    ["confirmed","cancelled"],
   confirmed: ["printing","cancelled"],
@@ -219,7 +221,95 @@ const STATUS_BTN_CFG = {
   cancelled: { label:"Cancelar ✗",        style:{ background:"rgba(239,68,68,0.1)",    border:"1px solid rgba(239,68,68,0.3)",    color:"#f87171" } },
 };
 
-const PedidosSection = ({ orders, setOrders }) => {
+// ── STL download via signed Supabase URL ─────────────────────────────────────
+// Calls the admin API which returns a 60-second signed URL from Supabase Storage.
+// Requires a valid adminToken (admin JWT).
+
+const downloadViaApi = async (orderId, type, adminToken) => {
+  if (!adminToken) { alert("Inicia sesión como admin para descargar archivos."); return; }
+  try {
+    const apiBase = import.meta.env.VITE_API_URL || "";
+    const res = await fetch(`${apiBase}/api/admin/orders/${orderId}/download/${type}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Error ${res.status}`);
+    }
+    const { url, fileName } = await res.json();
+    // Open signed URL — Supabase serves the file directly, never through our server.
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName || "model.stl";
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (err) {
+    alert("No se pudo descargar el archivo: " + err.message);
+  }
+};
+
+// ── Admin login component ─────────────────────────────────────────────────────
+
+const AdminLogin = ({ onLogin }) => {
+  const [creds, setCreds]   = useState({ username:"", password:"" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError]    = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || "";
+      const res  = await fetch(`${apiBase}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(creds),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+      sessionStorage.setItem("inity_admin_token", data.token);
+      onLogin(data.token);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background:"#050816" }}>
+      <div style={{ width:360, background:"linear-gradient(145deg,#0d0c1a,#121020)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:28, padding:"36px 32px", boxShadow:"0 24px 80px rgba(0,0,0,0.7)" }}>
+        <p className="uppercase tracking-[0.3em] text-violet-400 text-xs mb-2">INITY 3D</p>
+        <h2 className="text-2xl font-black text-white mb-2">Admin Dashboard</h2>
+        <p style={{ fontSize:12, color:"rgba(255,255,255,0.35)", marginBottom:28 }}>Inicia sesión para gestionar pedidos</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={labelCls}>Usuario</label>
+            <input value={creds.username} onChange={e=>setCreds(p=>({...p,username:e.target.value}))} className={inputCls} placeholder="admin" autoComplete="username" />
+          </div>
+          <div>
+            <label className={labelCls}>Contraseña</label>
+            <input type="password" value={creds.password} onChange={e=>setCreds(p=>({...p,password:e.target.value}))} className={inputCls} placeholder="••••••••" autoComplete="current-password" />
+          </div>
+          {error && <p style={{ color:"#f87171", fontSize:12, fontWeight:600 }}>⚠ {error}</p>}
+          <button type="submit" disabled={loading}
+            className="w-full py-3 rounded-xl font-bold text-sm text-white transition"
+            style={{ background: loading ? "rgba(124,58,237,0.5)" : "linear-gradient(135deg,#7c3aed,#9333ea)", border:"none", cursor:loading?"not-allowed":"pointer", opacity:loading?0.7:1 }}>
+            {loading ? "Iniciando sesión…" : "Iniciar sesión →"}
+          </button>
+        </form>
+        <p style={{ fontSize:10, color:"rgba(255,255,255,0.2)", marginTop:20, textAlign:"center" }}>
+          Credenciales configuradas en las variables de entorno del servidor
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const PedidosSection = ({ orders, setOrders, adminToken }) => {
   const [search, setSearch]     = useState("");
   const [filter, setFilter]     = useState("all");
   const [sort, setSort]         = useState("newest");
@@ -247,23 +337,35 @@ const PedidosSection = ({ orders, setOrders }) => {
   }, [orders, search, filter, sort]);
 
   const updateStatus = (id, status) => {
+    // Optimistic UI + localStorage update
     const updated = orders.map(o => {
       if (o.id !== id) return o;
       const next = { ...o, status };
-      // If completing, add to customer totalSpent
       if (status === "completed") {
-        const customers = JSON.parse(localStorage.getItem("inity_customers") || "[]");
-        const email = o.customer?.email;
-        if (email) {
-          const idx = customers.findIndex(c => c.email === email);
-          if (idx >= 0) customers[idx].totalSpent = (customers[idx].totalSpent || 0) + (o.quote?.totalPrice || o.totalCRC || 0);
-          localStorage.setItem("inity_customers", JSON.stringify(customers));
-        }
+        try {
+          const customers = JSON.parse(localStorage.getItem("inity_customers") || "[]");
+          const email = o.customer?.email;
+          if (email) {
+            const idx = customers.findIndex(c => c.email === email);
+            if (idx >= 0) customers[idx].totalSpent = (customers[idx].totalSpent || 0) + (o.quote?.totalPrice || o.totalCRC || 0);
+            localStorage.setItem("inity_customers", JSON.stringify(customers));
+          }
+        } catch {}
       }
       return next;
     });
     setOrders(updated);
     localStorage.setItem("inity_orders", JSON.stringify(updated));
+
+    // Sync status to Supabase via API when admin token is available
+    if (adminToken) {
+      const apiBase = import.meta.env.VITE_API_URL || "";
+      fetch(`${apiBase}/api/admin/orders/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ status }),
+      }).catch(err => console.error("Status sync to API failed:", err));
+    }
   };
 
   const deleteOrder = (id) => {
@@ -369,12 +471,15 @@ const PedidosSection = ({ orders, setOrders }) => {
                           ["Email",       order.customer?.email || "—"],
                           ["Teléfono",    order.customer?.phone || "—"],
                           ["Archivo",     order.quote?.fileName || order.fileName || "—"],
+                          ["Escala",      order.modelFile?.scalePct != null ? `${order.modelFile.scalePct}%${order.modelFile.scalePct === 100 ? " (original)" : ""}` : "—"],
                           ["Dimensiones", order.quote?.dimensions || order.dimensions || "—"],
                           ["Material",    `${order.quote?.material || order.material || "—"}${order.quote?.color ? ` — ${order.quote.color}` : ""}`],
                           ["Cantidad",    `${order.quote?.quantity || 1} pieza${(order.quote?.quantity || 1) > 1 ? "s" : ""}`],
                           ["Urgencia",    order.quote?.urgency === "semi" ? "Semi-urgente" : order.quote?.urgency === "urgent" ? "Urgente" : "Normal"],
                           ["Precio unit", formatCRC(order.quote?.unitPrice || totalPrice)],
                           ["Total",       formatCRC(totalPrice)],
+                          ...(order.payment?.sinpeConfirmation ? [["SINPE Nº", order.payment.sinpeConfirmation]] : []),
+                          ...(order.delivery ? [["Envío", order.delivery.method === "correos" ? `Correos: ${order.delivery.branch} (${order.delivery.province})` : `${order.delivery.district}, ${order.delivery.canton}, ${order.delivery.province}`]] : []),
                           ...(order.customer?.notes ? [["Notas", order.customer.notes]] : []),
                         ].map(([k, v]) => (
                           <div key={k} className="flex justify-between text-sm gap-3">
@@ -382,6 +487,34 @@ const PedidosSection = ({ orders, setOrders }) => {
                             <span className="text-white/80 text-right">{v}</span>
                           </div>
                         ))}
+
+                        {/* ── STL download via Supabase signed URL ── */}
+                        {order.modelFile && (
+                          <div className="pt-3 mt-1 space-y-2" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+                            <p style={{ fontSize:9, fontWeight:800, letterSpacing:"0.14em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", marginBottom:6 }}>📁 ARCHIVOS STL</p>
+                            <div className="flex gap-2 flex-wrap">
+                              <button
+                                onClick={() => downloadViaApi(order.id, "original", adminToken)}
+                                disabled={!adminToken}
+                                title={adminToken ? "Descargar STL original desde Supabase Storage" : "Inicia sesión para descargar"}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
+                                style={{ background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", color:"#c4b5fd" }}>
+                                ⬇ Original STL
+                              </button>
+                              {/* Scaled button only shown when a scaled file exists in storage */}
+                              {order.stlScaledPath && (
+                                <button
+                                  onClick={() => downloadViaApi(order.id, "scaled", adminToken)}
+                                  disabled={!adminToken}
+                                  title={adminToken ? `Descargar STL escalado al ${order.modelFile.scalePct}%` : "Inicia sesión para descargar"}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
+                                  style={{ background:"rgba(245,158,11,0.12)", border:"1px solid rgba(245,158,11,0.35)", color:"#fde68a" }}>
+                                  ⬇ Scaled {order.modelFile.scalePct}% STL
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Right — admin technical */}
@@ -1154,14 +1287,50 @@ const NAV_ITEMS = [
 
 const Dashboard = ({ materials, setMaterials, printers, setPrinters, settings, setSettings }) => {
   const [activeSection, setActiveSection] = useState("resumen");
+
+  // ── Admin JWT auth ──────────────────────────────────────────────────────────
+  // Token is held in sessionStorage so it survives page refreshes within the same
+  // tab session but is cleared when the browser tab/window is closed.
+  const [adminToken, setAdminToken] = useState(() => sessionStorage.getItem("inity_admin_token") || null);
+
+  const handleLogin  = (token) => setAdminToken(token);
+  const handleLogout = () => {
+    sessionStorage.removeItem("inity_admin_token");
+    setAdminToken(null);
+  };
+
+  // ── Orders: loaded from localStorage; refreshed from API when token available ─
   const [orders, setOrders] = useState(() => {
-    try {
-      // Load from new key; fall back gracefully
-      return JSON.parse(localStorage.getItem("inity_orders") || "[]");
-    } catch { return []; }
+    try { return JSON.parse(localStorage.getItem("inity_orders") || "[]"); }
+    catch { return []; }
   });
 
-  const pendingCount = orders.filter(o => o.status === "pending").length;
+  // Refresh orders from API on mount (and whenever the token changes)
+  React.useEffect(() => {
+    if (!adminToken) return;
+    const apiBase = import.meta.env.VITE_API_URL || "";
+    fetch(`${apiBase}/api/admin/orders`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    })
+      .then(r => {
+        if (r.status === 401) { handleLogout(); return null; }
+        return r.json();
+      })
+      .then(data => {
+        if (data?.orders) {
+          setOrders(data.orders);
+          // Keep localStorage in sync so offline / non-API sections still work
+          localStorage.setItem("inity_orders", JSON.stringify(data.orders));
+        }
+      })
+      .catch(err => console.error("Failed to fetch orders from API:", err));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminToken]);
+
+  // Show login screen if not authenticated
+  if (!adminToken) return <AdminLogin onLogin={handleLogin} />;
+
+  const pendingCount = orders.filter(o => o.status === "pending" || o.status === "pending_verification").length;
 
   return (
     <div className="min-h-screen text-white flex" style={{ background:"#050816" }}>
@@ -1190,16 +1359,19 @@ const Dashboard = ({ materials, setMaterials, printers, setPrinters, settings, s
             );
           })}
         </nav>
-        <div className="p-4 border-t" style={{ borderColor:"rgba(255,255,255,0.06)" }}>
+        <div className="p-4 border-t space-y-2" style={{ borderColor:"rgba(255,255,255,0.06)" }}>
           <p style={{ fontSize:10, color:"rgba(255,255,255,0.2)" }}>v1.0.0</p>
-          <a href="/" style={{ fontSize:11, color:"rgba(139,92,246,0.7)", textDecoration:"none", display:"block", marginTop:2 }}>← Ver sitio</a>
+          <a href="/" style={{ fontSize:11, color:"rgba(139,92,246,0.7)", textDecoration:"none", display:"block" }}>← Ver sitio</a>
+          <button onClick={handleLogout} style={{ fontSize:11, color:"rgba(239,68,68,0.6)", background:"none", border:"none", cursor:"pointer", padding:0 }}>
+            Cerrar sesión
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 min-h-screen" style={{ marginLeft:240, padding:"40px 40px 80px" }}>
         {activeSection === "resumen"       && <ResumenSection       orders={orders} materials={materials} printers={printers} settings={settings} />}
-        {activeSection === "pedidos"       && <PedidosSection       orders={orders} setOrders={setOrders} />}
+        {activeSection === "pedidos"       && <PedidosSection       orders={orders} setOrders={setOrders} adminToken={adminToken} />}
         {activeSection === "impresoras"    && <PrintersSection      printers={printers} setPrinters={setPrinters} orders={orders} />}
         {activeSection === "materiales"    && <MaterialsSection     materials={materials} setMaterials={setMaterials} />}
         {activeSection === "clientes"      && <ClientesSection      orders={orders} />}

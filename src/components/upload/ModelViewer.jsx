@@ -304,11 +304,14 @@ const ModelViewer = ({
     if (haloModel.isMesh && haloModel.material) haloModel.material.color.set(col);
   }, [selectedColor?.hex, haloModel]);
 
-  // Apply visual scale when slider changes; update DimensionLines without repositioning camera
+  // Apply visual scale; keep model bottom at Y=0 so dimension lines stay anchored
   useEffect(() => {
     if (!model || !originalSizeRef.current) return;
     model.scale.setScalar(modelScale);
     const o = originalSizeRef.current;
+    // Re-ground the model: geometry is centered at local origin, so world bottom
+    // sits at position.y - height/2. Setting position.y = height/2 keeps it at Y=0.
+    model.position.y = (o.y * modelScale) / 2;
     setModelSize({ x: o.x * modelScale, y: o.y * modelScale, z: o.z * modelScale });
   }, [model, modelScale]);
 

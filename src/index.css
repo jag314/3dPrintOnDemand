@@ -6,6 +6,32 @@
   color-scheme: dark;
 }
 
+/* ── Dark-theme selects (Chrome, Firefox, Safari) ────────────────────────── */
+/* Forces the native dropdown widget to use dark colours.
+   Firefox requires background-color on <option> explicitly. */
+select {
+  background-color: #0d0c1a;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+select option,
+select optgroup {
+  background-color: #1a1631;
+  color: #ffffff;
+}
+
+select:focus {
+  outline: none;
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+}
+
+select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 html {
   scroll-behavior: smooth;
 }
