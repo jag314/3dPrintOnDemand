@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./utils/supabase/client";
 import { Routes, Route } from "react-router-dom";
 import { MaterialsProvider } from "./context/MaterialsContext";
 import Navbar from "./components/Navbar";
@@ -14,10 +15,38 @@ import Contact from "./pages/Contact";
 
 const DEFAULT_PRINTERS = [
   {
+    id: "hi-combo-001",
+    name: "Creality Hi Combo",
+    technology: "fdm",
+    status: "active",
+    purchasePriceCRC: 520000,
+    amortizationYears: 2,
+    daysPerYear: 312,
+    hoursPerDay: 10,
+    wattsConsumption: 350,
+    electricityRateCRC: 150,
+    printSpeedProfiles: {
+      draft:    { gPerHour: 28, label: "Borrador rápido" },
+      standard: { gPerHour: 18, label: "Estándar" },
+      quality:  { gPerHour: 10, label: "Alta calidad" },
+    },
+    defaultProfile: "standard",
+    buildVolume: { x: 260, y: 260, z: 300 },
+    maxTempNozzle: 300,
+    maxTempBed: 110,
+    hasEnclosure: false,
+    operatorRateCRC: 2000,
+    prepHours: 0.5,
+    postHours: 0.5,
+    failureRate: 0.10,
+    purchaseDate: "2026-01-01",
+    notes: "Impresora principal FDM — Multicolor 4 colores (CFS), 500 mm/s",
+  },
+  {
     id: "k1c-001",
     name: "Creality K1C",
     technology: "fdm",
-    status: "active",
+    status: "inactive",
     purchasePriceCRC: 346500,
     amortizationYears: 1,
     daysPerYear: 312,
@@ -39,7 +68,7 @@ const DEFAULT_PRINTERS = [
     postHours: 0.5,
     failureRate: 0.10,
     purchaseDate: "2025-01-01",
-    notes: "Impresora principal FDM",
+    notes: "Impresora FDM secundaria",
   },
 ];
 
@@ -137,6 +166,15 @@ export const DEFAULT_SETTINGS = {
 // ── App ───────────────────────────────────────────────────────────────────────
 
 const App = () => {
+  // TODO: Remove this block after confirming the DB connection works
+  useEffect(() => {
+    supabase.from("orders").select("count").limit(1)
+      .then(({ error }) => {
+        if (error) console.error("❌ Supabase connection failed:", error.message);
+        else        console.log("✅ Supabase connected successfully");
+      });
+  }, []);
+
   // Printers — inity_printers key, with migration from old "printers" key
   const [printers, setPrinters] = useState(() => {
     try {

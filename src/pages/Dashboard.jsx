@@ -225,7 +225,8 @@ const STATUS_BTN_CFG = {
 // Calls the admin API which returns a 60-second signed URL from Supabase Storage.
 // Requires a valid adminToken (admin JWT).
 
-const downloadViaApi = async (orderId, type, adminToken) => {
+const downloadViaApi = async (orderId, type, adminToken, refStr) => {
+  console.log('[Dashboard] Download clicked — orderId:', orderId, '| type:', type, '| hasToken:', !!adminToken);
   if (!adminToken) { alert("Inicia sesión como admin para descargar archivos."); return; }
   try {
     const apiBase = import.meta.env.VITE_API_URL || "";
@@ -236,15 +237,18 @@ const downloadViaApi = async (orderId, type, adminToken) => {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `Error ${res.status}`);
     }
-    const { url, fileName } = await res.json();
-    // Open signed URL — Supabase serves the file directly, never through our server.
+    const { url } = await res.json();
+    // Fetch as blob so the `download` attribute works cross-origin (Supabase signed URLs).
+    const blob = await fetch(url).then(r => r.blob());
+    const refNum = (refStr || "").replace(/[^0-9]/g, "") || orderId.slice(-6);
+    const fileName = `inity3d_order_${refNum}_${type}.stl`;
     const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName || "model.stl";
-    a.target = "_blank";
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
   } catch (err) {
     alert("No se pudo descargar el archivo: " + err.message);
   }
@@ -494,7 +498,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                             <p style={{ fontSize:9, fontWeight:800, letterSpacing:"0.14em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", marginBottom:6 }}>📁 ARCHIVOS STL</p>
                             <div className="flex gap-2 flex-wrap">
                               <button
-                                onClick={() => downloadViaApi(order.id, "original", adminToken)}
+                                onClick={() => downloadViaApi(order.id, "original", adminToken, order.ref)}
                                 disabled={!adminToken}
                                 title={adminToken ? "Descargar STL original desde Supabase Storage" : "Inicia sesión para descargar"}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
@@ -504,7 +508,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                               {/* Scaled button only shown when a scaled file exists in storage */}
                               {order.stlScaledPath && (
                                 <button
-                                  onClick={() => downloadViaApi(order.id, "scaled", adminToken)}
+                                  onClick={() => downloadViaApi(order.id, "scaled", adminToken, order.ref)}
                                   disabled={!adminToken}
                                   title={adminToken ? `Descargar STL escalado al ${order.modelFile.scalePct}%` : "Inicia sesión para descargar"}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
@@ -615,7 +619,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
 
 // ── SECTION 3: Impresoras ─────────────────────────────────────────────────────
 
-const FDM_DEFAULTS = { name:"", technology:"fdm", status:"inactive", purchasePriceCRC:0, amortizationYears:1, daysPerYear:312, hoursPerDay:10, wattsConsumption:300, electricityRateCRC:150, printSpeedProfiles:{ draft:{gPerHour:20,label:"Borrador rápido"}, standard:{gPerHour:12,label:"Estándar"}, quality:{gPerHour:6,label:"Alta calidad"} }, defaultProfile:"standard", buildVolume:{x:220,y:220,z:250}, maxTempNozzle:260, maxTempBed:100, hasEnclosure:false, operatorRateCRC:2000, prepHours:0.5, postHours:0.5, failureRate:0.10, notes:"" };
+const FDM_DEFAULTS = { name:"", technology:"fdm", status:"inactive", purchasePriceCRC:0, amortizationYears:1, daysPerYear:312, hoursPerDay:10, wattsConsumption:300, electricityRateCRC:150, printSpeedProfiles:{ draft:{gPerHour:20,label:"Borrador rápido"}, standard:{gPerHour:12,label:"Estándar"}, quality:{gPerHour:6,label:"Alta calidad"} }, defaultProfile:"standard", buildVolume:{x:260,y:260,z:300}, maxTempNozzle:260, maxTempBed:100, hasEnclosure:false, operatorRateCRC:2000, prepHours:0.5, postHours:0.5, failureRate:0.10, notes:"" };
 const SLA_DEFAULTS = { ...FDM_DEFAULTS, technology:"sla", wattsConsumption:200, slaSpeedMLPerHour:17, prepHours:0.75, postHours:0.75, failureRate:0.12 };
 
 const PrinterEditForm = ({ draft, setDraft, onSave, onCancel }) => {

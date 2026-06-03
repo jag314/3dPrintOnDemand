@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './env.js';  // explicit-path dotenv load — must precede all other imports
 import express from 'express';
 import cors from 'cors';
 import ordersRouter from './routes/orders.js';

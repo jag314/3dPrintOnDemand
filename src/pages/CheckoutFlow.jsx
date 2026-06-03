@@ -565,11 +565,14 @@ const CheckoutFlow = ({
         throw new Error(body.error || `Server error ${res.status}`);
       }
 
-      const { stlOriginalPath, stlScaledPath } = await res.json();
+      const { orderId, referenceNumber, stlOriginalPath, stlScaledPath } = await res.json();
 
-      // Merge server-confirmed storage paths into the payload for the confirm screen
+      // Use the DB-generated id and reference_number so the confirm screen
+      // shows the canonical values that will also appear in the admin dashboard.
       const confirmedOrder = {
         ...payload,
+        id:  orderId,
+        ref: referenceNumber != null ? `#${referenceNumber}` : payload.ref,
         stlOriginalPath,
         stlScaledPath,
       };
