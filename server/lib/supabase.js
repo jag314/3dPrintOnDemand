@@ -1,5 +1,6 @@
 import '../env.js'; // must be first — loads .env before any process.env read
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error(
@@ -8,10 +9,14 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 // Service-role client — bypasses RLS, never exposed to the browser.
+// ws transport required on Node.js 20 (no native WebSocket).
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { persistSession: false } }
+  {
+    auth:     { persistSession: false },
+    realtime: { transport: ws },
+  }
 );
 
 export default supabase;
