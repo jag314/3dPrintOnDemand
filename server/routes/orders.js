@@ -39,19 +39,10 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
     // download endpoint can always reconstruct or verify the path from the id.
     const orderId = randomUUID();
 
-    // ── 3. Upload original STL — instrumented for debugging ──────────────────
+    // ── 3. Upload original STL ───────────────────────────────────────────────
     const ext = (req.file.originalname || 'model.stl').split('.').pop().toLowerCase();
     const originalPath = `orders/${orderId}/original.${ext}`;
     let storedOriginalPath = null;
-
-    console.log('\n[STL Upload] ═══ Starting upload ═══')
-    console.log('[STL Upload] req.file exists:', !!req.file)
-    console.log('[STL Upload] File name:', req.file?.originalname)
-    console.log('[STL Upload] File size (bytes):', req.file?.buffer?.length)
-    console.log('[STL Upload] BUCKET value:', BUCKET)
-    console.log('[STL Upload] Target path:', originalPath)
-    console.log('[STL Upload] Supabase client exists:', !!supabase)
-    console.log('[STL Upload] Supabase storage exists:', !!supabase?.storage)
 
     try {
       const uploadResult = await supabase.storage
@@ -59,26 +50,18 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
         .upload(originalPath, req.file.buffer, {
           contentType: req.file.mimetype || 'application/octet-stream',
           upsert: true,
-        })
-
-      console.log('[STL Upload] Full result:', JSON.stringify(uploadResult, null, 2))
+        });
 
       if (uploadResult.error) {
-        console.error('[STL Upload] ❌ FAILED:', uploadResult.error.message)
-        console.error('[STL Upload] Error details:', JSON.stringify(uploadResult.error))
-        storedOriginalPath = null
+        console.error('[STL Upload] FAILED:', uploadResult.error.message);
+        storedOriginalPath = null;
       } else {
-        storedOriginalPath = originalPath
-        console.log('[STL Upload] ✅ SUCCESS — stored at:', storedOriginalPath)
+        storedOriginalPath = originalPath;
       }
     } catch (ex) {
-      console.error('[STL Upload] ❌ EXCEPTION:', ex.message)
-      console.error('[STL Upload] Stack:', ex.stack)
-      storedOriginalPath = null
+      console.error('[STL Upload] EXCEPTION:', ex.message);
+      storedOriginalPath = null;
     }
-
-    console.log('[STL Upload] Final storedOriginalPath:', storedOriginalPath)
-    console.log('[STL Upload] ═══════════════════════════\n')
 
     // ── 4. Upload scaled copy — non-fatal, only if original succeeded ─────────
     let scaledPath = null;
@@ -166,8 +149,6 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
     try { insertData.metadata = order; } catch { /* column may not exist yet */ }
 
     // ── 6. Insert and get back DB-generated id + reference_number ────────────
-    console.log('[DB insert] columns:', Object.keys(insertData).join(', '));
-
     const { data, error: dbErr } = await supabase
       .from('orders')
       .insert(insertData)
@@ -176,13 +157,12 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
 
     if (dbErr) {
       console.error('[DB insert failed]', dbErr.message);
-      console.error('[DB insert data]\n', JSON.stringify(insertData, null, 2));
       const toRemove = [storedOriginalPath, scaledPath].filter(Boolean);
       if (toRemove.length) await supabase.storage.from(BUCKET).remove(toRemove);
       return res.status(502).json({ error: 'Failed to save order: ' + dbErr.message });
     }
 
-    // ── 7. Log initial status (correct column names: from_status / to_status) ─
+    // ── 7. Log initial status ─────────────────────────────────────────────────
     await supabase.from('order_status_log').insert({
       order_id:    data.id,
       from_status: null,

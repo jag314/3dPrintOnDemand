@@ -704,7 +704,7 @@ const Designer = () => {
               <h3 className="font-black text-white text-xl mb-6">Prefer to talk first?</h3>
               <div className="space-y-5">
                 {[
-                  { icon:"📱", title:"+506 XXXX-XXXX", sub:"Chat with a designer right now" },
+                  { icon:"📱", title:"+506 7290-4402", sub:"Chat with a designer right now" },
                   { icon:"📧", title:"design@inity3d.com", sub:"Email us anytime" },
                   { icon:"⏰", title:"Under 2 hours", sub:"Average response time" },
                 ].map(({ icon, title, sub }) => (

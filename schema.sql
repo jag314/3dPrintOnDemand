@@ -1,52 +1,110 @@
--- ── Inity 3D – Supabase schema ───────────────────────────────────────────────
--- Run this script in your Supabase SQL editor once.
+-- ── Inity 3D – Supabase schema (complete, authoritative) ─────────────────────
+-- This file documents the full production schema.
+-- To set up a fresh database: run this script in Supabase Dashboard → SQL Editor.
+-- To update an existing database: run supabase/migrations/001_add_missing_columns.sql
+--
 -- All prices are stored as INTEGER in CRC (colones) to avoid float rounding.
+-- ─────────────────────────────────────────────────────────────────────────────
 
 -- ── orders ───────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS orders (
-  id                  TEXT PRIMARY KEY,
-  ref                 TEXT UNIQUE NOT NULL,
-  status              TEXT NOT NULL DEFAULT 'pending_verification',
+  -- Identity
+  id                  TEXT PRIMARY KEY,          -- UUID, supplied by Express (matches Storage path)
+  reference_number    BIGSERIAL UNIQUE,          -- Human-readable order number: #1, #2, …
+
+  -- Lifecycle
+  order_status        TEXT NOT NULL DEFAULT 'pending_verification',
+  payment_status      TEXT NOT NULL DEFAULT 'pending',
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  -- indexed query columns
+  -- Customer
   customer_email      TEXT,
-  total_price_crc     INTEGER NOT NULL,
-  scale_pct           INTEGER NOT NULL DEFAULT 100,
+  customer_name       TEXT,
+  customer_phone      TEXT,
+  customer_company    TEXT,
 
-  -- STL storage paths in Supabase Storage bucket 'stl-files'
+  -- Model file
+  original_filename   TEXT,
+  scale_applied       INTEGER NOT NULL DEFAULT 100,
+  dimensions_x_mm     NUMERIC,
+  dimensions_y_mm     NUMERIC,
+  dimensions_z_mm     NUMERIC,
+  weight_original_g   NUMERIC,
+  weight_effective_g  NUMERIC,
+
+  -- Storage paths in Supabase Storage bucket 'stl-files'
   stl_original_path   TEXT,
-  stl_scaled_path     TEXT,       -- NULL if no scale was applied
+  stl_scaled_path     TEXT,        -- NULL when no scaling was applied
 
-  -- complete order payload (same shape as the frontend order object)
-  metadata            JSONB NOT NULL
+  -- Print configuration
+  technology          TEXT,        -- 'fdm' | 'sla'
+  material            TEXT,
+  color               TEXT,
+  quantity            INTEGER NOT NULL DEFAULT 1,
+  supports_required   BOOLEAN NOT NULL DEFAULT false,
+  printer_assigned    TEXT,
+  print_time_min      INTEGER,
+
+  -- Pricing (all CRC colones, INTEGER)
+  unit_price_crc          INTEGER NOT NULL DEFAULT 0,
+  total_price_crc         INTEGER NOT NULL DEFAULT 0,
+  cost_material_crc       INTEGER NOT NULL DEFAULT 0,
+  cost_support_crc        INTEGER NOT NULL DEFAULT 0,
+  cost_electricity_crc    INTEGER NOT NULL DEFAULT 0,
+  cost_labor_crc          INTEGER NOT NULL DEFAULT 0,
+  cost_amortization_crc   INTEGER NOT NULL DEFAULT 0,
+  cost_failures_crc       INTEGER NOT NULL DEFAULT 0,
+  is_urgent               BOOLEAN NOT NULL DEFAULT false,
+
+  -- Payment
+  payment_method          TEXT,    -- 'sinpe' | 'onvo' | …
+  sinpe_number            TEXT,
+  sinpe_screenshot_path   TEXT,
+
+  -- Delivery
+  delivery_type       TEXT,        -- 'home' | 'branch' | 'pickup'
+  delivery_province   TEXT,
+  delivery_canton     TEXT,
+  delivery_district   TEXT,
+  delivery_address    TEXT,
+  delivery_branch     TEXT,
+  delivery_recipient  TEXT,
+  delivery_cedula     TEXT,
+  delivery_notes      TEXT,
+
+  -- Full order payload (same shape as the frontend order object)
+  metadata            JSONB
 );
 
-CREATE INDEX IF NOT EXISTS idx_orders_status        ON orders(status);
-CREATE INDEX IF NOT EXISTS idx_orders_email         ON orders(customer_email);
-CREATE INDEX IF NOT EXISTS idx_orders_created_at    ON orders(created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_reference_number  ON orders(reference_number);
+CREATE        INDEX IF NOT EXISTS idx_orders_order_status      ON orders(order_status);
+CREATE        INDEX IF NOT EXISTS idx_orders_payment_status    ON orders(payment_status);
+CREATE        INDEX IF NOT EXISTS idx_orders_email             ON orders(customer_email);
+CREATE        INDEX IF NOT EXISTS idx_orders_created_at        ON orders(created_at DESC);
+
 
 -- ── order_status_log ─────────────────────────────────────────────────────────
--- Every status transition is appended here.
+-- Every status transition is appended here — immutable audit trail.
 CREATE TABLE IF NOT EXISTS order_status_log (
   id          BIGSERIAL PRIMARY KEY,
   order_id    TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  old_status  TEXT,
-  new_status  TEXT NOT NULL,
+  from_status TEXT,                                -- NULL on initial creation
+  to_status   TEXT NOT NULL,
   changed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  changed_by  TEXT NOT NULL DEFAULT 'system'
+  changed_by  TEXT NOT NULL DEFAULT 'system',
+  note        TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_status_log_order_id  ON order_status_log(order_id);
+CREATE INDEX IF NOT EXISTS idx_status_log_order_id   ON order_status_log(order_id);
 CREATE INDEX IF NOT EXISTS idx_status_log_changed_at ON order_status_log(changed_at DESC);
+
 
 -- ── Row-Level Security ────────────────────────────────────────────────────────
 -- The Express API connects with the service-role key, which bypasses RLS.
--- These policies apply when using the anon/user keys from the client (not used here).
+-- These policies block any direct anon/user-key access from the browser.
 ALTER TABLE orders           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_status_log ENABLE ROW LEVEL SECURITY;
 
--- No public read/write — all access is through the authenticated Express server.
 CREATE POLICY "deny all direct access to orders"
   ON orders FOR ALL USING (false);
 

@@ -75,9 +75,6 @@ router.get('/orders', async (req, res) => {
 router.get('/orders/:id/download/:type', async (req, res) => {
   const { id, type } = req.params;
 
-  console.log('[Download] Received id:', id);
-  console.log('[Download] Received type:', type);
-
   if (type !== 'original' && type !== 'scaled') {
     return res.status(400).json({ error: 'type must be "original" or "scaled"' });
   }
@@ -92,10 +89,7 @@ router.get('/orders/:id/download/:type', async (req, res) => {
       .or(`id.eq.${id},reference_number.eq.${id}`)
       .single();
 
-    console.log('[Download] DB query result:', JSON.stringify({ data, error }, null, 2));
-
     if (error || !data) {
-      console.log('[Download] ❌ Order not found for id:', id);
       return res.status(404).json({ error: 'Order not found' });
     }
 

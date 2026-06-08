@@ -1,6 +1,7 @@
 import './env.js';  // explicit-path dotenv load — must precede all other imports
-import express from 'express';
-import cors from 'cors';
+import express    from 'express';
+import cors       from 'cors';
+import rateLimit  from 'express-rate-limit';
 import ordersRouter from './routes/orders.js';
 import adminRouter  from './routes/admin.js';
 import authRouter   from './routes/auth.js';
@@ -8,7 +9,7 @@ import authRouter   from './routes/auth.js';
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// Allow the Vite dev server (and any VITE_CLIENT_ORIGIN) to call us.
+// Allow the Vite dev server (and any CLIENT_ORIGIN) to call us.
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
@@ -26,11 +27,33 @@ app.use(cors({
 
 app.use(express.json({ limit: '1mb' }));
 
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+
+// 5 login attempts per IP per 15 minutes — brute-force protection
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 10 STL uploads per IP per hour — prevent storage abuse
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: 'Upload limit reached. Try again in 1 hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Routes ────────────────────────────────────────────────────────────────────
+
 app.get('/api/health', (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-app.use('/api/orders', ordersRouter);
+app.use('/api/orders', uploadLimiter, ordersRouter);
 app.use('/api/admin',  adminRouter);
-app.use('/api/auth',   authRouter);
+app.use('/api/auth',   loginLimiter,  authRouter);
 
 // Catch-all: unknown /api/* routes
 app.use('/api', (_, res) => res.status(404).json({ error: 'Unknown API endpoint' }));

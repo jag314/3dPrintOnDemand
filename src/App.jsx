@@ -147,7 +147,7 @@ const defaultMaterials = {
 export const DEFAULT_SETTINGS = {
   businessName:      "Inity 3D",
   email:             "hola@inity3d.com",
-  whatsapp:          "+506 XXXX-XXXX",
+  whatsapp:          "+506 7290-4402",
   address:           "Costa Rica",
   currency:          "CRC",
   applyVAT:          false,

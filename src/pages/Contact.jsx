@@ -344,7 +344,7 @@ const Contact = () => {
 
                     <h3 className="text-xl font-semibold">
 
-                      +506 XXXX-XXXX
+                      +506 7290-4402
 
                     </h3>
 

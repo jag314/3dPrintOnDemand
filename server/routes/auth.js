@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -8,9 +9,10 @@ const router = Router();
  * Body: { username, password }
  * Returns: { token }
  *
- * Credentials are checked against ADMIN_USERNAME / ADMIN_PASSWORD env vars.
+ * ADMIN_PASSWORD must be a bcrypt hash (cost ≥ 10).
+ * Generate: node -e "require('bcryptjs').hash('yourpass', 12).then(console.log)"
  */
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -18,19 +20,29 @@ router.post('/login', (req, res) => {
   }
 
   const validUser = process.env.ADMIN_USERNAME;
-  const validPass = process.env.ADMIN_PASSWORD;
+  const validHash = process.env.ADMIN_PASSWORD;
 
-  if (!validUser || !validPass) {
+  if (!validUser || !validHash) {
     return res.status(500).json({ error: 'Admin credentials not configured on server' });
   }
 
-  if (username !== validUser || password !== validPass) {
+  const usernameMatch = username === validUser;
+  // bcrypt.compare is timing-safe; always run it even on username mismatch
+  // to prevent username enumeration via response time differences.
+  const passwordMatch = await bcrypt.compare(password, validHash).catch(() => false);
+
+  if (!usernameMatch || !passwordMatch) {
     return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret) {
+    return res.status(500).json({ error: 'JWT secret not configured on server' });
   }
 
   const token = jwt.sign(
     { sub: username, role: 'admin' },
-    process.env.ADMIN_JWT_SECRET,
+    secret,
     { expiresIn: '8h' }
   );
 
