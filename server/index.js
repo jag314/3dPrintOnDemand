@@ -9,6 +9,8 @@ import authRouter   from './routes/auth.js';
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
+app.set('trust proxy', 1);
+
 // Allow the Vite dev server (and any CLIENT_ORIGIN) to call us.
 const allowedOrigins = [
   'http://localhost:5173',
