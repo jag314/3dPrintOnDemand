@@ -29,15 +29,6 @@ app.use(express.json({ limit: '1mb' }));
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 
-// 5 login attempts per IP per 15 minutes — brute-force protection
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { error: 'Too many login attempts. Try again in 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // 10 STL uploads per IP per hour — prevent storage abuse
 const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -53,7 +44,7 @@ app.get('/api/health', (_, res) => res.json({ ok: true, ts: new Date().toISOStri
 
 app.use('/api/orders', uploadLimiter, ordersRouter);
 app.use('/api/admin',  adminRouter);
-app.use('/api/auth',   loginLimiter,  authRouter);
+app.use('/api/auth',   authRouter);
 
 // Catch-all: unknown /api/* routes
 app.use('/api', (_, res) => res.status(404).json({ error: 'Unknown API endpoint' }));
