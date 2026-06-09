@@ -15,6 +15,7 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
+  'https://3d-print-on-demand-gilt.vercel.app',
   process.env.CLIENT_ORIGIN,
 ].filter(Boolean);
 
