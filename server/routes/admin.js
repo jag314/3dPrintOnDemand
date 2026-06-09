@@ -74,8 +74,6 @@ router.get('/orders', async (req, res) => {
 // :type  "original" | "scaled"
 router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
   try {
-    console.log('DOWNLOAD START - id:', req.params.id, 'type:', req.params.type);
-
     const { id, type } = req.params;
 
     if (type !== 'original' && type !== 'scaled') {
@@ -87,13 +85,10 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
     const { row, error } = await findOrder(id, cols);
 
     if (error || !row) {
-      console.log('DOWNLOAD DEBUG - order not found, error:', error?.message);
       return res.status(404).json({ error: 'Order not found' });
     }
 
     const storagePath = type === 'original' ? row.stl_original_path : row.stl_scaled_path;
-    console.log('DOWNLOAD DEBUG - storagePath:', storagePath);
-    console.log('DOWNLOAD DEBUG - BUCKET:', BUCKET);
 
     if (!storagePath) {
       return res.status(404).json({
@@ -104,7 +99,6 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
     }
 
     const url = await getSignedUrl(storagePath);
-    console.log('DOWNLOAD DEBUG - signedUrl:', url ? 'OK' : 'NULL');
 
     const baseName = (row.original_filename || row.metadata?.modelFile?.name || 'model')
       .replace(/\.[^.]+$/, '');

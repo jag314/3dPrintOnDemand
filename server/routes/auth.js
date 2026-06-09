@@ -24,10 +24,6 @@ const loginLimiter = rateLimit({
 router.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body || {};
 
-  console.log('AUTH DEBUG - username recibido:', req.body?.username);
-  console.log('AUTH DEBUG - ADMIN_USERNAME en env:', process.env.ADMIN_USERNAME ? 'SET' : 'NOT SET');
-  console.log('AUTH DEBUG - ADMIN_PASSWORD en env:', process.env.ADMIN_PASSWORD ? 'SET' : 'NOT SET');
-
   if (!username || !password) {
     return res.status(400).json({ error: 'username and password are required' });
   }
