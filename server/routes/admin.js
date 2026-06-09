@@ -84,19 +84,12 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
 
     const cols = 'id, reference_number, stl_original_path, stl_scaled_path, original_filename, scale_applied, metadata';
 
-    // Query by UUID (id) OR by integer reference_number — whichever matches
-    const { data, error } = await supabase
-      .from('orders')
-      .select(cols)
-      .or(`id.eq.${id},reference_number.eq.${id}`)
-      .single();
+    const { row, error } = await findOrder(id, cols);
 
-    if (error || !data) {
+    if (error || !row) {
       console.log('DOWNLOAD DEBUG - order not found, error:', error?.message);
       return res.status(404).json({ error: 'Order not found' });
     }
-
-    const row = data;
 
     const storagePath = type === 'original' ? row.stl_original_path : row.stl_scaled_path;
     console.log('DOWNLOAD DEBUG - storagePath:', storagePath);
