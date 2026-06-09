@@ -72,14 +72,16 @@ router.get('/orders', async (req, res) => {
 // ── GET /api/admin/orders/:id/download/:type ──────────────────────────────────
 // :id  can be a UUID or a reference_number integer
 // :type  "original" | "scaled"
-router.get('/orders/:id/download/:type', async (req, res) => {
-  const { id, type } = req.params;
-
-  if (type !== 'original' && type !== 'scaled') {
-    return res.status(400).json({ error: 'type must be "original" or "scaled"' });
-  }
-
+router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
   try {
+    console.log('DOWNLOAD START - id:', req.params.id, 'type:', req.params.type);
+
+    const { id, type } = req.params;
+
+    if (type !== 'original' && type !== 'scaled') {
+      return res.status(400).json({ error: 'type must be "original" or "scaled"' });
+    }
+
     const cols = 'id, reference_number, stl_original_path, stl_scaled_path, original_filename, scale_applied, metadata';
 
     // Query by UUID (id) OR by integer reference_number — whichever matches
@@ -90,6 +92,7 @@ router.get('/orders/:id/download/:type', async (req, res) => {
       .single();
 
     if (error || !data) {
+      console.log('DOWNLOAD DEBUG - order not found, error:', error?.message);
       return res.status(404).json({ error: 'Order not found' });
     }
 
@@ -118,7 +121,7 @@ router.get('/orders/:id/download/:type', async (req, res) => {
 
     res.json({ url, fileName });
   } catch (err) {
-    console.error(`[download/${type}]`, err.message);
+    console.error('DOWNLOAD ERROR:', err.message, err.stack);
     res.status(500).json({ error: err.message });
   }
 });
