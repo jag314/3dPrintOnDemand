@@ -5,25 +5,25 @@ import { Link } from "react-router-dom";
 
 const PORTFOLIO_CARDS = [
   {
-    url: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=600&q=80",
+    url: "https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=500",
     label: "3D Printed Parts",
     category: "FDM · PLA",
     position: "center center",
   },
   {
-    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
+    url: "https://images.unsplash.com/photo-1565043666747-69f6646db940?w=500",
     label: "Mechanical Parts",
     category: "Engineering",
     position: "center 40%",
   },
   {
-    url: "https://images.unsplash.com/photo-1563457718-2a2e48f37b66?w=600&q=80",
+    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500",
     label: "Precision Gears",
     category: "SLA Resin",
     position: "center center",
   },
   {
-    url: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?w=600&q=80",
+    url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=500",
     label: "Custom Prototypes",
     category: "High Detail",
     position: "center 30%",
@@ -93,59 +93,6 @@ const SERVICES = [
   { emoji:"🏭", title:"Industrial Components", description:"Replacement parts, jigs, tools and custom industrial solutions." },
 ];
 
-const PRICING = [
-  {
-    tier: "Basic",
-    label: "Simple Parts",
-    price: "From ₡15,000",
-    highlighted: false,
-    isGold: false,
-    badge: null,
-    features: [
-      { text:"Single component design", included:true  },
-      { text:"Up to 3 revisions",       included:true  },
-      { text:"STL file delivery",        included:true  },
-      { text:"48h turnaround",           included:true  },
-      { text:"STEP file",               included:false },
-      { text:"Assembly design",          included:false },
-    ],
-    cta: "Get Started",
-  },
-  {
-    tier: "Standard",
-    label: "Complex Parts",
-    price: "From ₡35,000",
-    highlighted: true,
-    isGold: false,
-    badge: "MOST POPULAR",
-    features: [
-      { text:"Multi-component design",  included:true  },
-      { text:"Unlimited revisions",     included:true  },
-      { text:"STL + STEP files",        included:true  },
-      { text:"24h turnaround",          included:true  },
-      { text:"Print optimization",      included:true  },
-      { text:"Assembly design",         included:false },
-    ],
-    cta: "Most Popular",
-  },
-  {
-    tier: "Premium",
-    label: "Full Assembly",
-    price: "From ₡75,000",
-    highlighted: false,
-    isGold: true,
-    badge: null,
-    features: [
-      { text:"Full assembly with parts",  included:true },
-      { text:"Unlimited revisions",       included:true },
-      { text:"All file formats",          included:true },
-      { text:"Priority 12h turnaround",   included:true },
-      { text:"Print optimization",        included:true },
-      { text:"Free first print included", included:true },
-    ],
-    cta: "Get Premium",
-  },
-];
 
 const FAQ_ITEMS = [
   {
@@ -527,80 +474,6 @@ const Designer = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* ══ S4 — PRICING ══ */}
-        <div className="mt-20 sm:mt-28">
-          <div className="text-center mb-12">
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">PRICING</p>
-            <h2 className="text-3xl sm:text-4xl font-black mt-3">Simple Transparent Pricing</h2>
-            <p className="soft-text text-base mt-3">Pay per project, no subscriptions</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {PRICING.map((p) => (
-              <div key={p.tier}
-                className="rounded-[24px] p-6 sm:p-8 flex flex-col relative"
-                style={{
-                  background: p.highlighted
-                    ? "linear-gradient(145deg, rgba(109,40,217,0.28), rgba(75,29,181,0.18))"
-                    : "rgba(255,255,255,0.04)",
-                  border: p.highlighted
-                    ? "1px solid rgba(139,92,246,0.55)"
-                    : p.isGold
-                    ? "1px solid rgba(245,158,11,0.28)"
-                    : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: p.highlighted ? "0 0 60px rgba(139,92,246,0.12)" : "none",
-                }}>
-                {p.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <span style={{
-                      background:"linear-gradient(135deg,#7c3aed,#9333ea)",
-                      borderRadius:999, padding:"3px 14px",
-                      fontSize:9, fontWeight:800, letterSpacing:"0.12em", color:"#fff",
-                    }}>{p.badge}</span>
-                  </div>
-                )}
-                <div className="mb-6">
-                  <p className="text-white/50 text-sm">{p.label}</p>
-                  <h3 className="text-3xl font-black mt-1" style={{ color: p.isGold ? "#f59e0b" : "#fff" }}>
-                    {p.price}
-                  </h3>
-                </div>
-                <ul className="space-y-3 flex-1">
-                  {p.features.map((f) => (
-                    <li key={f.text} className="flex items-center gap-3">
-                      <span style={{ color: f.included ? "#10b981" : "rgba(255,255,255,0.22)", flexShrink:0, fontWeight:800, fontSize:14 }}>
-                        {f.included ? "✓" : "✗"}
-                      </span>
-                      <span className={`text-sm ${f.included ? "text-white/80" : "text-white/30 line-through"}`}>
-                        {f.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/contact"
-                  className="mt-8 w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] block text-center"
-                  style={{
-                    background: p.highlighted
-                      ? "linear-gradient(135deg,#7c3aed,#9333ea)"
-                      : p.isGold ? "rgba(245,158,11,0.12)" : "rgba(139,92,246,0.12)",
-                    color: p.highlighted ? "#fff" : p.isGold ? "#f59e0b" : "#a78bfa",
-                    border: p.highlighted ? "none"
-                      : p.isGold ? "1px solid rgba(245,158,11,0.35)" : "1px solid rgba(139,92,246,0.3)",
-                    textDecoration: "none",
-                  }}>
-                  {p.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-          <p className="text-white/35 text-sm mt-6 text-center">
-            Not sure which tier?{" "}
-            <Link to="/contact" className="text-violet-400 font-semibold hover:text-violet-300 transition-colors">
-              Describe my project →
-            </Link>{" "}
-            and we'll recommend the right option.
-          </p>
         </div>
 
         {/* ══ S5 — CONTACT CTA ══ */}
