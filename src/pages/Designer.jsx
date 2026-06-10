@@ -315,10 +315,10 @@ const Designer = () => {
                 Every model designed and printed by our team in Costa Rica
               </p>
             </div>
-            <button onClick={scrollToForm}
+            <Link to="/contact"
               className="primary-button px-6 py-3 rounded-2xl font-bold text-sm whitespace-nowrap self-start sm:self-auto">
               Start Your Project →
-            </button>
+            </Link>
           </div>
 
           {/* 3x2 masonry-style grid */}
@@ -410,10 +410,10 @@ const Designer = () => {
               <p className="font-bold text-white text-base">Like what you see?</p>
               <p className="text-white/50 text-sm mt-0.5">We can design and print something just like this for you.</p>
             </div>
-            <button onClick={scrollToForm}
+            <Link to="/contact"
               className="primary-button px-8 py-3 rounded-2xl font-bold text-sm whitespace-nowrap">
               Get A Custom Quote →
-            </button>
+            </Link>
           </div>
         </div>
 
