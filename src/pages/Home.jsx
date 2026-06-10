@@ -14,7 +14,7 @@ const Home = () => {
 
   return (
 
-    <main className="bg-[#050816] text-white overflow-x-hidden">
+    <main className="bg-[#050816] text-white overflow-hidden">
 
       <Hero />
 
