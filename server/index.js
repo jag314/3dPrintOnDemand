@@ -55,3 +55,11 @@ app.use('/api', (_, res) => res.status(404).json({ error: 'Unknown API endpoint'
 app.listen(PORT, () => {
   console.log(`Inity 3D API server → http://localhost:${PORT}`);
 });
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err);
+});
