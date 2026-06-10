@@ -69,21 +69,21 @@ const Footer = () => (
               </a>
             </li>
           </ul>
-          <Link
-            to="/contact"
-            className="inline-block mt-4 px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-full transition-colors"
-          >
-            Enviar mensaje
-          </Link>
           <a
             href="https://instagram.com/inity.3d"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white/40 hover:text-violet-400 transition-colors mt-5 inline-block"
+            className="text-white/40 hover:text-violet-400 transition-colors mt-6 mb-4 block"
             aria-label="Instagram"
           >
             <FaInstagram size={22} />
           </a>
+          <Link
+            to="/contact"
+            className="inline-block px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-full transition-colors"
+          >
+            Enviar mensaje
+          </Link>
         </div>
 
       </div>
