@@ -3,6 +3,7 @@ import { supabase } from "./utils/supabase/client";
 import { Routes, Route } from "react-router-dom";
 import { MaterialsProvider } from "./context/MaterialsContext";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import QuotePage from "./pages/QuotePage";
 import Dashboard from "./pages/Dashboard";
@@ -273,6 +274,7 @@ const App = () => {
         <Route path="/designer"  element={<Designer />} />
         <Route path="/contact"   element={<Contact />} />
       </Routes>
+      <Footer />
     </MaterialsProvider>
   );
 };
