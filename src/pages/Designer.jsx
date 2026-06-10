@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -172,24 +173,15 @@ const FAQ_ITEMS = [
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 const Designer = () => {
-  const formRef     = useRef(null);
   const servicesRef = useRef(null);
   const portfolioRef = useRef(null);
 
-  const [form, setForm]               = useState({ name:"", email:"", phone:"", projectType:"", budget:"", description:"" });
-  const [submitted, setSubmitted]     = useState(false);
   const [openFaq, setOpenFaq]         = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [hoveredWork, setHoveredWork] = useState(null);
   const [lightbox, setLightbox]       = useState(null);
 
-  const scrollToForm      = () => formRef.current?.scrollIntoView({ behavior:"smooth", block:"start" });
   const scrollToServices  = () => portfolioRef.current?.scrollIntoView({ behavior:"smooth", block:"start" });
-  const handleChange      = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleSubmit      = (e) => { e.preventDefault(); setSubmitted(true); };
-
-  const inputCls  = "w-full rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 outline-none text-white focus:border-violet-500 transition-all text-sm placeholder:text-white/25";
-  const selectCls = inputCls + " appearance-none cursor-pointer";
 
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-32 pb-20 px-4 sm:px-6 relative overflow-hidden">
@@ -217,10 +209,10 @@ const Designer = () => {
               Send us a sketch, photo, or description — we handle the rest.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-10">
-              <button onClick={scrollToForm}
+              <Link to="/contact"
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold">
                 Start My Project →
-              </button>
+              </Link>
               <button onClick={scrollToServices}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
                 style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.28)", color:"#c4b5fd" }}>
@@ -586,8 +578,8 @@ const Designer = () => {
                     </li>
                   ))}
                 </ul>
-                <button onClick={scrollToForm}
-                  className="mt-8 w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+                <Link to="/contact"
+                  className="mt-8 w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] block text-center"
                   style={{
                     background: p.highlighted
                       ? "linear-gradient(135deg,#7c3aed,#9333ea)"
@@ -595,142 +587,36 @@ const Designer = () => {
                     color: p.highlighted ? "#fff" : p.isGold ? "#f59e0b" : "#a78bfa",
                     border: p.highlighted ? "none"
                       : p.isGold ? "1px solid rgba(245,158,11,0.35)" : "1px solid rgba(139,92,246,0.3)",
+                    textDecoration: "none",
                   }}>
                   {p.cta}
-                </button>
+                </Link>
               </div>
             ))}
           </div>
           <p className="text-white/35 text-sm mt-6 text-center">
             Not sure which tier?{" "}
-            <button onClick={scrollToForm} className="text-violet-400 font-semibold hover:text-violet-300 transition-colors">
+            <Link to="/contact" className="text-violet-400 font-semibold hover:text-violet-300 transition-colors">
               Describe my project →
-            </button>{" "}
+            </Link>{" "}
             and we'll recommend the right option.
           </p>
         </div>
 
-        {/* ══ S5 — FORM ══ */}
-        <div ref={formRef} className="mt-20 sm:mt-28" id="design-form">
-          <div className="grid lg:grid-cols-[1fr_280px] gap-8 items-start">
-            <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden"
-              style={{
-                background:"linear-gradient(145deg, rgba(109,40,217,0.08) 0%, rgba(12,12,24,0.96) 100%)",
-                border:"1px solid rgba(139,92,246,0.22)",
-              }}>
-              <div className="absolute inset-0 pointer-events-none"
-                style={{ background:"radial-gradient(ellipse at 50% -8%, rgba(124,58,237,0.2) 0%, transparent 55%)" }} />
-              <div className="relative z-10 px-6 sm:px-10 py-12 sm:py-16">
-                <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">GET A QUOTE</p>
-                <h2 className="text-3xl sm:text-4xl font-black mt-3 leading-tight">Start Your Project</h2>
-                <p className="soft-text text-base mt-3 leading-relaxed mb-8">
-                  Tell us about your idea and we'll get back to you within 2 hours during business hours.
-                </p>
-                {submitted ? (
-                  <div className="text-center py-12">
-                    <div style={{ fontSize:56, marginBottom:16 }}>🎉</div>
-                    <h3 className="text-2xl font-black">Project brief received!</h3>
-                    <p className="soft-text text-base mt-4 leading-relaxed max-w-sm mx-auto">
-                      We'll contact you within 2 hours on WhatsApp or email. Get ready to see your idea come to life.
-                    </p>
-                    <button onClick={() => setSubmitted(false)} className="mt-8 text-violet-400 text-sm font-semibold hover:text-violet-300 transition-colors">
-                      Submit another project
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-white/55 text-sm mb-2">Full Name *</label>
-                        <input type="text" name="name" value={form.name} onChange={handleChange}
-                          placeholder="Your name" required className={inputCls} />
-                      </div>
-                      <div>
-                        <label className="block text-white/55 text-sm mb-2">Email *</label>
-                        <input type="email" name="email" value={form.email} onChange={handleChange}
-                          placeholder="you@email.com" required className={inputCls} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-white/55 text-sm mb-2">WhatsApp / Phone</label>
-                      <input type="tel" name="phone" value={form.phone} onChange={handleChange}
-                        placeholder="+506 XXXX-XXXX" className={inputCls} />
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-white/55 text-sm mb-2">Project Type *</label>
-                        <select name="projectType" value={form.projectType} onChange={handleChange} required className={selectCls}>
-                          <option value="" disabled className="bg-[#111827]">Select type</option>
-                          <option value="mechanical"    className="bg-[#111827]">Mechanical Part</option>
-                          <option value="prototype"     className="bg-[#111827]">Product Prototype</option>
-                          <option value="artistic"      className="bg-[#111827]">Artistic / Jewelry</option>
-                          <option value="architectural" className="bg-[#111827]">Architectural Model</option>
-                          <option value="gaming"        className="bg-[#111827]">Gaming / Collectible</option>
-                          <option value="industrial"    className="bg-[#111827]">Industrial Component</option>
-                          <option value="other"         className="bg-[#111827]">Other</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-white/55 text-sm mb-2">Budget Range</label>
-                        <select name="budget" value={form.budget} onChange={handleChange} className={selectCls}>
-                          <option value="" disabled className="bg-[#111827]">Select budget</option>
-                          <option value="under15" className="bg-[#111827]">Under ₡15,000</option>
-                          <option value="15to35"  className="bg-[#111827]">₡15,000–₡35,000</option>
-                          <option value="35to75"  className="bg-[#111827]">₡35,000–₡75,000</option>
-                          <option value="over75"  className="bg-[#111827]">Over ₡75,000</option>
-                          <option value="notsure" className="bg-[#111827]">Not sure yet</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-white/55 text-sm mb-2">Project Description *</label>
-                      <textarea name="description" value={form.description} onChange={handleChange}
-                        placeholder="Describe your idea in as much detail as possible. You can mention size, material, purpose, reference images you can send later..."
-                        rows={5} required className={inputCls + " resize-none"} />
-                    </div>
-                    <p className="text-white/40 text-xs leading-relaxed">
-                      📎 After submitting, we'll send you a WhatsApp link to share reference images or sketches.
-                    </p>
-                    <button type="submit" className="primary-button w-full py-5 rounded-2xl text-lg font-bold mt-2">
-                      Send My Project Brief →
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] p-6 lg:sticky lg:top-28"
-              style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}>
-              <h3 className="font-black text-white text-xl mb-6">Prefer to talk first?</h3>
-              <div className="space-y-5">
-                {[
-                  { icon:"📱", title:"+506 7290-4402", sub:"Chat with a designer right now" },
-                  { icon:"📧", title:"design@inity3d.com", sub:"Email us anytime" },
-                  { icon:"⏰", title:"Under 2 hours", sub:"Average response time" },
-                ].map(({ icon, title, sub }) => (
-                  <div key={title} className="flex items-start gap-3">
-                    <span className="text-xl">{icon}</span>
-                    <div>
-                      <p className="font-bold text-white text-sm">{title}</p>
-                      <p className="text-white/40 text-xs mt-0.5">{sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-6 space-y-3" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
-                {[
-                  { icon:"🔒", text:"Your idea is confidential" },
-                  { icon:"💯", text:"Satisfaction guaranteed" },
-                  { icon:"🖨️", text:"We can also print it for you" },
-                ].map(({ icon, text }) => (
-                  <div key={text} className="flex items-center gap-3">
-                    <span style={{ fontSize:"1.1rem", flexShrink:0 }}>{icon}</span>
-                    <span className="text-white/55 text-sm">{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* ══ S5 — CONTACT CTA ══ */}
+        <div className="mt-20 sm:mt-28 text-center">
+          <h2 className="text-3xl sm:text-4xl font-black">
+            ¿Querés hablar sobre tu proyecto de diseño?
+          </h2>
+          <p className="soft-text text-base mt-4">
+            Escribinos y te respondemos a la brevedad.
+          </p>
+          <Link
+            to="/contact"
+            className="inline-block mt-8 px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-full transition-colors"
+          >
+            Contáctanos
+          </Link>
         </div>
 
         {/* ══ S6 — FAQ ══ */}

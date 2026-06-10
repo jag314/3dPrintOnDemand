@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ const COURSES = [
     students: "500+",
     duration: "16h",
     topics: ["Onshape CAD basics", "FDM printing workflow", "First print setup"],
-    thumbnail: "https://img-c.udemycdn.com/course/480x270/6380765_3f8c.jpg",
+    thumbnail: "https://img-c.udemycdn.com/course/125_H/4689258_30fe_2.jpg",
     url: "https://www.udemy.com/course/diseno-e-impresion-3d-desde-cero-con-onshape/?referralCode=04D6F15A784B910A7695",
     available: true,
   },
@@ -195,7 +195,7 @@ const audiences = [
 
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
 
-const CourseCard = ({ course, onNotify }) => {
+const CourseCard = ({ course }) => {
   const thumb = !course.available ? {
     gradient: course.gradient || COMING_SOON_THUMBS[course.id]?.gradient || "linear-gradient(135deg,#1e1e2e,#3b2060)",
     emoji:    course.emoji    || COMING_SOON_THUMBS[course.id]?.emoji    || "📚",
@@ -327,13 +327,13 @@ const CourseCard = ({ course, onNotify }) => {
             </a>
           ) : (
             <>
-              <button
-                onClick={onNotify}
+              <Link
+                to="/contact"
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: "linear-gradient(135deg,#7c3aed,#9333ea)", color: "#fff" }}
+                style={{ background: "linear-gradient(135deg,#7c3aed,#9333ea)", color: "#fff", textDecoration: "none" }}
               >
                 I Want This Course →
-              </button>
+              </Link>
               <p className="text-white/40 text-xs text-center mt-2">
                 📅 Flexible scheduling &nbsp;·&nbsp; 👥 Group &amp; individual available
               </p>
@@ -348,72 +348,13 @@ const CourseCard = ({ course, onNotify }) => {
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 const Teach = () => {
-  const formRef    = useRef(null);
   const coursesRef = useRef(null);
 
-  const [showFloat,      setShowFloat]      = useState(false);
-  const [formHighlighted, setFormHighlighted] = useState(false);
-  const [form, setForm]                     = useState({ name: "", email: "", company: "", type: "", participants: "", message: "" });
-  const [submitted, setSubmitted]           = useState(false);
-
-  useEffect(() => {
-    const el = formRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setShowFloat(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  const scrollToForm    = () => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   const scrollToCourses = () => coursesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const handleChange    = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleSubmit    = (e) => { e.preventDefault(); setSubmitted(true); };
-
-  const notifyAboutCourse = (title) => {
-    setForm(p => ({
-      ...p,
-      message: `Hi, I'm interested in learning ${title}. Please contact me with available dates and pricing.`,
-    }));
-    scrollToForm();
-    setFormHighlighted(true);
-    setTimeout(() => setFormHighlighted(false), 1400);
-  };
-
-  const inputCls  = "w-full rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 outline-none text-white focus:border-violet-500 transition-all text-sm placeholder:text-white/25";
-  const selectCls = inputCls + " appearance-none cursor-pointer";
 
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-32 pb-20 px-4 sm:px-6 relative overflow-hidden">
-      <style>{`
-        @keyframes formPulse {
-          0%   { box-shadow: 0 0 0 0   rgba(139,92,246,0);    border-color: rgba(139,92,246,0.22); }
-          35%  { box-shadow: 0 0 0 12px rgba(139,92,246,0.28); border-color: rgba(139,92,246,0.8);  }
-          100% { box-shadow: 0 0 0 0   rgba(139,92,246,0);    border-color: rgba(139,92,246,0.22); }
-        }
-      `}</style>
       <div className="section-glow" />
-
-      {/* ── FLOATING CTA (mobile only, hides when form is visible) ── */}
-      <div
-        className={`fixed bottom-6 right-6 z-50 sm:hidden transition-all duration-300 ${
-          showFloat ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"
-        }`}
-      >
-        <button
-          onClick={scrollToForm}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm"
-          style={{
-            background: "linear-gradient(135deg,#7c3aed,#9333ea)",
-            color: "#fff",
-            boxShadow: "0 8px 32px rgba(124,58,237,0.5)",
-          }}
-        >
-          Get a Quote ↑
-        </button>
-      </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
 
@@ -438,12 +379,12 @@ const Teach = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-10">
-              <button
-                onClick={scrollToForm}
+              <Link
+                to="/contact"
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold"
               >
                 Request a Workshop
-              </button>
+              </Link>
               <button
                 onClick={scrollToCourses}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
@@ -541,7 +482,6 @@ const Teach = () => {
               >
                 <CourseCard
                   course={course}
-                  onNotify={() => notifyAboutCourse(course.title)}
                 />
               </div>
             ))}
@@ -549,12 +489,12 @@ const Teach = () => {
 
           <p className="text-white/35 text-sm mt-7 text-center">
             Need something custom?{" "}
-            <button
-              onClick={scrollToForm}
+            <Link
+              to="/contact"
               className="text-violet-400 font-semibold hover:text-violet-300 transition-colors"
             >
               Request a tailored workshop →
-            </button>
+            </Link>
           </p>
         </div>
 
@@ -657,141 +597,21 @@ const Teach = () => {
         </div>
 
         {/* ════════════════════════════════════════════════
-            S5 — LEAD CAPTURE FORM
+            S5 — CONTACT CTA
         ════════════════════════════════════════════════ */}
-        <div ref={formRef} className="mt-20 sm:mt-28" id="workshop-form">
-          <div
-            className="relative rounded-[28px] sm:rounded-[42px] overflow-hidden"
-            style={{
-              background: "linear-gradient(145deg, rgba(109,40,217,0.08) 0%, rgba(12,12,24,0.96) 100%)",
-              border: "1px solid rgba(139,92,246,0.22)",
-              animation: formHighlighted ? "formPulse 1.4s ease-out" : "none",
-            }}
+        <div className="mt-20 sm:mt-28 text-center">
+          <h2 className="text-3xl sm:text-4xl font-black">
+            ¿Tenés alguna pregunta sobre nuestros cursos?
+          </h2>
+          <p className="soft-text text-base mt-4">
+            Escribinos y te respondemos a la brevedad.
+          </p>
+          <Link
+            to="/contact"
+            className="inline-block mt-8 px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-full transition-colors"
           >
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: "radial-gradient(ellipse at 50% -8%, rgba(124,58,237,0.2) 0%, transparent 55%)" }}
-            />
-
-            <div className="relative z-10 max-w-[600px] mx-auto px-6 sm:px-10 py-14 sm:py-20">
-
-              <div className="text-center mb-10">
-                <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">START TODAY</p>
-                <h2 className="text-4xl sm:text-5xl font-black mt-4 leading-tight">
-                  Ready To Train
-                  <br />
-                  <span className="text-violet-400">Your Team?</span>
-                </h2>
-                <p className="soft-text text-base sm:text-lg mt-5 leading-relaxed">
-                  Tell us about your project and we'll get back to you within 24 hours.
-                </p>
-              </div>
-
-              {submitted ? (
-                <div className="text-center py-10">
-                  <div style={{
-                    width: 72, height: 72, borderRadius: "50%", margin: "0 auto",
-                    background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.35)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 32,
-                  }}>✓</div>
-                  <h3 className="text-2xl font-black mt-6">Message Sent!</h3>
-                  <p className="soft-text text-base mt-3">
-                    Thanks! We'll contact you within 24 hours.
-                  </p>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="mt-8 text-violet-400 text-sm font-semibold hover:text-violet-300 transition-colors"
-                  >
-                    Send another message
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-white/55 text-sm mb-2">Full Name *</label>
-                      <input type="text" name="name" value={form.name} onChange={handleChange}
-                        placeholder="Your name" required className={inputCls} />
-                    </div>
-                    <div>
-                      <label className="block text-white/55 text-sm mb-2">Email *</label>
-                      <input type="email" name="email" value={form.email} onChange={handleChange}
-                        placeholder="you@company.com" required className={inputCls} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-white/55 text-sm mb-2">Company / Institution *</label>
-                    <input type="text" name="company" value={form.company} onChange={handleChange}
-                      placeholder="Your organization" required className={inputCls} />
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-white/55 text-sm mb-2">Type of Training *</label>
-                      <select name="type" value={form.type} onChange={handleChange} required className={selectCls}>
-                        <option value="" disabled className="bg-[#111827]">Select type</option>
-                        <option value="corporate" className="bg-[#111827]">Corporate Workshop</option>
-                        <option value="academic"  className="bg-[#111827]">Academic Program</option>
-                        <option value="event"     className="bg-[#111827]">Event Experience</option>
-                        <option value="online"    className="bg-[#111827]">Online Course</option>
-                        <option value="other"     className="bg-[#111827]">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/55 text-sm mb-2">Participants *</label>
-                      <select name="participants" value={form.participants} onChange={handleChange} required className={selectCls}>
-                        <option value="" disabled className="bg-[#111827]">Select range</option>
-                        <option value="1-10"  className="bg-[#111827]">1–10</option>
-                        <option value="11-30" className="bg-[#111827]">11–30</option>
-                        <option value="31-50" className="bg-[#111827]">31–50</option>
-                        <option value="50+"   className="bg-[#111827]">50+</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-white/55 text-sm mb-2">Project Details</label>
-                    <textarea name="message" value={form.message} onChange={handleChange}
-                      placeholder="Tell us about your team, goals and timeline..."
-                      rows={3} className={inputCls + " resize-none"} />
-                  </div>
-
-                  <button type="submit" className="primary-button w-full py-5 rounded-2xl text-lg font-bold mt-2">
-                    Request Your Workshop →
-                  </button>
-                </form>
-              )}
-
-              {!submitted && (
-                <div className="mt-8 pt-8 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <p className="text-white/38 text-sm mb-5">Or contact us directly:</p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
-                    <a href="mailto:contact@inity3d.com"
-                      className="flex items-center gap-2 text-white/60 text-sm hover:text-violet-400 transition-colors"
-                      style={{ textDecoration: "none" }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                        <polyline points="22,6 12,13 2,6" />
-                      </svg>
-                      contact@inity3d.com
-                    </a>
-                    <a href="https://wa.me/50600000000"
-                      className="flex items-center gap-2 text-white/60 text-sm hover:text-violet-400 transition-colors"
-                      style={{ textDecoration: "none" }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.4 2 2 0 0 1 3.6 2.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 17z" />
-                      </svg>
-                      +506 7290-4402
-                    </a>
-                  </div>
-                  <p className="text-violet-400/65 text-xs font-semibold mt-5">⚡ Average response: 2 hours</p>
-                </div>
-              )}
-
-            </div>
-          </div>
+            Contáctanos
+          </Link>
         </div>
 
       </div>
