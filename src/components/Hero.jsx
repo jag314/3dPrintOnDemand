@@ -114,8 +114,8 @@ const Hero = () => {
             rounded-[42px]
             overflow-hidden
             transition-all
-            duration-700
-            bg-white/[0.02]
+            duration-300
+            bg-transparent
             hover:bg-white/[0.04]
             "
           >
@@ -144,10 +144,10 @@ const Hero = () => {
               bg-gradient-to-br
               from-violet-500/[0.03]
               to-transparent
-              opacity-60
+              opacity-0
               group-hover:opacity-100
               transition-all
-              duration-700
+              duration-300
               "
             />
 
