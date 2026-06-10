@@ -112,7 +112,7 @@ const Hero = () => {
             max-w-[650px]
             h-[650px]
             rounded-[42px]
-            overflow-hidden
+            overflow-visible
             transition-all
             duration-300
             bg-transparent
