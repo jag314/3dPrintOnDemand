@@ -8,7 +8,7 @@ const Hero = () => {
 
   return (
 
-    <section className="relative w-full min-h-screen overflow-hidden pt-32 lg:pt-40">
+    <section className="relative w-full min-h-screen overflow-x-hidden pt-32 lg:pt-40">
 
       {/* BACKGROUND — fixed so it never moves on scroll */}
 
