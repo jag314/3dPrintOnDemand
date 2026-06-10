@@ -130,9 +130,7 @@ const TechnologySelector = ({ technology, setTechnology }) => {
   React.useEffect(() => { setPhotoIdx(0); }, [modal]);
   return (
     <>
-      {/* Technology selector sits to the right of the upload compact button (58px + 24px left = 82px).
-          Using left-anchored position prevents overlap with the Analysis badge on the right. */}
-      <div className="absolute top-6 z-30" style={{ left:90, background:"rgba(10,10,20,0.72)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"10px 10px", boxShadow:"0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)", maxWidth:"calc(100% - 114px)" }}>
+      <div className="absolute top-6 z-30" style={{ left:"50%", transform:"translateX(-50%)", background:"rgba(10,10,20,0.72)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"10px 10px", boxShadow:"0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
         <div style={{ fontSize:"9px", letterSpacing:"0.14em", color:"rgba(255,255,255,0.25)", fontWeight:600, textTransform:"uppercase", marginBottom:8, paddingLeft:4 }}>Technology</div>
         <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
           {[{id:"fdm",label:"FDM",desc:"PLA · PETG · ABS",icon:"⬡"},{id:"sla",label:"SLA",desc:"High detail · Resin",icon:"◈"}].map(({id,label,desc,icon}) => (

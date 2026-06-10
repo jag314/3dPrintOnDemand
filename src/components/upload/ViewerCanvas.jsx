@@ -48,7 +48,6 @@ const InteractionHint = ({ visible }) => (
     {[
       { svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M12 3v4"/></svg>, label:"Drag to rotate" },
       { svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M9 11l3-3 3 3"/></svg>, label:"Scroll to zoom" },
-      { svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 9l4-4 4 4M5 15l4 4 4-4"/><path d="M14 5l4 4-4 4M20 9H9"/></svg>, label:"Right-drag to pan" },
     ].map(({ svg, label }, i) => (
       <React.Fragment key={label}>
         {i > 0 && <span style={{ width:1, height:16, background:"rgba(255,255,255,0.1)", margin:"0 6px", flexShrink:0 }} />}
