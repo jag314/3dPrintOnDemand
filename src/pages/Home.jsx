@@ -6,7 +6,6 @@ import {
   PremiumFinishes,
   WhyInity3D,
   CTASection,
-  Footer,
 } from "../components";
 
 
@@ -29,8 +28,6 @@ const Home = () => {
       <WhyInity3D />
 
       <CTASection />
-
-      <Footer />
 
     </main>
 
