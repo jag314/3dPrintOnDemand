@@ -73,10 +73,10 @@ const Footer = () => (
             href="https://instagram.com/inity.3d"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white/40 hover:text-violet-400 transition-colors mt-6 mb-4 block"
-            aria-label="Instagram"
+            className="flex items-center gap-2 text-white/50 hover:text-violet-400 transition-colors mt-6 mb-4"
           >
-            <FaInstagram size={22} />
+            <FaInstagram size={20} />
+            <span className="text-sm">@inity.3d</span>
           </a>
           <Link
             to="/contact"
