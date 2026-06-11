@@ -153,6 +153,13 @@ router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screensh
       sinpe_number:         order.payment?.sinpeConfirmation || null,
       sinpe_screenshot_path: screenshotStoragePath,
 
+      requires_invoice:    order.invoice?.requiresInvoice || false,
+      invoice_type:        order.invoice?.type            || null,
+      invoice_name:        order.invoice?.name            || null,
+      invoice_id_number:   order.invoice?.idNumber        || null,
+      invoice_email:       order.invoice?.email           || null,
+      tax_crc:             Math.round(order.quote?.taxCrc || 0),
+
       delivery_cost_crc:  Math.round(delivery.cost_crc || 0),
 
       delivery_type:      delivery.method       || null,

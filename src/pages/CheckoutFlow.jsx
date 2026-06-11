@@ -60,11 +60,11 @@ const Lbl = ({ children }) => <label style={{ fontSize:11, color:"rgba(255,255,2
 const Err = ({ msg }) => msg ? <p style={{ fontSize:11, color:"#f87171", marginTop:4 }}>{msg}</p> : null;
 
 // ── Step indicator ────────────────────────────────────────────────────────────
-// modalStep: 1=Delivery, 2=Payment, 3=Confirm → overall steps 3, 4, 5
-const STEPS = ["Model","Configure","Delivery","Payment","Confirm"];
+// modalStep: 1=Delivery, 2=Billing, 3=Payment, 4=Confirm → overall steps 3, 4, 5, 6
+const STEPS = ["Model","Configure","Delivery","Facturación","Payment","Confirm"];
 
 const StepIndicator = ({ modalStep }) => {
-  const overall = modalStep + 2; // 3, 4, or 5
+  const overall = modalStep + 2; // 3, 4, 5, or 6
   return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", paddingBottom:20, overflowX:"auto", flexShrink:0 }}>
       {STEPS.map((label, i) => {
@@ -249,10 +249,73 @@ const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delive
   );
 };
 
-// ── Step 2: SINPE Móvil payment ───────────────────────────────────────────────
-const PaymentStep = ({ totalPrice, shippingCrc, sinpe, setSinpe, errors }) => {
+// ── Step 2: Facturación / IVA ─────────────────────────────────────────────────
+const BillingStep = ({ billing, setBilling, errors }) => {
+  const set = (k,v) => setBilling(p => ({ ...p, [k]:v }));
+  return (
+    <div className="space-y-5">
+      <label style={{ display:"flex", alignItems:"flex-start", gap:12, cursor:"pointer", padding:"14px 16px", borderRadius:14, background:billing.requiresInvoice?"rgba(139,92,246,0.08)":"rgba(255,255,255,0.03)", border:billing.requiresInvoice?"1.5px solid rgba(139,92,246,0.5)":"1px solid rgba(255,255,255,0.08)" }}>
+        <input type="checkbox" checked={billing.requiresInvoice} onChange={e=>set("requiresInvoice",e.target.checked)} style={{ accentColor:"#7c3aed", width:16, height:16, flexShrink:0, marginTop:2 }} />
+        <div>
+          <p style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.85)" }}>Requiero factura electrónica</p>
+          <p style={{ fontSize:11, color:"rgba(255,255,255,0.4)", marginTop:2 }}>Para empresas y profesionales que necesitan factura del Ministerio de Hacienda</p>
+        </div>
+      </label>
+
+      {billing.requiresInvoice && (
+        <div className="space-y-4">
+          <div>
+            <Lbl>Tipo de contribuyente *</Lbl>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { val:"fisica",   title:"Persona física",    desc:"Cédula de identidad" },
+                { val:"juridica", title:"Persona jurídica",  desc:"Cédula jurídica" },
+              ].map(opt => (
+                <label key={opt.val} style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px", borderRadius:12, cursor:"pointer", background:billing.type===opt.val?"rgba(139,92,246,0.12)":"rgba(255,255,255,0.02)", border:billing.type===opt.val?"1.5px solid rgba(139,92,246,0.4)":"1px solid rgba(255,255,255,0.08)", fontSize:12, color:billing.type===opt.val?"#c4b5fd":"rgba(255,255,255,0.55)" }}>
+                  <input type="radio" name="invoiceType" value={opt.val} checked={billing.type===opt.val} onChange={()=>set("type",opt.val)} style={{ accentColor:"#7c3aed", flexShrink:0 }} />
+                  <div>
+                    <p style={{ fontWeight:700 }}>{opt.title}</p>
+                    <p style={{ fontSize:10, opacity:0.6, marginTop:1 }}>{opt.desc}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Lbl>{billing.type === "juridica" ? "Razón social *" : "Nombre completo *"}</Lbl>
+            <input value={billing.name} onChange={e=>set("name",e.target.value)} placeholder={billing.type==="juridica"?"Empresa S.A.":"Tu nombre completo"} className={lbl(errors.invoiceName)} />
+            <Err msg={errors.invoiceName} />
+          </div>
+          <div>
+            <Lbl>{billing.type === "juridica" ? "Cédula jurídica *" : "Cédula de identidad *"}</Lbl>
+            <input value={billing.idNumber} onChange={e=>set("idNumber",e.target.value)} placeholder={billing.type==="juridica"?"3-XXX-XXXXXX":"1-XXXX-XXXX"} className={lbl(errors.invoiceIdNumber)} />
+            <Err msg={errors.invoiceIdNumber} />
+          </div>
+          <div>
+            <Lbl>Correo para recibir factura *</Lbl>
+            <input type="email" value={billing.email} onChange={e=>set("email",e.target.value)} placeholder="facturacion@empresa.com" className={lbl(errors.invoiceEmail)} />
+            <Err msg={errors.invoiceEmail} />
+          </div>
+        </div>
+      )}
+
+      {!billing.requiresInvoice && (
+        <div style={{ padding:"10px 14px", borderRadius:10, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", fontSize:11, color:"rgba(255,255,255,0.35)" }}>
+          Sin factura electrónica — podés activarla marcando la casilla de arriba.
+        </div>
+      )}
+
+      <div style={{ padding:"10px 14px", borderRadius:10, background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.18)", fontSize:11, color:"rgba(167,139,250,0.7)" }}>
+        IVA 13% se aplica sobre el costo de la pieza. El envío (Correos CR) está exento de IVA.
+      </div>
+    </div>
+  );
+};
+
+// ── Step 3: SINPE Móvil payment ───────────────────────────────────────────────
+const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors }) => {
   const set = (k,v) => setSinpe(p=>({ ...p, [k]:v }));
-  const pieceCrc = totalPrice - (shippingCrc || 0);
+  const pieceCrc = totalPrice - (ivaCrc || 0) - (shippingCrc || 0);
   return (
     <div className="space-y-5">
       {/* SINPE instructions */}
@@ -265,6 +328,12 @@ const PaymentStep = ({ totalPrice, shippingCrc, sinpe, setSinpe, errors }) => {
               <span>Costo de la pieza</span>
               <span>{formatCRC(pieceCrc)}</span>
             </div>
+            {ivaCrc > 0 && (
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
+                <span>IVA 13%</span>
+                <span>{formatCRC(ivaCrc)}</span>
+              </div>
+            )}
             {shippingCrc > 0 && (
               <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
                 <span>Envío PYMEXPRESS</span>
@@ -388,7 +457,7 @@ const CheckoutFlow = ({
   modelScale, file,
   // fileBase64 is no longer used — file goes directly to the server as multipart
 }) => {
-  const [modalStep, setModalStep] = useState(1); // 1=Delivery, 2=Payment, 3=Confirm
+  const [modalStep, setModalStep] = useState(1); // 1=Delivery, 2=Billing, 3=Payment, 4=Confirm
   const [savedOrder, setSavedOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -404,6 +473,11 @@ const CheckoutFlow = ({
   const [delivery, setDelivery] = useState({
     province:"", canton:"", district:"", exactAddress:"", additionalNotes:"",
     branch:"", fullName:"", cedula:"",
+  });
+
+  // Billing / invoice state
+  const [billing, setBilling] = useState({
+    requiresInvoice: false, type:"fisica", name:"", idNumber:"", email:"",
   });
 
   // Payment state
@@ -433,7 +507,8 @@ const CheckoutFlow = ({
   const qty         = Math.max(1, parseInt(form.quantity) || 1);
   const unitPrice   = Math.round((pricing.salePrice * urgencyOpt.multiplier) / 500) * 500;
   const totalPrice  = unitPrice * qty;
-  const grandTotal  = totalPrice + (shippingCost?.total || 0);
+  const ivaCrc      = Math.round(totalPrice * 0.13);
+  const grandTotal  = totalPrice + ivaCrc + (shippingCost?.total || 0);
 
   // ── Validation ────────────────────────────────────────────────────────────
   const validateDelivery = () => {
@@ -455,6 +530,18 @@ const CheckoutFlow = ({
       if (!delivery.cedula.trim())   e.cedula   = "Cédula requerida";
     }
 
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validateBilling = () => {
+    const e = {};
+    if (billing.requiresInvoice) {
+      if (!billing.name.trim())     e.invoiceName     = "Requerido";
+      if (!billing.idNumber.trim()) e.invoiceIdNumber = "Requerido";
+      if (!billing.email.trim())    e.invoiceEmail    = "Requerido";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billing.email)) e.invoiceEmail = "Email inválido";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -505,7 +592,15 @@ const CheckoutFlow = ({
         unitPrice,
         totalPrice:  grandTotal,
         shippingCrc: shippingCost?.total || 0,
+        taxCrc:      ivaCrc,
         currency:    "CRC",
+      },
+      invoice: {
+        requiresInvoice: billing.requiresInvoice,
+        type:     billing.type,
+        name:     billing.name,
+        idNumber: billing.idNumber,
+        email:    billing.email,
       },
       delivery: deliveryData,
       payment: {
@@ -629,7 +724,7 @@ const CheckoutFlow = ({
 
       setSavedOrder(confirmedOrder);
       setErrors({});
-      setModalStep(3);
+      setModalStep(4);
     } catch (err) {
       setSubmitError(err.message || "Error al enviar el pedido. Inténtalo de nuevo.");
     } finally {
@@ -642,26 +737,29 @@ const CheckoutFlow = ({
     if (modalStep === 1) {
       if (validateDelivery()) { setErrors({}); setModalStep(2); }
     } else if (modalStep === 2) {
+      if (validateBilling()) { setErrors({}); setModalStep(3); }
+    } else if (modalStep === 3) {
       if (validatePayment()) submitOrder();
     }
   };
 
-  const titleMap  = { 1:"Datos & Entrega", 2:"Pago SINPE Móvil", 3:"¡Pedido Confirmado!" };
+  const titleMap  = { 1:"Datos & Entrega", 2:"Facturación", 3:"Pago SINPE Móvil", 4:"¡Pedido Confirmado!" };
   const btnLabel  = {
-    1: "Continuar al pago →",
-    2: submitting ? "Enviando pedido…" : "Confirmar pedido →",
+    1: "Continuar →",
+    2: "Continuar al pago →",
+    3: submitting ? "Enviando pedido…" : "Confirmar pedido →",
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
       style={{ background:"rgba(0,0,0,0.82)", backdropFilter:"blur(16px)" }}
-      onClick={modalStep < 3 ? onClose : undefined}>
+      onClick={modalStep < 4 ? onClose : undefined}>
       <div className="relative w-full max-w-2xl rounded-[28px] overflow-hidden max-h-[92vh] flex flex-col"
         style={{ background:"linear-gradient(145deg,#0d0c1a,#121020)", border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 32px 80px rgba(0,0,0,0.85)" }}
         onClick={e => e.stopPropagation()}>
 
         {/* Close button */}
-        {modalStep < 3 && (
+        {modalStep < 4 && (
           <button onClick={onClose} style={{ position:"absolute", top:14, right:14, zIndex:10, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(255,255,255,0.08)", borderRadius:"50%", border:"1px solid rgba(255,255,255,0.12)", color:"rgba(255,255,255,0.55)", cursor:"pointer", fontSize:18 }}>×</button>
         )}
 
@@ -669,7 +767,7 @@ const CheckoutFlow = ({
         <div className="overflow-y-auto flex-1" style={{ padding:"24px 24px 28px" }}>
           <StepIndicator modalStep={modalStep} />
 
-          {modalStep < 3 && (
+          {modalStep < 4 && (
             <>
               <p className="uppercase tracking-[0.22em] text-violet-400 text-xs mb-1">PEDIDO 3D</p>
               <h3 style={{ fontSize:22, fontWeight:900, color:"#fff", marginBottom:18 }}>{titleMap[modalStep]}</h3>
@@ -687,14 +785,18 @@ const CheckoutFlow = ({
             />
           )}
           {modalStep === 2 && (
+            <BillingStep billing={billing} setBilling={setBilling} errors={errors} />
+          )}
+          {modalStep === 3 && (
             <PaymentStep
               totalPrice={grandTotal}
               shippingCrc={shippingCost?.total || 0}
+              ivaCrc={ivaCrc}
               sinpe={sinpe} setSinpe={setSinpe}
               errors={errors}
             />
           )}
-          {modalStep === 3 && (
+          {modalStep === 4 && (
             <ConfirmStep
               savedOrder={savedOrder}
               onNewOrder={() => { onNewOrder(); }}
@@ -705,7 +807,7 @@ const CheckoutFlow = ({
         </div>
 
         {/* Footer navigation */}
-        {modalStep < 3 && (
+        {modalStep < 4 && (
           <div style={{ padding:"14px 24px 20px", borderTop:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
             {/* Upload / submit error banner */}
             {submitError && (

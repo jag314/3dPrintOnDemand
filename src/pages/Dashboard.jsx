@@ -552,6 +552,31 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                             <p style={{ fontSize:12, color:"rgba(255,255,255,0.28)" }}>Sin comprobante adjunto</p>
                           )}
                         </div>
+
+                        {/* ── Invoice / billing ── */}
+                        <div className="pt-3 mt-1" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+                          <p style={{ fontSize:9, fontWeight:800, letterSpacing:"0.14em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", marginBottom:8 }}>📄 FACTURACIÓN ELECTRÓNICA</p>
+                          {order.invoice?.requiresInvoice ? (
+                            <div className="space-y-1.5">
+                              <div style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"3px 10px", borderRadius:999, background:"rgba(245,158,11,0.12)", border:"1px solid rgba(245,158,11,0.3)", fontSize:11, fontWeight:700, color:"#f59e0b", marginBottom:8 }}>
+                                ⚡ Requiere factura
+                              </div>
+                              {[
+                                ["Tipo",   order.invoice.type === "juridica" ? "Persona jurídica" : "Persona física"],
+                                ["Nombre", order.invoice.name],
+                                ["Cédula", order.invoice.idNumber],
+                                ["Correo", order.invoice.email],
+                              ].map(([k, v]) => (
+                                <div key={k} className="flex justify-between text-sm gap-3">
+                                  <span className="text-white/40 shrink-0">{k}</span>
+                                  <span className="text-white/80 text-right">{v || "—"}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize:12, color:"rgba(255,255,255,0.28)" }}>No solicitó factura electrónica</p>
+                          )}
+                        </div>
                       </div>
 
                       {/* Right — admin technical */}
