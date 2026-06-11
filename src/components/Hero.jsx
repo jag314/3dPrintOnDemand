@@ -22,7 +22,7 @@ const Hero = () => {
 
   return (
 
-    <section id="upload-hero" className="relative w-full min-h-screen overflow-hidden pt-32 lg:pt-40">
+    <section id="upload-hero" className="relative w-full min-h-screen overflow-x-hidden pt-32 lg:pt-40">
 
       {/* BACKGROUND — fixed so it never moves on scroll */}
 
@@ -83,18 +83,6 @@ const Hero = () => {
 
           </p>
 
-          {/* BUTTONS */}
-
-          <div className="flex flex-wrap gap-5 mt-12">
-
-            <button className="glass-card hover-card px-10 py-5 rounded-2xl text-lg">
-
-              Explore Materials
-
-            </button>
-
-          </div>
-
           {/* UPLOAD ZONE */}
 
           <div
@@ -102,10 +90,10 @@ const Hero = () => {
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-            className={`mt-8 border-2 border-dashed rounded-2xl p-6 cursor-pointer transition-all flex items-center gap-4 ${
+            className={`mt-12 border-2 border-dashed rounded-2xl p-8 cursor-pointer transition-all flex items-center gap-5 ${
               dragging
-                ? "border-violet-500/70 bg-violet-500/10"
-                : "border-violet-500/40 bg-violet-500/5 hover:bg-violet-500/10 hover:border-violet-500/70"
+                ? "border-violet-500/80 bg-violet-500/15"
+                : "border-violet-500/60 bg-violet-500/10 hover:bg-violet-500/15 hover:border-violet-500/80"
             }`}
           >
             <input
@@ -115,22 +103,31 @@ const Hero = () => {
               className="hidden"
               onChange={(e) => handleFile(e.target.files[0])}
             />
-            <div className="w-12 h-12 rounded-xl bg-violet-600/20 flex items-center justify-center flex-shrink-0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-16 h-16 rounded-xl bg-violet-600/20 flex items-center justify-center flex-shrink-0">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
             </div>
             <div>
-              <p className="text-white font-semibold text-sm">
+              <p className="text-white text-base font-bold">
                 {dragging ? "Soltá el archivo aquí" : "Subí tu archivo STL, OBJ o 3MF"}
               </p>
+              <p className="text-violet-300/70 text-sm mt-1 font-medium">
+                Obtené tu cotización en segundos
+              </p>
               <p className="text-white/40 text-xs mt-1">
-                Drag & drop o click para seleccionar · Cotización instantánea
+                Drag & drop o click para seleccionar
               </p>
             </div>
           </div>
+
+          {/* SECONDARY LINK */}
+
+          <a href="#materials" className="text-white/40 hover:text-white/70 text-sm transition-colors mt-3 inline-block">
+            Explorar materiales →
+          </a>
 
           {/* STATS */}
 
