@@ -244,27 +244,16 @@ const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delive
           </div>
         )}
 
-        {/* ── Shipping cost breakdown ── */}
+        {/* ── Shipping cost — shown for both home and correos once province is set ── */}
         {delivery.province && (
-          <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:14, padding:"12px 16px" }}>
+          <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:14, padding:"11px 16px" }}>
             {shippingLoading ? (
               <p style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>Calculando costo de envío...</p>
             ) : shippingCost ? (
-              <>
-                <p style={{ fontSize:10, letterSpacing:"0.15em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", fontWeight:700, marginBottom:8 }}>COSTO DE ENVÍO PYMEXPRESS</p>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.6)", marginBottom:3 }}>
-                  <span>Tarifa base ({shippingCost.zone === "GAM" ? "GAM → GAM" : "GAM → Resto del país"})</span>
-                  <span>{formatCRC(shippingCost.base)}</span>
-                </div>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.4)", marginBottom:8 }}>
-                  <span>Margen de servicio</span>
-                  <span>{formatCRC(shippingCost.margen)}</span>
-                </div>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, fontWeight:700, color:"#a78bfa", borderTop:"1px solid rgba(255,255,255,0.08)", paddingTop:8 }}>
-                  <span>Total envío</span>
-                  <span>{formatCRC(shippingCost.total)}</span>
-                </div>
-              </>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", color:"rgba(255,255,255,0.4)", fontWeight:600 }}>Envío PYMEXPRESS</span>
+                <span style={{ fontSize:13, fontWeight:700, color:"#a78bfa" }}>{formatCRC(shippingCost.total)}</span>
+              </div>
             ) : null}
           </div>
         )}
@@ -274,17 +263,34 @@ const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delive
 };
 
 // ── Step 2: SINPE Móvil payment ───────────────────────────────────────────────
-const PaymentStep = ({ totalPrice, sinpe, setSinpe, errors }) => {
+const PaymentStep = ({ totalPrice, shippingCrc, sinpe, setSinpe, errors }) => {
   const set = (k,v) => setSinpe(p=>({ ...p, [k]:v }));
+  const pieceCrc = totalPrice - (shippingCrc || 0);
   return (
     <div className="space-y-5">
       {/* SINPE instructions */}
       <div style={{ background:"rgba(139,92,246,0.07)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:18, padding:"20px 22px" }}>
-        <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Pay via SINPE Móvil</p>
+        <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Pagar via SINPE Móvil</p>
         <div style={{ background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-          <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>Send</p>
-          <p style={{ fontSize:28, fontWeight:900, color:"#a78bfa" }}>{formatCRC(totalPrice)}</p>
-          <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginTop:6 }}>to:</p>
+          {/* Breakdown */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
+              <span>Costo de la pieza</span>
+              <span>{formatCRC(pieceCrc)}</span>
+            </div>
+            {shippingCrc > 0 && (
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
+                <span>Envío PYMEXPRESS</span>
+                <span>{formatCRC(shippingCrc)}</span>
+              </div>
+            )}
+            <div style={{ height:1, background:"rgba(255,255,255,0.1)", margin:"8px 0" }} />
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+              <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>Total a pagar</span>
+              <span style={{ fontSize:28, fontWeight:900, color:"#a78bfa" }}>{formatCRC(totalPrice)}</span>
+            </div>
+          </div>
+          <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginTop:6 }}>a:</p>
           <p style={{ fontSize:22, fontWeight:900, color:"#fff", marginTop:2, letterSpacing:"0.05em" }}>{SINPE_PHONE}</p>
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:2 }}>{SINPE_NAME}</p>
         </div>
@@ -440,6 +446,7 @@ const CheckoutFlow = ({
   const [shippingCost, setShippingCost]     = useState(null);
   const [shippingLoading, setShippingLoading] = useState(false);
 
+  // Runs for both "home" and "correos" — both methods set delivery.province
   useEffect(() => {
     if (!delivery.province) { setShippingCost(null); return; }
     const weightG = pricing.effectiveWeight || parsedWeight || 100;
@@ -711,6 +718,7 @@ const CheckoutFlow = ({
           {modalStep === 2 && (
             <PaymentStep
               totalPrice={grandTotal}
+              shippingCrc={shippingCost?.total || 0}
               sinpe={sinpe} setSinpe={setSinpe}
               errors={errors}
             />
