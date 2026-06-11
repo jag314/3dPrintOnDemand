@@ -1,14 +1,28 @@
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
 import ComputersCanvas from "./canvas/Computers";
-
 import Stats from "./Stats";
 
 const Hero = () => {
+  const navigate          = useNavigate();
+  const location          = useLocation();
+  const [dragging, setDragging] = useState(false);
+  const inputRef          = useRef();
+
+  useEffect(() => {
+    if (location.hash === "#upload-hero") {
+      document.getElementById("upload-hero")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location.hash]);
+
+  const handleFile = (f) => {
+    if (f) navigate("/quote", { state: { file: f } });
+  };
 
   return (
 
-    <section className="relative w-full min-h-screen overflow-hidden pt-32 lg:pt-40">
+    <section id="upload-hero" className="relative w-full min-h-screen overflow-hidden pt-32 lg:pt-40">
 
       {/* BACKGROUND — fixed so it never moves on scroll */}
 
@@ -73,23 +87,49 @@ const Hero = () => {
 
           <div className="flex flex-wrap gap-5 mt-12">
 
-            <Link
-              to="/quote"
-              className="primary-button px-10 py-5 rounded-2xl font-semibold text-lg"
-            >
-
-              Upload Model
-
-            </Link>
-
-            <button
-              className="glass-card hover-card px-10 py-5 rounded-2xl text-lg"
-            >
+            <button className="glass-card hover-card px-10 py-5 rounded-2xl text-lg">
 
               Explore Materials
 
             </button>
 
+          </div>
+
+          {/* UPLOAD ZONE */}
+
+          <div
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
+            className={`mt-8 border-2 border-dashed rounded-2xl p-6 cursor-pointer transition-all flex items-center gap-4 ${
+              dragging
+                ? "border-violet-500/70 bg-violet-500/10"
+                : "border-violet-500/40 bg-violet-500/5 hover:bg-violet-500/10 hover:border-violet-500/70"
+            }`}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".stl,.obj,.3mf"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files[0])}
+            />
+            <div className="w-12 h-12 rounded-xl bg-violet-600/20 flex items-center justify-center flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm">
+                {dragging ? "Soltá el archivo aquí" : "Subí tu archivo STL, OBJ o 3MF"}
+              </p>
+              <p className="text-white/40 text-xs mt-1">
+                Drag & drop o click para seleccionar · Cotización instantánea
+              </p>
+            </div>
           </div>
 
           {/* STATS */}

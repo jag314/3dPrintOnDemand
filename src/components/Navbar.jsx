@@ -96,7 +96,7 @@ const Navbar = () => {
           {/* CTA */}
 
           <Link
-            to="/quote"
+            to="/#upload-hero"
             className="
             primary-button
             px-8

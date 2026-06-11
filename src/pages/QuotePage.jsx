@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import ViewerCanvas from "../components/upload/ViewerCanvas";
 import ModelViewer from "../components/upload/ModelViewer";
 import CheckoutFlow from "./CheckoutFlow";
@@ -261,8 +261,9 @@ const scaleDimensions = (dimensionsStr, scalePct) => {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
-  const navigate = useNavigate();
-  const [file,           setFile]           = useState(null);
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const [file,           setFile]           = useState(location.state?.file || null);
   const [technology,     setTechnology]     = useState("fdm");
   const [modelSize,      setModelSize]      = useState(null);
   const [isLoading,      setIsLoading]      = useState(false);
@@ -423,7 +424,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
             )}
 
             <div className={`w-full relative ${file ? "h-[380px] sm:h-[560px] lg:h-[820px]" : "h-[380px] sm:h-[480px] lg:h-[600px]"}`} style={{ transition:"height 0.5s ease" }}>
-              {!file && (<div className="absolute inset-0 z-20 flex items-center justify-center px-4 sm:p-10"><InlineUpload onFileUpload={setFile} /></div>)}
+              {!file && <Navigate to="/" replace />}
               {file && (<div className="absolute top-6 left-6 z-30"><InlineUploadCompact onFileUpload={setFile} /></div>)}
               <ViewerCanvas modelSize={modelSize} loading={isLoading} hasFile={!!file} glowMode={selectedColor?.finish==="glow"} glowColor={selectedColor?.hex}>
                 {file && (
