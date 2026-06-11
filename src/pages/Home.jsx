@@ -5,7 +5,6 @@ import {
   LivePreview,
   PremiumFinishes,
   WhyInity3D,
-  CTASection,
 } from "../components";
 
 
@@ -27,7 +26,6 @@ const Home = () => {
 
       <WhyInity3D />
 
-      <CTASection />
 
     </main>
 
