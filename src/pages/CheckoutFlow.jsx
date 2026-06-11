@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatCRC, formatPrintTime } from "../utils/pricingEngine";
 import {
@@ -91,7 +91,7 @@ const StepIndicator = ({ modalStep }) => {
 };
 
 // ── Step 1: Delivery (customer info + delivery address) ───────────────────────
-const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delivery, setDelivery, errors, pricing, unitPrice, qty, modelScale, modelStats }) => {
+const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delivery, setDelivery, errors, pricing, unitPrice, qty, modelScale, modelStats, shippingCost, shippingLoading }) => {
   const set  = (k,v) => setForm(p => ({ ...p, [k]:v }));
   const setD = (k,v) => setDelivery(p => ({ ...p, [k]:v, ...(k==="province" ? { canton:"", district:"", branch:"" } : {}), ...(k==="canton" ? { district:"" } : {}) }));
 
@@ -241,6 +241,31 @@ const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delive
                 <Err msg={errors.cedula} />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── Shipping cost breakdown ── */}
+        {delivery.province && (
+          <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:14, padding:"12px 16px" }}>
+            {shippingLoading ? (
+              <p style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>Calculando costo de envío...</p>
+            ) : shippingCost ? (
+              <>
+                <p style={{ fontSize:10, letterSpacing:"0.15em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", fontWeight:700, marginBottom:8 }}>COSTO DE ENVÍO PYMEXPRESS</p>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.6)", marginBottom:3 }}>
+                  <span>Tarifa base ({shippingCost.zone === "GAM" ? "GAM → GAM" : "GAM → Resto del país"})</span>
+                  <span>{formatCRC(shippingCost.base)}</span>
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.4)", marginBottom:8 }}>
+                  <span>Margen de servicio</span>
+                  <span>{formatCRC(shippingCost.margen)}</span>
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, fontWeight:700, color:"#a78bfa", borderTop:"1px solid rgba(255,255,255,0.08)", paddingTop:8 }}>
+                  <span>Total envío</span>
+                  <span>{formatCRC(shippingCost.total)}</span>
+                </div>
+              </>
+            ) : null}
           </div>
         )}
       </div>
@@ -411,10 +436,27 @@ const CheckoutFlow = ({
   // Validation errors
   const [errors, setErrors] = useState({});
 
+  // Shipping cost fetched from backend
+  const [shippingCost, setShippingCost]     = useState(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
+
+  useEffect(() => {
+    if (!delivery.province) { setShippingCost(null); return; }
+    const weightG = pricing.effectiveWeight || parsedWeight || 100;
+    setShippingLoading(true);
+    const apiBase = import.meta.env.VITE_API_URL || "";
+    fetch(`${apiBase}/api/shipping/calculate?province=${encodeURIComponent(delivery.province)}&weight_g=${weightG}`)
+      .then(r => r.json())
+      .then(data => setShippingCost(data.total ? data : null))
+      .catch(() => setShippingCost(null))
+      .finally(() => setShippingLoading(false));
+  }, [delivery.province, deliveryMethod]);
+
   const urgencyOpt  = URGENCY_OPTS.find(o => o.value === form.urgency) || URGENCY_OPTS[0];
   const qty         = Math.max(1, parseInt(form.quantity) || 1);
   const unitPrice   = Math.round((pricing.salePrice * urgencyOpt.multiplier) / 500) * 500;
   const totalPrice  = unitPrice * qty;
+  const grandTotal  = totalPrice + (shippingCost?.total || 0);
 
   // ── Validation ────────────────────────────────────────────────────────────
   const validateDelivery = () => {
@@ -457,11 +499,13 @@ const CheckoutFlow = ({
       province: delivery.province, canton: delivery.canton,
       district: delivery.district, exactAddress: delivery.exactAddress,
       additionalNotes: delivery.additionalNotes,
+      cost_crc: shippingCost?.total || 0,
     } : {
       method:"correos",
       province: delivery.province, branch: delivery.branch,
       branchAddress: CORREOS_BRANCHES.find(b=>b.name===delivery.branch)?.address || "",
       fullName: delivery.fullName, cedula: delivery.cedula,
+      cost_crc: shippingCost?.total || 0,
     };
 
     const scalePct = Math.round(modelScale * 100);
@@ -482,7 +526,8 @@ const CheckoutFlow = ({
         quantity:    qty,
         urgency:     form.urgency,
         unitPrice,
-        totalPrice,
+        totalPrice:  grandTotal,
+        shippingCrc: shippingCost?.total || 0,
         currency:    "CRC",
       },
       delivery: deliveryData,
@@ -660,11 +705,12 @@ const CheckoutFlow = ({
               errors={errors} pricing={pricing}
               unitPrice={unitPrice} qty={qty}
               modelScale={modelScale} modelStats={modelStats}
+              shippingCost={shippingCost} shippingLoading={shippingLoading}
             />
           )}
           {modalStep === 2 && (
             <PaymentStep
-              totalPrice={totalPrice}
+              totalPrice={grandTotal}
               sinpe={sinpe} setSinpe={setSinpe}
               errors={errors}
             />

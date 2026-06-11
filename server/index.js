@@ -2,9 +2,10 @@ import './env.js';  // explicit-path dotenv load — must precede all other impo
 import express    from 'express';
 import cors       from 'cors';
 import rateLimit  from 'express-rate-limit';
-import ordersRouter from './routes/orders.js';
-import adminRouter  from './routes/admin.js';
-import authRouter   from './routes/auth.js';
+import ordersRouter   from './routes/orders.js';
+import adminRouter    from './routes/admin.js';
+import authRouter     from './routes/auth.js';
+import shippingRouter from './routes/shipping.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -45,9 +46,10 @@ const uploadLimiter = rateLimit({
 
 app.get('/api/health', (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-app.use('/api/orders', uploadLimiter, ordersRouter);
-app.use('/api/admin',  adminRouter);
-app.use('/api/auth',   authRouter);
+app.use('/api/orders',   uploadLimiter, ordersRouter);
+app.use('/api/admin',    adminRouter);
+app.use('/api/auth',     authRouter);
+app.use('/api/shipping', shippingRouter);
 
 // Catch-all: unknown /api/* routes
 app.use('/api', (_, res) => res.status(404).json({ error: 'Unknown API endpoint' }));

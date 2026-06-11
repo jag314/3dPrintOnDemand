@@ -134,6 +134,8 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
       sinpe_number:         order.payment?.sinpeConfirmation || null,
       sinpe_screenshot_path: null,
 
+      delivery_cost_crc:  Math.round(delivery.cost_crc || 0),
+
       delivery_type:      delivery.method       || null,
       delivery_province:  delivery.province     || null,
       delivery_canton:    delivery.canton       || null,

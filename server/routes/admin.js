@@ -146,4 +146,62 @@ router.patch('/orders/:id/status', async (req, res) => {
   }
 });
 
+// ── GET /api/admin/shipping/config ───────────────────────────────────────────
+router.get('/shipping/config', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('shipping_config')
+      .select('*')
+      .eq('carrier', 'correos_cr')
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('[GET /api/admin/shipping/config]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PUT /api/admin/shipping/config ───────────────────────────────────────────
+router.put('/shipping/config', async (req, res) => {
+  const { margin_percent, packaging_weight_g } = req.body || {};
+  if (margin_percent == null || packaging_weight_g == null) {
+    return res.status(400).json({ error: 'margin_percent and packaging_weight_g are required' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('shipping_config')
+      .update({
+        margin_percent:     Number(margin_percent),
+        packaging_weight_g: Number(packaging_weight_g),
+        updated_at:         new Date().toISOString(),
+        updated_by:         req.admin?.sub || 'admin',
+      })
+      .eq('carrier', 'correos_cr')
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('[PUT /api/admin/shipping/config]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/shipping/rates ────────────────────────────────────────────
+router.get('/shipping/rates', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('shipping_rates')
+      .select('*')
+      .eq('carrier', 'correos_cr')
+      .order('destination_zone');
+    if (error) throw error;
+    res.json({ rates: data || [] });
+  } catch (err) {
+    console.error('[GET /api/admin/shipping/rates]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

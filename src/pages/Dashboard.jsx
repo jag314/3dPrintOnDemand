@@ -1195,7 +1195,123 @@ const VentasSection = ({ orders }) => {
   );
 };
 
-// ── SECTION 7: Configuración ──────────────────────────────────────────────────
+// ── SECTION 7: Envíos ─────────────────────────────────────────────────────────
+
+const EnviosSection = ({ adminToken }) => {
+  const [config, setConfig]               = React.useState(null);
+  const [rates, setRates]                 = React.useState([]);
+  const [loading, setLoading]             = React.useState(true);
+  const [saving, setSaving]               = React.useState(false);
+  const [saved, setSaved]                 = React.useState(false);
+  const [margin, setMargin]               = React.useState("");
+  const [packagingWeight, setPackagingWeight] = React.useState("");
+
+  const apiBase = import.meta.env.VITE_API_URL || "";
+  const authHeaders = { Authorization: `Bearer ${adminToken}`, "Content-Type": "application/json" };
+
+  React.useEffect(() => {
+    Promise.all([
+      fetch(`${apiBase}/api/admin/shipping/config`, { headers: authHeaders }).then(r => r.json()),
+      fetch(`${apiBase}/api/admin/shipping/rates`,  { headers: authHeaders }).then(r => r.json()),
+    ])
+      .then(([cfg, ratesData]) => {
+        setConfig(cfg);
+        setMargin(String(cfg.margin_percent));
+        setPackagingWeight(String(cfg.packaging_weight_g));
+        setRates(ratesData.rates || []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res  = await fetch(`${apiBase}/api/admin/shipping/config`, {
+        method: "PUT",
+        headers: authHeaders,
+        body: JSON.stringify({ margin_percent: Number(margin), packaging_weight_g: Number(packagingWeight) }),
+      });
+      const data = await res.json();
+      setConfig(data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div style={{ color:"rgba(255,255,255,0.4)", padding:40 }}>Cargando configuración de envíos...</div>;
+
+  return (
+    <div>
+      <SectionTitle eyebrow="LOGÍSTICA" title="Envíos" />
+
+      {/* Rates table */}
+      <div className="rounded-2xl p-6 mb-6" style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.08)" }}>
+        <p className="font-bold text-white mb-4">Tarifas base — Correos de Costa Rica</p>
+        <table className="w-full" style={{ borderCollapse:"collapse" }}>
+          <thead>
+            <tr style={{ borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
+              {["Origen","Destino","Primer kg","Kg adicional"].map(h => (
+                <th key={h} style={{ textAlign:"left", padding:"6px 12px", fontSize:11, color:"rgba(255,255,255,0.4)", textTransform:"uppercase", letterSpacing:"0.08em", fontWeight:600 }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rates.map(r => (
+              <tr key={r.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding:"10px 12px", fontSize:13, color:"rgba(255,255,255,0.75)" }}>{r.origin_zone}</td>
+                <td style={{ padding:"10px 12px", fontSize:13, color:"rgba(255,255,255,0.75)" }}>{r.destination_zone}</td>
+                <td style={{ padding:"10px 12px", fontSize:13, color:"#a78bfa", fontWeight:700 }}>{formatCRC(r.first_kg_crc)}</td>
+                <td style={{ padding:"10px 12px", fontSize:13, color:"rgba(255,255,255,0.6)" }}>{formatCRC(r.additional_kg_crc)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p style={{ fontSize:11, color:"rgba(255,255,255,0.28)", marginTop:12, paddingTop:12, borderTop:"1px solid rgba(255,255,255,0.05)" }}>
+          Tarifas PYMEXPRESS Categoría Emprendedor. Actualizar manualmente cuando Correos modifique sus precios.
+        </p>
+      </div>
+
+      {/* Config panel */}
+      <div className="rounded-2xl p-6" style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.08)" }}>
+        <p className="font-bold text-white mb-6">Configuración editable</p>
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className={labelCls}>Margen de servicio (%)</label>
+            <input type="number" min="0" max="100" step="0.5" value={margin} onChange={e => setMargin(e.target.value)} className={inputCls} />
+            <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", marginTop:4 }}>Ej: 5 → se cobra 5% extra sobre la tarifa base de Correos</p>
+          </div>
+          <div>
+            <label className={labelCls}>Peso de empaque (g)</label>
+            <input type="number" min="0" step="10" value={packagingWeight} onChange={e => setPackagingWeight(e.target.value)} className={inputCls} />
+            <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", marginTop:4 }}>Ej: 150 → se suman 150g al peso del modelo para calcular la tarifa</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ padding:"10px 22px", borderRadius:12, fontWeight:700, fontSize:13, cursor:saving?"not-allowed":"pointer", background:saving?"rgba(139,92,246,0.3)":"rgba(139,92,246,0.8)", color:"#fff", border:"none", transition:"background 0.2s" }}>
+            {saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+          {saved && <span style={{ fontSize:12, color:"#4ade80", fontWeight:600 }}>✓ Guardado</span>}
+        </div>
+        {config?.updated_at && (
+          <p style={{ fontSize:11, color:"rgba(255,255,255,0.25)", marginTop:16 }}>
+            Última actualización: {formatDate(config.updated_at)}{config.updated_by ? ` · por ${config.updated_by}` : ""}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── SECTION 8: Configuración ──────────────────────────────────────────────────
 
 const ConfiguracionSection = ({ settings, setSettings }) => {
   const [draft, setDraft] = useState({ ...settings });
@@ -1284,6 +1400,7 @@ const NAV_ITEMS = [
   { id:"materiales",    icon:"🧵", label:"Materiales" },
   { id:"clientes",      icon:"👥", label:"Clientes" },
   { id:"ventas",        icon:"📈", label:"Ventas" },
+  { id:"envios",        icon:"🚚", label:"Envíos" },
   { id:"configuracion", icon:"⚙️", label:"Configuración" },
 ];
 
@@ -1380,6 +1497,7 @@ const Dashboard = ({ materials, setMaterials, printers, setPrinters, settings, s
         {activeSection === "materiales"    && <MaterialsSection     materials={materials} setMaterials={setMaterials} />}
         {activeSection === "clientes"      && <ClientesSection      orders={orders} />}
         {activeSection === "ventas"        && <VentasSection        orders={orders} />}
+        {activeSection === "envios"        && <EnviosSection        adminToken={adminToken} />}
         {activeSection === "configuracion" && <ConfiguracionSection settings={settings} setSettings={setSettings} />}
       </div>
     </div>
