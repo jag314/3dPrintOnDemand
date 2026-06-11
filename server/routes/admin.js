@@ -45,6 +45,7 @@ router.get('/orders', async (req, res) => {
         'scale_applied',
         'stl_original_path',
         'stl_scaled_path',
+        'sinpe_screenshot_path',
         'metadata',
       ].join(', '))
       .order('created_at', { ascending: false })
@@ -58,8 +59,9 @@ router.get('/orders', async (req, res) => {
       id:     row.id,
       ref:    row.reference_number != null ? `#${row.reference_number}` : (row.metadata?.ref || '—'),
       status: row.order_status,
-      stlOriginalPath: row.stl_original_path,
-      stlScaledPath:   row.stl_scaled_path,
+      stlOriginalPath:  row.stl_original_path,
+      stlScaledPath:    row.stl_scaled_path,
+      screenshotPath:   row.sinpe_screenshot_path || null,
     }));
 
     res.json({ orders });
@@ -71,16 +73,16 @@ router.get('/orders', async (req, res) => {
 
 // ── GET /api/admin/orders/:id/download/:type ──────────────────────────────────
 // :id  can be a UUID or a reference_number integer
-// :type  "original" | "scaled"
+// :type  "original" | "scaled" | "screenshot"
 router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
   try {
     const { id, type } = req.params;
 
-    if (type !== 'original' && type !== 'scaled') {
-      return res.status(400).json({ error: 'type must be "original" or "scaled"' });
+    if (type !== 'original' && type !== 'scaled' && type !== 'screenshot') {
+      return res.status(400).json({ error: 'type must be "original", "scaled", or "screenshot"' });
     }
 
-    const cols = 'id, reference_number, stl_original_path, stl_scaled_path, original_filename, scale_applied, metadata';
+    const cols = 'id, reference_number, stl_original_path, stl_scaled_path, sinpe_screenshot_path, original_filename, scale_applied, metadata';
 
     const { row, error } = await findOrder(id, cols);
 
@@ -88,23 +90,33 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    const storagePath = type === 'original' ? row.stl_original_path : row.stl_scaled_path;
+    const storagePath = type === 'original'    ? row.stl_original_path
+                      : type === 'scaled'      ? row.stl_scaled_path
+                      : row.sinpe_screenshot_path;
 
     if (!storagePath) {
       return res.status(404).json({
-        error: type === 'original'
-          ? 'El archivo STL no fue almacenado para este pedido. Puede que el bucket no existiera al momento del pedido.'
+        error: type === 'screenshot'
+          ? 'No hay comprobante de pago almacenado para este pedido.'
+          : type === 'original'
+          ? 'El archivo STL no fue almacenado para este pedido.'
           : 'No hay versión escalada almacenada para este pedido.',
       });
     }
 
     const url = await getSignedUrl(storagePath);
 
-    const baseName = (row.original_filename || row.metadata?.modelFile?.name || 'model')
-      .replace(/\.[^.]+$/, '');
-    const fileName = type === 'original'
-      ? `${baseName}_original.stl`
-      : `${baseName}_scaled_${row.scale_applied}pct.stl`;
+    let fileName;
+    if (type === 'screenshot') {
+      const ext = storagePath.split('.').pop() || 'jpg';
+      fileName = `comprobante_${row.reference_number || row.id.slice(-6)}.${ext}`;
+    } else {
+      const baseName = (row.original_filename || row.metadata?.modelFile?.name || 'model')
+        .replace(/\.[^.]+$/, '');
+      fileName = type === 'original'
+        ? `${baseName}_original.stl`
+        : `${baseName}_scaled_${row.scale_applied}pct.stl`;
+    }
 
     res.json({ url, fileName });
   } catch (err) {

@@ -91,7 +91,7 @@ const StepIndicator = ({ modalStep }) => {
 };
 
 // ── Step 1: Delivery (customer info + delivery address) ───────────────────────
-const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delivery, setDelivery, errors, pricing, unitPrice, qty, modelScale, modelStats, shippingCost, shippingLoading }) => {
+const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delivery, setDelivery, errors, pricing, unitPrice, qty, modelScale, modelStats }) => {
   const set  = (k,v) => setForm(p => ({ ...p, [k]:v }));
   const setD = (k,v) => setDelivery(p => ({ ...p, [k]:v, ...(k==="province" ? { canton:"", district:"", branch:"" } : {}), ...(k==="canton" ? { district:"" } : {}) }));
 
@@ -244,19 +244,6 @@ const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delive
           </div>
         )}
 
-        {/* ── Shipping cost — shown for both home and correos once province is set ── */}
-        {delivery.province && (
-          <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:14, padding:"11px 16px" }}>
-            {shippingLoading ? (
-              <p style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>Calculando costo de envío...</p>
-            ) : shippingCost ? (
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <span style={{ fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", color:"rgba(255,255,255,0.4)", fontWeight:600 }}>Envío PYMEXPRESS</span>
-                <span style={{ fontSize:13, fontWeight:700, color:"#a78bfa" }}>{formatCRC(shippingCost.total)}</span>
-              </div>
-            ) : null}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -295,35 +282,20 @@ const PaymentStep = ({ totalPrice, shippingCrc, sinpe, setSinpe, errors }) => {
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:2 }}>{SINPE_NAME}</p>
         </div>
         <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.6 }}>
-          <p>1. Open your bank's app and select <strong style={{ color:"rgba(255,255,255,0.75)" }}>SINPE Móvil</strong>.</p>
-          <p>2. Send the exact amount above to the number shown.</p>
-          <p>3. Enter the confirmation number you receive here.</p>
+          <p>1. Abrí la app de tu banco y seleccioná <strong style={{ color:"rgba(255,255,255,0.75)" }}>SINPE Móvil</strong>.</p>
+          <p>2. Enviá el monto exacto al número indicado.</p>
+          <p>3. Adjuntá el comprobante abajo para confirmar el pedido.</p>
         </div>
       </div>
 
-      {/* Confirmation number */}
+      {/* Screenshot upload — required */}
       <div>
-        <Lbl>Número de confirmación SINPE *</Lbl>
-        <input
-          value={sinpe.confirmation}
-          onChange={e=>set("confirmation",e.target.value)}
-          placeholder="Ej: 12345678"
-          className={lbl(errors.confirmation)}
-          maxLength={20}
-        />
-        <Err msg={errors.confirmation} />
-        <p style={{ fontSize:10, color:"rgba(255,255,255,0.3)", marginTop:4 }}>
-          El número de confirmación aparece en el SMS de tu banco tras completar el SINPE.
-        </p>
-      </div>
-
-      {/* Screenshot upload (optional) */}
-      <div>
-        <Lbl>Captura de pantalla del comprobante (opcional)</Lbl>
-        <label style={{ display:"block", cursor:"pointer", padding:"14px 16px", borderRadius:12, background:"rgba(255,255,255,0.03)", border:sinpe.screenshot?"1px solid rgba(16,185,129,0.35)":"1px dashed rgba(255,255,255,0.12)", textAlign:"center" }}>
-          <input type="file" accept="image/*" style={{ display:"none" }} onChange={e=>{
+        <Lbl>Comprobante de pago *</Lbl>
+        <label style={{ display:"block", cursor:"pointer", padding:"16px", borderRadius:12, background:"rgba(255,255,255,0.03)", border: errors.screenshot ? "1px solid rgba(239,68,68,0.5)" : sinpe.screenshot ? "1px solid rgba(16,185,129,0.35)" : "1px dashed rgba(255,255,255,0.18)", textAlign:"center" }}>
+          <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
             const f = e.target.files?.[0];
             set("screenshot", f ? f.name : null);
+            set("screenshotFile", f || null);
           }} />
           {sinpe.screenshot ? (
             <span style={{ fontSize:12, color:"#4ade80" }}>✓ {sinpe.screenshot}</span>
@@ -331,14 +303,12 @@ const PaymentStep = ({ totalPrice, shippingCrc, sinpe, setSinpe, errors }) => {
             <span style={{ fontSize:12, color:"rgba(255,255,255,0.35)" }}>📎 Adjuntar imagen (JPG, PNG)</span>
           )}
         </label>
-        <p style={{ fontSize:10, color:"rgba(255,255,255,0.25)", marginTop:4 }}>
-          La captura ayuda a acelerar la verificación del pago.
-        </p>
+        <Err msg={errors.screenshot} />
       </div>
 
       <div style={{ padding:"10px 14px", borderRadius:10, background:"rgba(245,158,11,0.06)", border:"1px solid rgba(245,158,11,0.2)" }}>
         <p style={{ fontSize:11, color:"#f59e0b", fontWeight:600 }}>
-          ⏳ Tu pedido quedará en estado <strong>Pendiente de verificación</strong> hasta que nuestro equipo confirme el pago. Recibirás notificación por email.
+          Adjuntá el comprobante de tu transferencia SINPE. Verificaremos el pago y actualizaremos tu pedido.
         </p>
       </div>
     </div>
@@ -437,7 +407,7 @@ const CheckoutFlow = ({
   });
 
   // Payment state
-  const [sinpe, setSinpe] = useState({ confirmation:"", screenshot:null });
+  const [sinpe, setSinpe] = useState({ screenshot:null, screenshotFile:null });
 
   // Validation errors
   const [errors, setErrors] = useState({});
@@ -491,7 +461,7 @@ const CheckoutFlow = ({
 
   const validatePayment = () => {
     const e = {};
-    if (!sinpe.confirmation.trim()) e.confirmation = "Ingresa el número de confirmación SINPE";
+    if (!sinpe.screenshotFile) e.screenshot = "Adjuntá el comprobante de pago para continuar";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -540,8 +510,7 @@ const CheckoutFlow = ({
       delivery: deliveryData,
       payment: {
         method: "sinpe",
-        sinpeConfirmation: sinpe.confirmation,
-        screenshotAttached: !!sinpe.screenshot,
+        screenshotAttached: !!sinpe.screenshotFile,
         screenshotName: sinpe.screenshot || null,
       },
       modelFile: file ? {
@@ -604,6 +573,9 @@ const CheckoutFlow = ({
       const formData = new FormData();
       formData.append("stlFile",   file, file.name);
       formData.append("orderData", JSON.stringify(payload));
+      if (sinpe.screenshotFile) {
+        formData.append("screenshotFile", sinpe.screenshotFile, sinpe.screenshotFile.name);
+      }
 
       const apiBase = import.meta.env.VITE_API_URL || "";
       const res = await fetch(`${apiBase}/api/orders`, {
@@ -712,7 +684,6 @@ const CheckoutFlow = ({
               errors={errors} pricing={pricing}
               unitPrice={unitPrice} qty={qty}
               modelScale={modelScale} modelStats={modelStats}
-              shippingCost={shippingCost} shippingLoading={shippingLoading}
             />
           )}
           {modalStep === 2 && (

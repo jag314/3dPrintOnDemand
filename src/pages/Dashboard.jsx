@@ -254,6 +254,24 @@ const downloadViaApi = async (orderId, type, adminToken, refStr) => {
   }
 };
 
+const viewPaymentReceipt = async (orderId, adminToken) => {
+  if (!adminToken) { alert("Inicia sesión como admin para ver comprobantes."); return; }
+  try {
+    const apiBase = import.meta.env.VITE_API_URL || "";
+    const res = await fetch(`${apiBase}/api/admin/orders/${orderId}/download/screenshot`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Error ${res.status}`);
+    }
+    const { url } = await res.json();
+    window.open(url, "_blank", "noopener,noreferrer");
+  } catch (err) {
+    alert("No se pudo cargar el comprobante: " + err.message);
+  }
+};
+
 // ── Admin login component ─────────────────────────────────────────────────────
 
 const AdminLogin = ({ onLogin }) => {
@@ -505,7 +523,6 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                                 style={{ background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", color:"#c4b5fd" }}>
                                 ⬇ Original STL
                               </button>
-                              {/* Scaled button only shown when a scaled file exists in storage */}
                               {order.stlScaledPath && (
                                 <button
                                   onClick={() => downloadViaApi(order.id, "scaled", adminToken, order.ref)}
@@ -519,6 +536,22 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                             </div>
                           </div>
                         )}
+
+                        {/* ── Payment receipt ── */}
+                        <div className="pt-3 mt-1" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+                          <p style={{ fontSize:9, fontWeight:800, letterSpacing:"0.14em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", marginBottom:8 }}>🧾 COMPROBANTE DE PAGO</p>
+                          {order.screenshotPath ? (
+                            <button
+                              onClick={() => viewPaymentReceipt(order.id, adminToken)}
+                              disabled={!adminToken}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
+                              style={{ background:"rgba(16,185,129,0.15)", border:"1px solid rgba(16,185,129,0.35)", color:"#4ade80" }}>
+                              🔍 Ver comprobante
+                            </button>
+                          ) : (
+                            <p style={{ fontSize:12, color:"rgba(255,255,255,0.28)" }}>Sin comprobante adjunto</p>
+                          )}
+                        </div>
                       </div>
 
                       {/* Right — admin technical */}

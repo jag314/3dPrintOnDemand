@@ -12,7 +12,7 @@ const upload = multer({
 });
 
 // ── POST /api/orders ──────────────────────────────────────────────────────────
-// Accepts multipart/form-data: stlFile (File) + orderData (JSON string).
+// Accepts multipart/form-data: stlFile (File) + screenshotFile (optional image) + orderData (JSON string).
 //
 // Key schema facts this code respects:
 //   - orders.id            → we supply a server-generated UUID so it matches
@@ -22,10 +22,11 @@ const upload = multer({
 //   - All price columns are INTEGER (CRC) — floats are rounded
 //   - metadata column is JSONB — optional, added non-fatally
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/', upload.single('stlFile'), async (req, res) => {
+router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screenshotFile', maxCount:1 }]), async (req, res) => {
   try {
     // ── 1. Parse & validate payload ───────────────────────────────────────────
-    if (!req.file)           return res.status(400).json({ error: 'stlFile is required' });
+    const stlFile = req.files?.stlFile?.[0];
+    if (!stlFile)            return res.status(400).json({ error: 'stlFile is required' });
     if (!req.body.orderData) return res.status(400).json({ error: 'orderData is required' });
 
     let order;
@@ -35,20 +36,18 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
     const { scalePct = 100 } = order;
 
     // ── 2. Single UUID for BOTH the DB row and the Storage folder ────────────
-    // Using the same value guarantees: DB.id === Storage path prefix, so the
-    // download endpoint can always reconstruct or verify the path from the id.
     const orderId = randomUUID();
 
     // ── 3. Upload original STL ───────────────────────────────────────────────
-    const ext = (req.file.originalname || 'model.stl').split('.').pop().toLowerCase();
+    const ext = (stlFile.originalname || 'model.stl').split('.').pop().toLowerCase();
     const originalPath = `orders/${orderId}/original.${ext}`;
     let storedOriginalPath = null;
 
     try {
       const uploadResult = await supabase.storage
         .from(BUCKET)
-        .upload(originalPath, req.file.buffer, {
-          contentType: req.file.mimetype || 'application/octet-stream',
+        .upload(originalPath, stlFile.buffer, {
+          contentType: stlFile.mimetype || 'application/octet-stream',
           upsert: true,
         });
 
@@ -65,9 +64,9 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
 
     // ── 4. Upload scaled copy — non-fatal, only if original succeeded ─────────
     let scaledPath = null;
-    if (storedOriginalPath && scalePct !== 100 && isSTL(req.file.originalname)) {
+    if (storedOriginalPath && scalePct !== 100 && isSTL(stlFile.originalname)) {
       try {
-        const scaledBuffer = scaleSTL(req.file.buffer, scalePct / 100);
+        const scaledBuffer = scaleSTL(stlFile.buffer, scalePct / 100);
         const candidate    = `orders/${orderId}/scaled_${scalePct}pct.stl`;
         const { error: scaledErr } = await supabase.storage
           .from(BUCKET)
@@ -76,6 +75,26 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
         else           scaledPath = candidate;
       } catch (ex) {
         console.warn('[STL scaling exception — non-fatal]', ex.message);
+      }
+    }
+
+    // ── 4b. Upload SINPE screenshot — non-fatal ───────────────────────────────
+    let screenshotStoragePath = null;
+    const screenshotFile = req.files?.screenshotFile?.[0];
+    if (screenshotFile) {
+      try {
+        const ssExt  = (screenshotFile.originalname || 'screenshot.jpg').split('.').pop().toLowerCase();
+        const ssPath = `orders/${orderId}/sinpe_screenshot.${ssExt}`;
+        const { error: ssErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(ssPath, screenshotFile.buffer, {
+            contentType: screenshotFile.mimetype || 'image/jpeg',
+            upsert: true,
+          });
+        if (ssErr) console.warn('[Screenshot upload failed — non-fatal]', ssErr.message);
+        else       screenshotStoragePath = ssPath;
+      } catch (ex) {
+        console.warn('[Screenshot upload exception — non-fatal]', ex.message);
       }
     }
 
@@ -132,7 +151,7 @@ router.post('/', upload.single('stlFile'), async (req, res) => {
 
       payment_method:       order.payment?.method            || 'sinpe',
       sinpe_number:         order.payment?.sinpeConfirmation || null,
-      sinpe_screenshot_path: null,
+      sinpe_screenshot_path: screenshotStoragePath,
 
       delivery_cost_crc:  Math.round(delivery.cost_crc || 0),
 
