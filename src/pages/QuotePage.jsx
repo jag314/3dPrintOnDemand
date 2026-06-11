@@ -128,6 +128,12 @@ const TechnologySelector = ({ technology, setTechnology }) => {
   const [photoIdx, setPhotoIdx] = React.useState(0);
   const info = modal ? MATERIAL_INFO[modal] : null;
   React.useEffect(() => { setPhotoIdx(0); }, [modal]);
+  React.useEffect(() => {
+    if (!modal) return;
+    const len = MATERIAL_INFO[modal].photos.length;
+    const timer = setInterval(() => setPhotoIdx(i => (i + 1) % len), 3000);
+    return () => clearInterval(timer);
+  }, [modal, photoIdx]);
   return (
     <>
       <div className="absolute top-6 z-30" style={{ left:"50%", transform:"translateX(-50%)", background:"rgba(10,10,20,0.72)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"10px 10px", boxShadow:"0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
@@ -149,8 +155,17 @@ const TechnologySelector = ({ technology, setTechnology }) => {
           <div className="relative w-full max-w-2xl rounded-[28px] overflow-hidden" style={{ background:"linear-gradient(145deg,#0f0e1a,#13101f)", border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 24px 80px rgba(0,0,0,0.8)", maxHeight:"85vh", display:"flex", flexDirection:"column" }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setModal(null)} style={{ position:"absolute", top:16, right:16, zIndex:10, fontSize:22, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.5)", borderRadius:"50%", border:"1px solid rgba(255,255,255,0.12)", color:"rgba(255,255,255,0.6)", cursor:"pointer" }}>×</button>
             <div style={{ position:"relative", width:"100%", height:288, flexShrink:0, overflow:"hidden" }}>
-              {info.photos.map((p,idx) => (<div key={idx} style={{ position:"absolute", inset:0, opacity:photoIdx===idx?1:0, transition:"opacity 0.6s ease", backgroundImage:`url(${p.url})`, backgroundSize:"cover", backgroundPosition:p.position, backgroundRepeat:"no-repeat" }} />))}
+              {info.photos.map((p,idx) => (
+                <div key={idx} style={{ position:"absolute", inset:0, opacity:photoIdx===idx?1:0, transition:"opacity 0.6s ease", backgroundImage:`url(${p.url})`, backgroundSize:"cover", backgroundPosition:p.position||"center center", backgroundRepeat:"no-repeat" }} />
+              ))}
               <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 0%, rgba(15,14,26,0.55) 55%, #0f0e1a 100%)", pointerEvents:"none" }} />
+              <button onClick={(e) => { e.stopPropagation(); setPhotoIdx(i => (i - 1 + info.photos.length) % info.photos.length); }} style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", zIndex:5, width:32, height:32, borderRadius:"50%", background:"rgba(0,0,0,0.45)", border:"1px solid rgba(255,255,255,0.15)", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, lineHeight:1 }}>‹</button>
+              <button onClick={(e) => { e.stopPropagation(); setPhotoIdx(i => (i + 1) % info.photos.length); }} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", zIndex:5, width:32, height:32, borderRadius:"50%", background:"rgba(0,0,0,0.45)", border:"1px solid rgba(255,255,255,0.15)", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, lineHeight:1 }}>›</button>
+              <div style={{ position:"absolute", bottom:24, right:24, zIndex:5, display:"flex", gap:6, alignItems:"center" }}>
+                {info.photos.map((_,idx) => (
+                  <button key={idx} onClick={(e) => { e.stopPropagation(); setPhotoIdx(idx); }} style={{ width:photoIdx===idx?18:6, height:6, borderRadius:3, background:photoIdx===idx?"#a78bfa":"rgba(255,255,255,0.35)", border:"none", cursor:"pointer", transition:"all 0.3s ease", padding:0 }} />
+                ))}
+              </div>
               <div style={{ position:"absolute", bottom:20, left:24 }}>
                 <h2 style={{ fontSize:22, fontWeight:900, color:"#ffffff", margin:0, lineHeight:1.2 }}>{info.title}</h2>
                 <p style={{ fontSize:13, color:"rgba(255,255,255,0.55)", margin:"4px 0 0" }}>{info.subtitle}</p>
