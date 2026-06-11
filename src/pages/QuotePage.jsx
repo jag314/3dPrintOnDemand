@@ -148,13 +148,15 @@ const TechnologySelector = ({ technology, setTechnology }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" style={{ background:"rgba(0,0,0,0.75)", backdropFilter:"blur(10px)" }} onClick={() => setModal(null)}>
           <div className="relative w-full max-w-2xl rounded-[28px] overflow-hidden" style={{ background:"linear-gradient(145deg,#0f0e1a,#13101f)", border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 24px 80px rgba(0,0,0,0.8)", maxHeight:"85vh", display:"flex", flexDirection:"column" }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setModal(null)} style={{ position:"absolute", top:16, right:16, zIndex:10, fontSize:22, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.5)", borderRadius:"50%", border:"1px solid rgba(255,255,255,0.12)", color:"rgba(255,255,255,0.6)", cursor:"pointer" }}>×</button>
-            <div style={{ position:"relative", width:"100%", height:260, flexShrink:0, overflow:"hidden" }}>
+            <div style={{ position:"relative", width:"100%", height:288, flexShrink:0, overflow:"hidden" }}>
               {info.photos.map((p,idx) => (<div key={idx} style={{ position:"absolute", inset:0, opacity:photoIdx===idx?1:0, transition:"opacity 0.6s ease", backgroundImage:`url(${p.url})`, backgroundSize:"cover", backgroundPosition:p.position, backgroundRepeat:"no-repeat" }} />))}
-              <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(15,14,26,0.88) 78%, #0f0e1a 100%)", pointerEvents:"none" }} />
+              <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 0%, rgba(15,14,26,0.55) 55%, #0f0e1a 100%)", pointerEvents:"none" }} />
+              <div style={{ position:"absolute", bottom:20, left:24 }}>
+                <h2 style={{ fontSize:22, fontWeight:900, color:"#ffffff", margin:0, lineHeight:1.2 }}>{info.title}</h2>
+                <p style={{ fontSize:13, color:"rgba(255,255,255,0.55)", margin:"4px 0 0" }}>{info.subtitle}</p>
+              </div>
             </div>
             <div className="overflow-y-auto" style={{ padding:"20px 28px 32px" }}>
-              <h2 className="text-3xl font-black text-white">{info.title}</h2>
-              <p className="text-white/50 text-sm mt-1">{info.subtitle}</p>
               <p className="text-white/70 text-sm mt-3 leading-relaxed">{info.description}</p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 {info.characteristics.map(c => (
