@@ -154,31 +154,31 @@ const TechnologySelector = ({ technology, setTechnology }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" style={{ background:"rgba(0,0,0,0.75)", backdropFilter:"blur(10px)" }} onClick={() => setModal(null)}>
           <div className="relative w-full max-w-2xl rounded-[28px] overflow-hidden" style={{ background:"linear-gradient(145deg,#0f0e1a,#13101f)", border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 24px 80px rgba(0,0,0,0.8)", maxHeight:"85vh", display:"flex", flexDirection:"column" }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setModal(null)} style={{ position:"absolute", top:16, right:16, zIndex:10, fontSize:22, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.5)", borderRadius:"50%", border:"1px solid rgba(255,255,255,0.12)", color:"rgba(255,255,255,0.6)", cursor:"pointer" }}>×</button>
-            <div style={{ position:"relative", width:"100%", height:288, flexShrink:0, overflow:"hidden" }}>
+            <div style={{ position:"relative", width:"100%", height:340, flexShrink:0, overflow:"hidden" }}>
               {info.photos.map((p,idx) => (
                 <div key={idx} style={{ position:"absolute", inset:0, opacity:photoIdx===idx?1:0, transition:"opacity 0.6s ease", backgroundImage:`url(${p.url})`, backgroundSize:"cover", backgroundPosition:p.position||"center center", backgroundRepeat:"no-repeat" }} />
               ))}
               <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 0%, rgba(15,14,26,0.55) 55%, #0f0e1a 100%)", pointerEvents:"none" }} />
               <button onClick={(e) => { e.stopPropagation(); setPhotoIdx(i => (i - 1 + info.photos.length) % info.photos.length); }} style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", zIndex:5, width:32, height:32, borderRadius:"50%", background:"rgba(0,0,0,0.45)", border:"1px solid rgba(255,255,255,0.15)", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, lineHeight:1 }}>‹</button>
               <button onClick={(e) => { e.stopPropagation(); setPhotoIdx(i => (i + 1) % info.photos.length); }} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", zIndex:5, width:32, height:32, borderRadius:"50%", background:"rgba(0,0,0,0.45)", border:"1px solid rgba(255,255,255,0.15)", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, lineHeight:1 }}>›</button>
-              <div style={{ position:"absolute", bottom:24, right:24, zIndex:5, display:"flex", gap:6, alignItems:"center" }}>
-                {info.photos.map((_,idx) => (
-                  <button key={idx} onClick={(e) => { e.stopPropagation(); setPhotoIdx(idx); }} style={{ width:photoIdx===idx?18:6, height:6, borderRadius:3, background:photoIdx===idx?"#a78bfa":"rgba(255,255,255,0.35)", border:"none", cursor:"pointer", transition:"all 0.3s ease", padding:0 }} />
-                ))}
-              </div>
               <div style={{ position:"absolute", bottom:20, left:24 }}>
                 <h2 style={{ fontSize:22, fontWeight:900, color:"#ffffff", margin:0, lineHeight:1.2 }}>{info.title}</h2>
                 <p style={{ fontSize:13, color:"rgba(255,255,255,0.55)", margin:"4px 0 0" }}>{info.subtitle}</p>
               </div>
             </div>
-            <div className="overflow-y-auto" style={{ padding:"20px 28px 32px" }}>
-              <p className="text-white/70 text-sm mt-3 leading-relaxed">{info.description}</p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                {info.characteristics.map(c => (
-                  <div key={c.title} style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.12)", borderRadius:16, padding:14 }}>
-                    <div className="text-2xl mb-2">{c.icon}</div>
+            <div style={{ display:"flex", justifyContent:"center", gap:6, padding:"10px 0 2px", flexShrink:0 }}>
+              {info.photos.map((_,idx) => (
+                <button key={idx} onClick={(e) => { e.stopPropagation(); setPhotoIdx(idx); }} style={{ width:photoIdx===idx?18:6, height:6, borderRadius:3, background:photoIdx===idx?"#a78bfa":"rgba(255,255,255,0.25)", border:"none", cursor:"pointer", transition:"all 0.3s ease", padding:0 }} />
+              ))}
+            </div>
+            <div className="overflow-y-auto" style={{ padding:"12px 28px 28px" }}>
+              <p className="text-white/70 text-sm leading-relaxed">{info.description}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {info.characteristics.slice(0,4).map(c => (
+                  <div key={c.title} style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.12)", borderRadius:14, padding:10 }}>
+                    <div className="text-xl mb-1">{c.icon}</div>
                     <div className="text-white font-bold text-sm">{c.title}</div>
-                    <div className="text-white/55 text-xs mt-1.5 leading-relaxed">{c.description}</div>
+                    <div className="text-white/55 text-xs mt-1 leading-relaxed">{c.description}</div>
                   </div>
                 ))}
               </div>
