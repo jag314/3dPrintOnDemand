@@ -1434,6 +1434,48 @@ const ConfiguracionSection = ({ settings, setSettings }) => {
           <div className="mt-4"><label className={labelCls}>Mensaje de bienvenida</label><textarea value={draft.welcomeMessage||""} onChange={e=>set("welcomeMessage",e.target.value)} rows={2} className={inputCls + " resize-none"} /></div>
         </div>
 
+        {/* Soportes */}
+        <div className="rounded-2xl border border-white/10 p-6" style={{ background:"rgba(255,255,255,0.02)" }}>
+          <p className={labelCls} style={{ color:"#a78bfa", fontSize:11, marginBottom:4 }}>SOPORTES — RECARGO POR NIVEL</p>
+          <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", marginBottom:16 }}>
+            Porcentaje extra de material y tiempo según el nivel de soportes detectado en el modelo 3D.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full" style={{ borderCollapse:"collapse" }}>
+              <thead>
+                <tr style={{ borderBottom:"1px solid rgba(255,255,255,0.1)" }}>
+                  {["Nivel","% Material extra","% Tiempo extra"].map(h => (
+                    <th key={h} style={{ padding:"6px 12px", textAlign:"left", fontSize:10, color:"rgba(255,255,255,0.35)", textTransform:"uppercase", letterSpacing:"0.08em", fontWeight:600 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { matKey:"supportLightMat",    timeKey:"supportLightTime",    label:"Leve",     color:"#3b82f6", defaultMat:5,  defaultTime:8  },
+                  { matKey:"supportModerateMat", timeKey:"supportModerateTime", label:"Moderado", color:"#f59e0b", defaultMat:15, defaultTime:20 },
+                  { matKey:"supportHeavyMat",    timeKey:"supportHeavyTime",    label:"Pesado",   color:"#ef4444", defaultMat:30, defaultTime:40 },
+                ].map(({ matKey, timeKey, label, color, defaultMat, defaultTime }) => (
+                  <tr key={label} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                    <td style={{ padding:"10px 12px", fontSize:13, fontWeight:700, color }}>{label}</td>
+                    <td style={{ padding:"10px 12px" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <input type="number" min="0" max="200" step="1" value={draft[matKey] ?? defaultMat} onChange={e=>set(matKey,+e.target.value)} className={inputCls} style={{ width:80 }} />
+                        <span style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>%</span>
+                      </div>
+                    </td>
+                    <td style={{ padding:"10px 12px" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <input type="number" min="0" max="200" step="1" value={draft[timeKey] ?? defaultTime} onChange={e=>set(timeKey,+e.target.value)} className={inputCls} style={{ width:80 }} />
+                        <span style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Notificaciones */}
         <div className="rounded-2xl border border-white/10 p-6" style={{ background:"rgba(255,255,255,0.02)" }}>
           <p className={labelCls} style={{ color:"#a78bfa", fontSize:11, marginBottom:16 }}>NOTIFICACIONES</p>

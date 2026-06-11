@@ -162,6 +162,13 @@ export const DEFAULT_SETTINGS = {
   responseTimeH:     2,
   notificationEmail: "",
   lowStockAlert:     1,
+  // Support overhead percentages (whole numbers, e.g. 5 = 5%)
+  supportLightMat:     5,
+  supportLightTime:    8,
+  supportModerateMat:  15,
+  supportModerateTime: 20,
+  supportHeavyMat:     30,
+  supportHeavyTime:    40,
 };
 
 // ── App ───────────────────────────────────────────────────────────────────────

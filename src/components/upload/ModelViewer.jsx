@@ -29,7 +29,7 @@ const detectScale = (sz) => {
 
 // ── Support detection ────────────────────────────────────────────────────────
 
-const analyzeSupportNeeds = (geometry) => {
+const analyzeSupportNeeds = (geometry, extraLookup) => {
   const pos = geometry.attributes.position;
   if (!geometry.attributes.normal) geometry.computeVertexNormals();
   const nor = geometry.attributes.normal;
@@ -62,7 +62,7 @@ const analyzeSupportNeeds = (geometry) => {
   else if (overhangRatio < 0.25) supportLevel = "moderate";
   else                            supportLevel = "heavy";
 
-  const EXTRA = {
+  const EXTRA = extraLookup || {
     none:     { material: 0.00, time: 0.00 },
     light:    { material: 0.05, time: 0.08 },
     moderate: { material: 0.15, time: 0.20 },
@@ -274,6 +274,7 @@ const ModelViewer = ({
   selectedMaterial, materials, onModelSizeChange, onLoadingChange,
   technology = "fdm",
   modelScale = 1,
+  supportConfig,
 }) => {
   const [model, setModel] = useState(null);
   const [modelSize, setModelSize] = useState(null);
@@ -318,6 +319,14 @@ const ModelViewer = ({
   useEffect(() => {
     if (!file) return;
     if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
+
+    const extraLookup = supportConfig ? {
+      none:     { material: 0,                           time: 0 },
+      light:    { material: supportConfig.light.material,    time: supportConfig.light.time    },
+      moderate: { material: supportConfig.moderate.material, time: supportConfig.moderate.time },
+      heavy:    { material: supportConfig.heavy.material,    time: supportConfig.heavy.time    },
+    } : null;
+
     const ext = file.name.split(".").pop().toLowerCase();
     const url = URL.createObjectURL(file);
     prevUrlRef.current = url;
@@ -355,7 +364,7 @@ const ModelViewer = ({
       new STLLoader().load(url, (geo) => {
         geo.computeVertexNormals();
         const { sz, volumeMM3 } = prepareGeometry(geo);
-        const support = analyzeSupportNeeds(geo);
+        const support = analyzeSupportNeeds(geo, extraLookup);
         const mesh = new THREE.Mesh(geo, createMaterial(colorHex, technology, colorFinish));
         const complexity = geo.attributes.position.count > 200000 ? "High" : geo.attributes.position.count > 80000 ? "Medium" : "Low";
         finish(mesh, sz, volumeMM3, complexity, support);
@@ -390,7 +399,7 @@ const ModelViewer = ({
         const mergedGeo = new THREE.BufferGeometry();
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
         mergedGeo.computeVertexNormals();
-        const support = analyzeSupportNeeds(mergedGeo);
+        const support = analyzeSupportNeeds(mergedGeo, extraLookup);
         const totalVol = calcVolume(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(obj);
         const sz = finalBox.getSize(new THREE.Vector3());
@@ -445,7 +454,7 @@ const ModelViewer = ({
         const mergedGeo = new THREE.BufferGeometry();
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
         mergedGeo.computeVertexNormals();
-        const support = analyzeSupportNeeds(mergedGeo);
+        const support = analyzeSupportNeeds(mergedGeo, extraLookup);
         const totalVol = calcVolume(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(object);
         const sz = finalBox.getSize(new THREE.Vector3());

@@ -346,6 +346,18 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const markup         = settings?.commercialMarkup || 2.5;
   const minimumPrice   = settings?.minimumPrice || 5000;
 
+  const supportConfig = useMemo(() => ({
+    none:     { material: 0, time: 0 },
+    light:    { material: (settings?.supportLightMat     ?? 5)  / 100,
+                time:     (settings?.supportLightTime    ?? 8)  / 100 },
+    moderate: { material: (settings?.supportModerateMat  ?? 15) / 100,
+                time:     (settings?.supportModerateTime ?? 20) / 100 },
+    heavy:    { material: (settings?.supportHeavyMat     ?? 30) / 100,
+                time:     (settings?.supportHeavyTime    ?? 40) / 100 },
+  }), [settings?.supportLightMat, settings?.supportLightTime,
+       settings?.supportModerateMat, settings?.supportModerateTime,
+       settings?.supportHeavyMat, settings?.supportHeavyTime]);
+
   // Build volume check
   const buildCheck = useMemo(() => {
     return computeBuildCheck(modelStats.dimensions, activePrinter?.buildVolume);
@@ -451,6 +463,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     onModelSizeChange={setModelSize} onLoadingChange={setIsLoading}
                     technology={technology}
                     modelScale={modelScaleProp}
+                    supportConfig={supportConfig}
                   />
                 )}
               </ViewerCanvas>
@@ -703,6 +716,9 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     <h3 className="text-4xl sm:text-5xl font-black text-violet-400 leading-none break-all">
                       {formatCRC(pricing.salePrice)}
                     </h3>
+                    <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontStyle:"italic", marginTop:4 }}>
+                      * Precio estimado basado en el análisis del modelo. El precio final puede variar.
+                    </p>
                     <ul className="mt-4 space-y-1.5">
                       {[
                         "✓ Material de impresión incluido",
