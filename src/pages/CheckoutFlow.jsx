@@ -361,7 +361,7 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
       <div>
         <Lbl>Comprobante de pago *</Lbl>
         <label style={{ display:"block", cursor:"pointer", padding:"16px", borderRadius:12, background:"rgba(255,255,255,0.03)", border: errors.screenshot ? "1px solid rgba(239,68,68,0.5)" : sinpe.screenshot ? "1px solid rgba(16,185,129,0.35)" : "1px dashed rgba(255,255,255,0.18)", textAlign:"center" }}>
-          <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
+          <input type="file" accept="image/jpeg,image/png,application/pdf" style={{ display:"none" }} onChange={e => {
             const f = e.target.files?.[0];
             set("screenshot", f ? f.name : null);
             set("screenshotFile", f || null);
@@ -369,7 +369,7 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
           {sinpe.screenshot ? (
             <span style={{ fontSize:12, color:"#4ade80" }}>✓ {sinpe.screenshot}</span>
           ) : (
-            <span style={{ fontSize:12, color:"rgba(255,255,255,0.35)" }}>📎 Adjuntar imagen (JPG, PNG)</span>
+            <span style={{ fontSize:12, color:"rgba(255,255,255,0.35)" }}>📎 Adjuntar comprobante (JPG, PNG o PDF)</span>
           )}
         </label>
         <Err msg={errors.screenshot} />
