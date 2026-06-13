@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 
-import ComputersCanvas from "./canvas/Computers";
+import MechanicalAssemblyCanvas from "./canvas/MechanicalAssembly";
 import Stats from "./Stats";
 
 const Hero = () => {
@@ -22,7 +22,7 @@ const Hero = () => {
 
   return (
 
-    <section id="upload-hero" className="relative w-full min-h-screen overflow-x-hidden pt-32 lg:pt-40">
+    <section id="upload-hero" className="relative w-full min-h-screen overflow-x-clip pt-32 lg:pt-40">
 
       {/* BACKGROUND — fixed so it never moves on scroll */}
 
@@ -42,7 +42,7 @@ const Hero = () => {
 
       {/* CONTENT */}
 
-      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative z-10">
+      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative">
 
         {/* LEFT */}
 
@@ -203,9 +203,31 @@ const Hero = () => {
               "
             />
 
-            {/* MODEL */}
+            {/* CANVAS — extends 180px above its container on lg screens,
+                creating the "bursting above navbar" overflow effect.
+                Mobile: top-0, model stays within bounds. */}
+            <div
+              className="absolute bottom-0 left-[-6%] right-[-6%] top-0 lg:-top-[180px] pointer-events-none"
+              style={{ zIndex: 30 }}
+            >
+              {/* pointer-events-auto on the inner div so hover → explode still works */}
+              <div className="w-full h-full pointer-events-auto">
+                <MechanicalAssemblyCanvas />
+              </div>
+            </div>
 
-            <ComputersCanvas />
+            {/* GRADIENT — fades the overflow zone into the navbar's dark background.
+                z-35 sits above the canvas (z-30) so the very top of the model
+                emerges from darkness rather than cutting sharply. Desktop only. */}
+            <div
+              className="absolute left-0 right-0 pointer-events-none hidden lg:block"
+              style={{
+                top:        "-180px",
+                height:     "220px",
+                background: "linear-gradient(to bottom, rgba(11,16,32,0.94) 0%, transparent 100%)",
+                zIndex:     35,
+              }}
+            />
 
           </div>
 
