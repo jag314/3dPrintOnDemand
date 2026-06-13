@@ -291,6 +291,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const [modelScale,     setModelScale]     = useState(1.0);   // applied
   const [scalePanelOpen, setScalePanelOpen] = useState(false);
   const [currentScale,   setCurrentScale]   = useState(100);   // panel preview (10-200)
+  const [debouncedScale, setDebouncedScale] = useState(100);   // debounced, drives Three.js model
 
   const [modelStats, setModelStats] = useState({
     fileName:"-", dimensions:"-", materialUsage:"0", complexity:"-",
@@ -340,6 +341,12 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
     if (scalePanelOpen) setCurrentScale(Math.round(modelScale * 100));
   }, [scalePanelOpen]);
 
+  // Debounce model scale to prevent Three.js jerkiness during slider drag
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedScale(currentScale), 150);
+    return () => clearTimeout(t);
+  }, [currentScale]);
+
   const selectedColors = materials[selectedMaterial]?.colors || [];
   const parsedWeight   = parseFloat(modelStats.materialUsage) || 0;
   const activePrinter  = getActivePrinter(technology);
@@ -365,8 +372,8 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
 
   const fitsOriginal = buildCheck?.fitsOriginal ?? true;
 
-  // Live viewer scale — use currentScale while panel is open for live preview
-  const modelScaleProp = scalePanelOpen ? currentScale / 100 : modelScale;
+  // Live viewer scale — debounced so Three.js only updates after slider settles
+  const modelScaleProp = scalePanelOpen ? debouncedScale / 100 : modelScale;
 
   // Pricing uses the APPLIED scale (not live preview)
   const weightForPricing = useMemo(() => parsedWeight * Math.pow(modelScale, 3), [parsedWeight, modelScale]);
@@ -421,7 +428,8 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   }, [modelStats.dimensions, modelScale]);
 
   // fitsOriginal is used only for the compact oversized banner; AnalysisBadge no longer receives it
-  const badgeProps = { modelStats, parsedWeight, displayDimensions };
+  const displayWeight = scalePanelOpen ? panelLiveWeight : weightForPricing;
+  const badgeProps = { modelStats, parsedWeight: parseFloat(displayWeight.toFixed(1)), displayDimensions };
 
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
