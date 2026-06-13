@@ -371,6 +371,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   }, [modelStats.dimensions, activePrinter?.buildVolume]);
 
   const fitsOriginal = buildCheck?.fitsOriginal ?? true;
+  const fitsAtCurrentScale = fitsOriginal || (!!buildCheck && Math.round(modelScale * 100) <= buildCheck.minScalePct);
 
   // Live viewer scale — debounced so Three.js only updates after slider settles
   const modelScaleProp = scalePanelOpen ? debouncedScale / 100 : modelScale;
@@ -633,28 +634,53 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                 </div>
               )}
 
-              {/* ── COMPACT OVERSIZED BANNER — placed above material selector ── */}
+              {/* ── OVERSIZED MODEL CARD — placed above material selector ── */}
               {!fitsOriginal && (
-                <div style={{
-                  display:"flex", alignItems:"center", gap:8,
-                  maxHeight:56, height:48,
-                  background:"rgba(13,10,30,0.92)",
-                  border:"1px solid rgba(245,158,11,0.45)",
-                  borderRadius:12, padding:"0 12px",
-                  marginTop:16, marginBottom:4,
-                  overflow:"hidden",
-                }}>
-                  <span style={{ fontSize:14, flexShrink:0 }}>⚠️</span>
-                  <span style={{ flex:1, fontSize:11, fontWeight:600, color:"rgba(255,255,255,0.85)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                    Your model exceeds our standard print volume.
-                  </span>
-                  <button onClick={() => setScalePanelOpen(true)} style={{ flexShrink:0, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
-                    Scale model
-                  </button>
-                  <button onClick={() => navigate("/contact")} style={{ flexShrink:0, background:"rgba(255,255,255,0.07)", border:"1px solid rgba(255,255,255,0.15)", color:"rgba(255,255,255,0.75)", borderRadius:8, padding:"5px 10px", fontSize:11, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
-                    Contact support
-                  </button>
-                </div>
+                fitsAtCurrentScale ? (
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:16, marginBottom:4, padding:"10px 14px", borderRadius:12, background:"rgba(16,185,129,0.06)", border:"1px solid rgba(16,185,129,0.25)" }}>
+                    <span style={{ fontSize:14, color:"#10b981" }}>✓</span>
+                    <span style={{ fontSize:12, fontWeight:600, color:"#10b981" }}>Modelo dentro del volumen de impresión</span>
+                  </div>
+                ) : (
+                  <div style={{
+                    marginTop:16, marginBottom:4,
+                    background:"rgba(245,158,11,0.06)",
+                    borderTop:"1px solid rgba(245,158,11,0.2)",
+                    borderRight:"1px solid rgba(245,158,11,0.2)",
+                    borderBottom:"1px solid rgba(245,158,11,0.2)",
+                    borderLeft:"3px solid #f59e0b",
+                    borderRadius:12,
+                    padding:"18px 16px",
+                  }}>
+                    <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:14 }}>
+                      <span style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>📐</span>
+                      <div>
+                        <p style={{ fontSize:14, fontWeight:700, color:"#fde68a", margin:0, lineHeight:1.35 }}>Tu modelo supera nuestro volumen de impresión estándar</p>
+                      </div>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"auto 1fr", gap:"6px 14px", marginBottom:16 }}>
+                      <span style={{ fontSize:12, color:"rgba(255,255,255,0.45)", alignSelf:"center" }}>Dimensiones del modelo</span>
+                      <span style={{ fontSize:12, color:"rgba(255,255,255,0.85)", fontWeight:600 }}>{buildCheck?.originalDimensions}</span>
+                      <span style={{ fontSize:12, color:"rgba(255,255,255,0.45)", alignSelf:"center" }}>Volumen máximo</span>
+                      <span style={{ fontSize:12, color:"rgba(255,255,255,0.85)", fontWeight:600 }}>{buildCheck?.printerVolume}</span>
+                    </div>
+                    <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:12 }}>¿Cómo deseas continuar?</p>
+                    <div style={{ display:"flex", gap:8 }}>
+                      <button
+                        onClick={() => setScalePanelOpen(true)}
+                        style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"10px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}
+                      >
+                        ↕ Escalar modelo
+                      </button>
+                      <button
+                        onClick={() => navigate(`/contact?ref=oversized&file=${encodeURIComponent(modelStats.fileName)}&dims=${(buildCheck?.originalDimensions||"").replace(/ × /g,"x").replace(" mm","")}`)}
+                        style={{ flex:1, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.35)", color:"#fde68a", borderRadius:10, padding:"10px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}
+                      >
+                        ✉ Solicitar cotización
+                      </button>
+                    </div>
+                  </div>
+                )
               )}
 
               {/* Material selection */}
@@ -706,10 +732,35 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
 
               {/* Price section */}
               <div className="mt-8 pt-6 border-t border-white/10">
-                {pricing.needsPrinter ? (
+                {technology === "sla" ? (
+                  <div style={{
+                    background:"rgba(124,58,237,0.06)",
+                    borderTop:"1px solid rgba(124,58,237,0.18)",
+                    borderRight:"1px solid rgba(124,58,237,0.18)",
+                    borderBottom:"1px solid rgba(124,58,237,0.18)",
+                    borderLeft:"3px solid #7c3aed",
+                    borderRadius:12,
+                    padding:"20px 18px",
+                  }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+                      <span style={{ fontSize:20 }}>🔬</span>
+                      <span style={{ fontSize:13, fontWeight:700, color:"#a78bfa", lineHeight:1.3 }}>Próximamente · Impresión en Resina SLA</span>
+                    </div>
+                    <p style={{ fontSize:13, color:"rgba(255,255,255,0.65)", lineHeight:1.6, marginBottom:14 }}>
+                      Estamos trabajando para ofrecerte impresión en resina de alta precisión muy pronto.
+                    </p>
+                    <p style={{ fontSize:12, color:"rgba(255,255,255,0.45)", marginBottom:14 }}>¿Necesitas este servicio ahora?</p>
+                    <button
+                      onClick={() => navigate("/contact")}
+                      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"11px 16px", fontSize:13, fontWeight:700, cursor:"pointer" }}
+                    >
+                      <span>Solicitar cotización personalizada</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                ) : pricing.needsPrinter ? (
                   <div style={{ padding:"14px", borderRadius:12, background:"rgba(245,158,11,0.06)", border:"1px solid rgba(245,158,11,0.2)" }}>
-                    <p style={{ fontSize:13, color:"#f59e0b", fontWeight:600 }}>⚙️ No hay impresora para {technology.toUpperCase()}</p>
-                    <p style={{ fontSize:12, color:"rgba(255,255,255,0.4)", marginTop:3 }}>Configura una en el Dashboard.</p>
+                    <p style={{ fontSize:13, color:"#f59e0b", fontWeight:600 }}>⚙️ Sin impresora {technology.toUpperCase()} activa</p>
                   </div>
                 ) : (
                   <>
@@ -737,7 +788,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                   </>
                 )}
 
-                {!pricing.needsPrinter && weightForPricing > 0 && (
+                {technology !== "sla" && !pricing.needsPrinter && weightForPricing > 0 && (
                   <button onClick={() => setShowModal(true)}
                     className="mt-6 w-full primary-button py-4 rounded-2xl sm:rounded-3xl text-base sm:text-lg font-bold">
                     Confirmar Pedido →
