@@ -10,7 +10,7 @@ const Navbar = () => {
       top-0
       left-0
       w-full
-      z-[20]
+      z-50
       backdrop-blur-2xl
       bg-[#0b1020]/70
       border-b
