@@ -22,7 +22,7 @@ const Hero = () => {
 
   return (
 
-    <section id="upload-hero" className="relative w-full min-h-screen overflow-x-hidden pt-32 lg:pt-40">
+    <section id="upload-hero" className="relative w-full min-h-screen overflow-x-clip pt-32 lg:pt-40">
 
       {/* BACKGROUND — fixed so it never moves on scroll */}
 
@@ -42,7 +42,7 @@ const Hero = () => {
 
       {/* CONTENT */}
 
-      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative z-10">
+      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative">
 
         {/* LEFT */}
 
@@ -139,7 +139,7 @@ const Hero = () => {
 
         <div className="relative flex justify-center">
 
-          {/* MODEL AREA */}
+          {/* MODEL AREA — maintains grid height, shows hover effects */}
 
           <div
             className="
@@ -203,13 +203,34 @@ const Hero = () => {
               "
             />
 
-            {/* MODEL */}
-
-            <ComputersCanvas />
+            {/* CANVAS WRAPPER
+                Mobile: top-0 (stays within bounds)
+                Desktop (lg): extends 180px above the container into navbar area */}
+            <div
+              className="absolute bottom-0 left-[-6%] right-[-6%] top-0 lg:-top-[180px] pointer-events-none"
+              style={{ zIndex: 30 }}
+            >
+              {/* Inner div enables pointer events for 3D rotation while wrapper passes through clicks */}
+              <div className="w-full h-full pointer-events-auto">
+                <ComputersCanvas />
+              </div>
+            </div>
 
           </div>
 
         </div>
+
+        {/* TOP GRADIENT — subtle fade so the overflowing model blends into the navbar background;
+            only on desktop where the overflow effect is active */}
+        <div
+          className="absolute top-0 right-0 pointer-events-none hidden lg:block"
+          style={{
+            width: "55%",
+            height: "160px",
+            background: "linear-gradient(to bottom, rgba(11,16,32,0.75) 0%, transparent 100%)",
+            zIndex: 15,
+          }}
+        />
 
       </div>
 
