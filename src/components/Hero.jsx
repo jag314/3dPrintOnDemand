@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 
-import MechanicalAssemblyCanvas from "./canvas/MechanicalAssembly";
+import ComputersCanvas from "./canvas/Computers";
 import Stats from "./Stats";
 
 const Hero = () => {
@@ -24,67 +24,44 @@ const Hero = () => {
 
     <section id="upload-hero" className="relative w-full min-h-screen overflow-x-clip pt-32 lg:pt-40">
 
-      {/* BACKGROUND — fixed so it never moves on scroll */}
-
+      {/* BACKGROUND */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1e1b4b] pointer-events-none" />
 
       {/* GRID */}
-
       <div className="grid-background" />
 
-      {/* BIG GLOW — fixed so it stays put while user scrolls */}
-
+      {/* GLOW */}
       <div className="fixed top-[-200px] right-[-200px] w-[900px] h-[900px] bg-violet-600/[0.18] blur-[180px] rounded-full -z-10 pointer-events-none" />
-
-      {/* EXTRA ATMOSPHERE — fixed */}
-
       <div className="fixed top-0 right-0 w-[900px] h-[900px] bg-violet-500/[0.08] blur-[180px] rounded-full -z-10 pointer-events-none" />
 
       {/* CONTENT */}
-
       <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative">
 
         {/* LEFT */}
-
         <div className="pb-20 lg:pb-0">
 
           {/* BADGE */}
-
           <div className="inline-flex items-center px-6 py-3 rounded-full border border-violet-400/20 bg-violet-500/10 text-violet-200 backdrop-blur-xl mb-10">
-
             Professional Additive Manufacturing Platform
-
           </div>
 
           {/* TITLE */}
-
           <h1 className="premium-heading text-6xl sm:text-7xl lg:text-8xl font-black leading-[0.92]">
-
             Professional
             <br />
-
             <span className="text-violet-400">
-
               3D Printing
-
             </span>
-
             <br />
-
             Costa Rica
-
           </h1>
 
           {/* DESCRIPTION */}
-
           <p className="soft-text text-lg sm:text-xl leading-relaxed mt-10 max-w-xl">
-
             Upload STL, OBJ or STEP files and receive instant manufacturing quotes, premium materials and professional 3D printing services in Costa Rica.
-
           </p>
 
           {/* UPLOAD ZONE */}
-
           <div
             onClick={() => inputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -124,113 +101,20 @@ const Hero = () => {
           </div>
 
           {/* SECONDARY LINK */}
-
           <a href="#materials" className="text-white/40 hover:text-white/70 text-sm transition-colors mt-3 inline-block">
             Explorar materiales →
           </a>
 
           {/* STATS */}
-
           <Stats />
 
         </div>
 
-        {/* RIGHT */}
-
-        <div className="relative flex justify-center">
-
-          {/* MODEL AREA */}
-
-          <div
-            className="
-            group
-            relative
-            w-full
-            max-w-[650px]
-            h-[650px]
-            rounded-[42px]
-            overflow-visible
-            transition-all
-            duration-300
-            bg-transparent
-            hover:bg-white/[0.04]
-            "
-          >
-
-            {/* HOVER BORDER */}
-
-            <div
-              className="
-              absolute
-              inset-0
-              rounded-[42px]
-              border
-              border-transparent
-              group-hover:border-white/10
-              transition-all
-              duration-700
-              "
-            />
-
-            {/* INNER LIGHT */}
-
-            <div
-              className="
-              absolute
-              inset-0
-              bg-gradient-to-br
-              from-violet-500/[0.03]
-              to-transparent
-              opacity-0
-              group-hover:opacity-100
-              transition-all
-              duration-300
-              "
-            />
-
-            {/* HOVER GLOW */}
-
-            <div
-              className="
-              absolute
-              inset-0
-              opacity-0
-              group-hover:opacity-100
-              transition-all
-              duration-700
-              shadow-[0_0_120px_rgba(124,58,237,0.18)]
-              rounded-[42px]
-              "
-            />
-
-            {/* CANVAS — extends 180px above its container on lg screens,
-                creating the "bursting above navbar" overflow effect.
-                Mobile: top-0, model stays within bounds. */}
-            <div
-              className="absolute bottom-0 left-[-6%] right-[-6%] top-0 lg:-top-[180px] pointer-events-none"
-              style={{ zIndex: 30 }}
-            >
-              {/* pointer-events-auto on the inner div so hover → explode still works */}
-              <div className="w-full h-full pointer-events-auto">
-                <MechanicalAssemblyCanvas />
-              </div>
-            </div>
-
-            {/* GRADIENT — fades the overflow zone into the navbar's dark background.
-                z-35 sits above the canvas (z-30) so the very top of the model
-                emerges from darkness rather than cutting sharply. Desktop only. */}
-            <div
-              className="absolute left-0 right-0 pointer-events-none hidden lg:block"
-              style={{
-                top:        "-180px",
-                height:     "220px",
-                background: "linear-gradient(to bottom, rgba(11,16,32,0.94) 0%, transparent 100%)",
-                zIndex:     35,
-              }}
-            />
-
+        {/* RIGHT — 3D robot canvas */}
+        <div className="relative">
+          <div className="w-full" style={{ height: "600px" }}>
+            <ComputersCanvas />
           </div>
-
         </div>
 
       </div>

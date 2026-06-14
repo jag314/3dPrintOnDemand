@@ -187,3 +187,8 @@ body::before {
   overflow: hidden;
   display: inline-block;
 }
+
+/* Hero printer — hide on mobile */
+@media (max-width: 768px) {
+  .hero-printer-wrapper { display: none; }
+}
