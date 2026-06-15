@@ -191,4 +191,5 @@ body::before {
 /* Hero printer — hide on mobile */
 @media (max-width: 768px) {
   .hero-printer-wrapper { display: none; }
+  .hp-wrapper { display: none !important; }
 }
