@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 
-import ComputersCanvas from "./canvas/Computers";
+import HelmetCanvas from "./canvas/Computers";
 import Stats from "./Stats";
 
 const Hero = () => {
@@ -95,8 +95,8 @@ const Hero = () => {
 
         {/* RIGHT — 3D robot canvas */}
         <div className="relative">
-          <div className="w-full" style={{ height: "600px" }}>
-            <ComputersCanvas />
+          <div className="w-full" style={{ height: "600px", overflow: "visible" }}>
+            <HelmetCanvas />
           </div>
         </div>
 
