@@ -323,7 +323,7 @@ const Designer = () => {
           >
             <div
               onClick={e => e.stopPropagation()}
-              style={{ position: "relative", maxWidth: "900px", width: "100%", cursor: "default" }}
+              style={{ position: "relative", maxWidth: "600px", maxHeight: "80vh", width: "100%", cursor: "default" }}
             >
               <button
                 type="button"
@@ -342,7 +342,8 @@ const Designer = () => {
                 src={lightbox.image}
                 alt={lightbox.name}
                 style={{
-                  width: "100%", borderRadius: "16px",
+                  width: "100%", maxHeight: "60vh", objectFit: "contain",
+                  borderRadius: "16px",
                   border: "1px solid rgba(167,139,250,0.2)",
                   display: "block",
                 }}
