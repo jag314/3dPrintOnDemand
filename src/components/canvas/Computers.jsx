@@ -142,11 +142,7 @@ const ModelCarousel = () => {
       <div style={{
         position: "absolute",
         inset: 0,
-        borderRadius: "24px",
-        transition: "box-shadow 0.4s ease, background 0.4s ease",
-        boxShadow: isHovering
-          ? "0 0 60px rgba(124,58,237,0.25), 0 0 120px rgba(124,58,237,0.1)"
-          : "none",
+        transition: "background 0.4s ease",
         background: isHovering
           ? "radial-gradient(ellipse at center, rgba(124,58,237,0.06) 0%, transparent 70%)"
           : "transparent",
