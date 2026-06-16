@@ -305,13 +305,10 @@ const BillingStep = ({ billing, setBilling, errors }) => {
   );
 };
 
-// ── Step 3: Payment (SINPE Móvil or Transferencia BAC) ───────────────────────
-const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors }) => {
-  const set = (k,v) => setSinpe(p=>({ ...p, [k]:v }));
-  const method = sinpe.paymentMethod || "sinpe";
+// ── Shared payment total breakdown ───────────────────────────────────────────
+const TotalBreakdown = ({ totalPrice, shippingCrc, ivaCrc }) => {
   const pieceCrc = totalPrice - (ivaCrc || 0) - (shippingCrc || 0);
-
-  const TotalBreakdown = () => (
+  return (
     <div style={{ background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
       <div style={{ marginBottom:10 }}>
         <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
@@ -338,6 +335,12 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
       </div>
     </div>
   );
+};
+
+// ── Step 3: Payment (SINPE Móvil or Transferencia BAC) ───────────────────────
+const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors }) => {
+  const set = (k,v) => setSinpe(p=>({ ...p, [k]:v }));
+  const method = sinpe.paymentMethod || "sinpe";
 
   return (
     <div className="space-y-5">
@@ -347,7 +350,7 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
           { value:"sinpe", label:"SINPE Móvil" },
           { value:"bac",   label:"Transferencia BAC" },
         ].map(opt => (
-          <button key={opt.value} onClick={() => set("paymentMethod", opt.value)}
+          <button type="button" key={opt.value} onClick={() => set("paymentMethod", opt.value)}
             style={{
               flex:1, padding:"10px 0", borderRadius:12, fontSize:13, fontWeight:700, cursor:"pointer",
               background: method === opt.value ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)",
@@ -364,7 +367,7 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
       {method === "sinpe" && (
         <div style={{ background:"rgba(139,92,246,0.07)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:18, padding:"20px 22px" }}>
           <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Pagar via SINPE Móvil</p>
-          <TotalBreakdown />
+          <TotalBreakdown totalPrice={totalPrice} shippingCrc={shippingCrc} ivaCrc={ivaCrc} />
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginTop:6 }}>a:</p>
           <p style={{ fontSize:22, fontWeight:900, color:"#fff", marginTop:2, letterSpacing:"0.05em" }}>{SINPE_PHONE}</p>
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:2 }}>{SINPE_NAME}</p>
@@ -380,7 +383,7 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
       {method === "bac" && (
         <div style={{ background:"rgba(139,92,246,0.07)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:18, padding:"20px 22px" }}>
           <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Transferencia BAC Credomatic</p>
-          <TotalBreakdown />
+          <TotalBreakdown totalPrice={totalPrice} shippingCrc={shippingCrc} ivaCrc={ivaCrc} />
           <div style={{ background:"rgba(0,0,0,0.2)", borderRadius:10, padding:"12px 14px", marginBottom:14 }}>
             {[
               ["Nombre",  "Jonathan Aguilar González"],
@@ -862,13 +865,15 @@ const CheckoutFlow = ({
             <div style={{ display:"flex", gap:10 }}>
               {modalStep > 1 && (
                 <button
+                  type="button"
                   onClick={() => { setErrors({}); setSubmitError(null); setModalStep(s => s - 1); }}
                   disabled={submitting}
-                  style={{ padding:"11px 18px", borderRadius:14, fontWeight:700, fontSize:13, cursor:submitting?"not-allowed":"pointer", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.5)", opacity:submitting?0.4:1 }}>
+                  style={{ padding:"11px 22px", borderRadius:14, fontWeight:700, fontSize:13, cursor:submitting?"not-allowed":"pointer", background:"rgba(139,92,246,0.12)", border:"1.5px solid rgba(139,92,246,0.35)", color:"#c4b5fd", opacity:submitting?0.4:1, transition:"all 0.2s ease", flexShrink:0 }}>
                   ← Atrás
                 </button>
               )}
               <button
+                type="button"
                 onClick={handleNext}
                 disabled={submitting}
                 style={{ flex:1, padding:"13px 0", borderRadius:14, fontWeight:800, fontSize:14, cursor:submitting?"not-allowed":"pointer", background: submitting ? "rgba(124,58,237,0.5)" : "linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", display:"flex", alignItems:"center", justifyContent:"center", gap:8, transition:"background 0.2s" }}>
