@@ -4,54 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 // ── PROJECT DATA ───────────────────────────────────────────────────────────────
 
 const PROJECTS = [
-  {
-    id: 1,
-    image: "./images/1.png",
-    name: "Exo-Armor Shoulder Plate",
-    category: "Cosplay & Props",
-    tag: "FDM · PLA+",
-    description: "Pieza de armadura articulada para cosplay de alta fidelidad.",
-  },
-  {
-    id: 2,
-    image: "./images/2.png",
-    name: "Planetary Gear System",
-    category: "Mecánica Industrial",
-    tag: "FDM · PETG",
-    description: "Sistema de engranajes planetarios funcionales para prototipo.",
-  },
-  {
-    id: 3,
-    image: "./images/3.png",
-    name: "Architectural Façade",
-    category: "Arquitectura",
-    tag: "SLA · Resina",
-    description: "Maqueta estructural con detalle de 0.1mm para presentación.",
-  },
-  {
-    id: 4,
-    image: "./images/4.png",
-    name: "Tactical Grip Housing",
-    category: "Industrial",
-    tag: "FDM · ABS",
-    description: "Carcasa ergonómica resistente al calor para dispositivo de campo.",
-  },
-  {
-    id: 5,
-    image: "./images/5.png",
-    name: "Bio-Inspired Lattice",
-    category: "Arte & Diseño",
-    tag: "FDM · PLA+",
-    description: "Estructura lattice inspirada en patrones orgánicos.",
-  },
-  {
-    id: 6,
-    image: "./images/6.png",
-    name: "Drone Frame V2",
-    category: "Aeronáutica",
-    tag: "FDM · ASA",
-    description: "Chasis de drone ultraligero resistente a UV para exteriores.",
-  },
+  { id: 1, image: "./images/1.png", name: "Bracket de Montaje",    category: "Ingeniería Industrial",  tag: "FDM · PLA+" },
+  { id: 2, image: "./images/2.png", name: "Engranaje Planetario",  category: "Transmisión Mecánica",   tag: "FDM · PETG" },
+  { id: 3, image: "./images/3.png", name: "Carcasa de Sensor",     category: "Electrónica Industrial", tag: "FDM · ABS"  },
+  { id: 4, image: "./images/4.png", name: "Soporte de Rodamiento", category: "Manufactura",            tag: "FDM · ASA"  },
+  { id: 5, image: "./images/5.png", name: "Jig de Ensamblaje",     category: "Control de Calidad",     tag: "FDM · PETG" },
+  { id: 6, image: "./images/6.png", name: "Ducto de Ventilación",  category: "HVAC Industrial",        tag: "FDM · ABS"  },
 ];
 
 const STEPS = [
@@ -169,12 +127,8 @@ const ProjectCard = ({ project }) => {
         }}>{project.category}</p>
         <h3 style={{
           color: "#ffffff", fontSize: "15px",
-          fontWeight: "700", margin: "0 0 8px 0", lineHeight: 1.3,
+          fontWeight: "700", margin: "0 0 16px 0", lineHeight: 1.3,
         }}>{project.name}</h3>
-        <p style={{
-          color: "#6b7280", fontSize: "12px",
-          lineHeight: 1.6, margin: "0 0 16px 0",
-        }}>{project.description}</p>
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
           borderTop: "1px solid rgba(167,139,250,0.1)", paddingTop: "12px",
