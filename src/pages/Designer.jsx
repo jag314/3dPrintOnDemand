@@ -1,38 +1,59 @@
-import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useRef, useEffect, Suspense } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import * as THREE from "three";
 
-// ── DATA ──────────────────────────────────────────────────────────────────────
+// ── PROJECT DATA ───────────────────────────────────────────────────────────────
 
-const MY_WORK = [
+const PROJECTS = [
   {
-    url: "/images/1.png",
-    title: "Custom Mechanical Part",
-    tech: "FDM · PLA",
+    id: 1,
+    file: "./projects/1.gltf",
+    name: "Exo-Armor Shoulder Plate",
+    category: "Cosplay & Props",
+    tag: "FDM · PLA+",
+    description: "Pieza de armadura articulada diseñada para cosplay de alta fidelidad.",
   },
   {
-    url: "/images/2.png",
-    title: "Prototype Design",
-    tech: "FDM · PETG",
+    id: 2,
+    file: "./projects/2.gltf",
+    name: "Planetary Gear System",
+    category: "Mecánica Industrial",
+    tag: "FDM · PETG",
+    description: "Sistema de engranajes planetarios funcionales para prototipo de transmisión.",
   },
   {
-    url: "/images/3.png",
-    title: "Artistic Model",
-    tech: "SLA · Resin",
+    id: 3,
+    file: "./projects/3.gltf",
+    name: "Architectural Façade",
+    category: "Arquitectura",
+    tag: "SLA · Resina",
+    description: "Maqueta de fachada estructural con detalle de 0.1mm para presentación.",
   },
   {
-    url: "/images/4.png",
-    title: "Functional Component",
-    tech: "FDM · ABS",
+    id: 4,
+    file: "./projects/4.gltf",
+    name: "Tactical Grip Housing",
+    category: "Industrial",
+    tag: "FDM · ABS",
+    description: "Carcasa ergonómica resistente al calor para dispositivo de campo.",
   },
   {
-    url: "/images/5.png",
-    title: "Detail Part",
-    tech: "SLA · High Detail",
+    id: 5,
+    file: "./projects/5.gltf",
+    name: "Bio-Inspired Lattice",
+    category: "Arte & Diseño",
+    tag: "FDM · PLA+",
+    description: "Estructura lattice inspirada en patrones orgánicos, optimizada para peso.",
   },
   {
-    url: "/images/6.png",
-    title: "Custom Design",
-    tech: "FDM · PLA+",
+    id: 6,
+    file: "./projects/6.gltf",
+    name: "Drone Frame V2",
+    category: "Aeronáutica",
+    tag: "FDM · ASA",
+    description: "Chasis de drone ultraligero resistente a UV para uso en exteriores.",
   },
 ];
 
@@ -66,7 +87,6 @@ const SERVICES = [
   { emoji:"🏭", title:"Industrial Components", description:"Replacement parts, jigs, tools and custom industrial solutions." },
 ];
 
-
 const FAQ_ITEMS = [
   {
     q: "Do I need to know anything about 3D design?",
@@ -90,17 +110,155 @@ const FAQ_ITEMS = [
   },
 ];
 
-// ── PAGE ──────────────────────────────────────────────────────────────────────
+// ── Error boundary — silently handles missing GLTF files ──────────────────────
+class ModelErrorBoundary extends React.Component {
+  state = { error: false };
+  static getDerivedStateFromError() { return { error: true }; }
+  render() {
+    if (this.state.error) return null;
+    return this.props.children;
+  }
+}
 
+// ── Auto-centering, auto-scaling, rotating model ───────────────────────────────
+const ProjectModel = ({ path }) => {
+  const { scene } = useGLTF(path);
+  const groupRef = useRef();
+
+  useEffect(() => {
+    if (!scene) return;
+    const box = new THREE.Box3().setFromObject(scene);
+    const center = new THREE.Vector3();
+    const size   = new THREE.Vector3();
+    box.getCenter(center);
+    box.getSize(size);
+    scene.position.set(-center.x, -center.y, -center.z);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (maxDim > 0) scene.scale.setScalar(2.5 / maxDim);
+  }, [scene]);
+
+  useFrame((_, delta) => {
+    if (groupRef.current) groupRef.current.rotation.y += delta * 0.5;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <primitive object={scene} />
+    </group>
+  );
+};
+
+// ── Single project card ────────────────────────────────────────────────────────
+const ProjectCard = ({ project, isMobile }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => { if (!isMobile) setHovered(true);  }}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#120a22",
+        borderRadius: "16px",
+        border: `1px solid ${hovered ? "rgba(167,139,250,0.5)" : "rgba(167,139,250,0.15)"}`,
+        boxShadow: hovered ? "0 0 30px rgba(124,58,237,0.2)" : "none",
+        transition: "all 0.3s ease",
+        overflow: "hidden",
+        cursor: "pointer",
+      }}
+    >
+      {/* MODEL AREA */}
+      <div style={{
+        height: isMobile ? "180px" : "220px",
+        position: "relative",
+        background: "#0a0618",
+      }}>
+        {hovered ? (
+          <Canvas
+            frameloop="always"
+            dpr={[1, 1.5]}
+            camera={{ position: [0, 0, 4], fov: 45 }}
+            gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
+            style={{ background: "transparent" }}
+          >
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[-4, 6, 4]} intensity={2.5} />
+            <directionalLight position={[4, -2, -4]} intensity={0.8} color="#c4b5fd" />
+            <ModelErrorBoundary>
+              <Suspense fallback={null}>
+                <ProjectModel path={project.file} />
+              </Suspense>
+            </ModelErrorBoundary>
+          </Canvas>
+        ) : (
+          <div style={{
+            width: "100%", height: "100%",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            background: "linear-gradient(135deg, #1a0f30 0%, #0a0618 100%)",
+          }}>
+            <div style={{
+              width: "48px", height: "48px",
+              borderRadius: "50%",
+              border: "1px solid rgba(167,139,250,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              marginBottom: "8px",
+              color: "#6d28d9", fontSize: "20px",
+            }}>⬡</div>
+            <span style={{
+              fontFamily: "'Courier New', monospace",
+              fontSize: "9px", letterSpacing: "2px",
+              color: "#4c1d95", textTransform: "uppercase",
+            }}>
+              {isMobile ? project.name : "hover to view"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* INFO */}
+      <div style={{ padding: "16px" }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          alignItems: "flex-start", marginBottom: "6px",
+        }}>
+          <h3 style={{
+            color: "#ffffff", fontSize: "14px",
+            fontWeight: "700", margin: 0, lineHeight: 1.3,
+          }}>{project.name}</h3>
+          <span style={{
+            background: "rgba(124,58,237,0.25)",
+            border: "1px solid rgba(167,139,250,0.3)",
+            borderRadius: "20px", padding: "2px 8px",
+            fontSize: "9px", color: "#c4b5fd",
+            fontFamily: "'Courier New', monospace",
+            whiteSpace: "nowrap", marginLeft: "8px",
+            letterSpacing: "0.5px",
+          }}>{project.tag}</span>
+        </div>
+        <p style={{
+          color: "#6d28d9", fontSize: "10px",
+          letterSpacing: "1px", textTransform: "uppercase",
+          marginBottom: "6px", fontFamily: "'Courier New', monospace",
+        }}>{project.category}</p>
+        <p style={{
+          color: "#9ca3af", fontSize: "12px",
+          lineHeight: 1.5, margin: 0,
+        }}>{project.description}</p>
+      </div>
+    </div>
+  );
+};
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 const Designer = () => {
-  const servicesRef = useRef(null);
+  const navigate     = useNavigate();
+  const servicesRef  = useRef(null);
   const portfolioRef = useRef(null);
+  const [openFaq, setOpenFaq] = useState(null);
+  const isMobile = window.innerWidth < 768;
 
-  const [openFaq, setOpenFaq]         = useState(null);
-  const [hoveredWork, setHoveredWork] = useState(null);
-  const [lightbox, setLightbox]       = useState(null);
-
-  const scrollToServices  = () => portfolioRef.current?.scrollIntoView({ behavior:"smooth", block:"start" });
+  const scrollToPortfolio = () =>
+    portfolioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-32 pb-20 px-4 sm:px-6 relative overflow-hidden">
@@ -109,8 +267,6 @@ const Designer = () => {
 
         {/* ══ S1 — HERO ══ */}
         <div className="py-8 sm:py-12">
-
-          {/* Left */}
           <div>
             <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">
               PROFESSIONAL 3D DESIGN SERVICES
@@ -132,14 +288,14 @@ const Designer = () => {
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold">
                 Start My Project →
               </Link>
-              <button onClick={scrollToServices}
+              <button onClick={scrollToPortfolio}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
                 style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.28)", color:"#c4b5fd" }}>
                 See Our Work
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-8">
-              {["⚡ 48h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + 3MF included"].map((b,i) => (
+              {["⚡ 48h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + 3MF included"].map((b, i) => (
                 <React.Fragment key={b}>
                   {i > 0 && <span className="text-white/20">·</span>}
                   <span className="text-white/55 text-sm font-semibold">{b}</span>
@@ -147,172 +303,63 @@ const Designer = () => {
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* ══ REAL PORTFOLIO SECTION ══ */}
-        <div ref={portfolioRef} className="mt-20 sm:mt-28" id="portfolio">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
-            <div>
-              <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">OUR WORK</p>
-              <h2 className="text-3xl sm:text-4xl font-black mt-3">Real Projects We've Built</h2>
-              <p className="soft-text text-base mt-2">
-                Every model designed and printed by our team in Costa Rica
+        {/* ══ S2 — 3D PROJECT GRID ══ */}
+        <section ref={portfolioRef} id="portfolio" style={{ padding: "80px 0" }}>
+          <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+
+            <p style={{
+              fontFamily: "'Courier New', monospace",
+              fontSize: "11px", letterSpacing: "3px",
+              color: "#7c3aed", marginBottom: "12px",
+              textTransform: "uppercase",
+            }}>OUR WORK</p>
+            <h2 style={{
+              fontSize: "36px", fontWeight: "900",
+              color: "#ffffff", marginBottom: "8px",
+            }}>
+              Proyectos <span style={{ color: "#a78bfa" }}>Reales</span>
+            </h2>
+            <p style={{
+              color: "#6b7280", fontSize: "15px", marginBottom: "48px",
+            }}>
+              Cada modelo diseñado e impreso por nuestro equipo en Costa Rica.
+              {!isMobile && " Hover sobre cada card para ver el modelo en 3D."}
+            </p>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+              gap: "20px",
+            }}>
+              {PROJECTS.map(project => (
+                <ProjectCard key={project.id} project={project} isMobile={isMobile} />
+              ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: "48px" }}>
+              <p style={{ color: "#6b7280", marginBottom: "16px", fontSize: "14px" }}>
+                ¿Tenés un proyecto en mente?
               </p>
-            </div>
-            <Link to="/contact"
-              className="primary-button px-6 py-3 rounded-2xl font-bold text-sm whitespace-nowrap self-start sm:self-auto">
-              Start Your Project →
-            </Link>
-          </div>
-
-          {/* 3x2 masonry-style grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {MY_WORK.map((item, i) => (
-              <div key={i}
-                onMouseEnter={() => setHoveredWork(i)}
-                onMouseLeave={() => setHoveredWork(null)}
-                onClick={() => setLightbox(i)}
-                className="relative overflow-hidden cursor-pointer group"
-                style={{
-                  borderRadius:20,
-                  aspectRatio: i === 0 || i === 3 ? "4/3" : "1/1",
-                  border: hoveredWork === i ? "1px solid rgba(139,92,246,0.6)" : "1px solid rgba(255,255,255,0.08)",
-                  transform: hoveredWork === i ? "scale(1.02)" : "scale(1)",
-                  boxShadow: hoveredWork === i
-                    ? "0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.3)"
-                    : "0 4px 20px rgba(0,0,0,0.3)",
-                  transition:"all 0.35s ease",
-                }}>
-
-                {/* Image */}
-                <img
-                  src={item.url}
-                  alt={item.title}
-                  style={{
-                    width:"100%", height:"100%",
-                    objectFit:"cover",
-                    transform: hoveredWork === i ? "scale(1.06)" : "scale(1)",
-                    transition:"transform 0.5s ease",
-                    display:"block",
-                  }}
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                    e.target.parentElement.style.background = "linear-gradient(135deg,#1a1a2e,#2d1b69)";
-                  }}
-                />
-
-                {/* Hover overlay */}
-                <div style={{
-                  position:"absolute", inset:0,
-                  background: hoveredWork === i
-                    ? "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.0) 100%)"
-                    : "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0) 100%)",
-                  transition:"all 0.35s ease",
-                }} />
-
-                {/* Zoom icon on hover */}
-                <div style={{
-                  position:"absolute", top:14, right:14,
-                  width:36, height:36, borderRadius:"50%",
-                  background:"rgba(255,255,255,0.12)",
-                  backdropFilter:"blur(8px)",
-                  border:"1px solid rgba(255,255,255,0.2)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:16,
-                  opacity: hoveredWork === i ? 1 : 0,
-                  transform: hoveredWork === i ? "scale(1)" : "scale(0.8)",
-                  transition:"all 0.3s ease",
-                }}>🔍</div>
-
-                {/* Bottom info */}
-                <div style={{
-                  position:"absolute", bottom:0, left:0, right:0,
-                  padding:"16px",
-                  transform: hoveredWork === i ? "translateY(0)" : "translateY(4px)",
-                  transition:"transform 0.3s ease",
-                }}>
-                  <div style={{
-                    display:"inline-block",
-                    background:"rgba(139,92,246,0.25)",
-                    backdropFilter:"blur(8px)",
-                    border:"1px solid rgba(139,92,246,0.4)",
-                    borderRadius:999, padding:"2px 10px",
-                    fontSize:9, fontWeight:700,
-                    letterSpacing:"0.1em", textTransform:"uppercase",
-                    color:"#c4b5fd", marginBottom:6,
-                  }}>{item.tech}</div>
-                  <p style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.95)" }}>{item.title}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom CTA strip */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 rounded-2xl"
-            style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.2)" }}>
-            <div>
-              <p className="font-bold text-white text-base">Like what you see?</p>
-              <p className="text-white/50 text-sm mt-0.5">We can design and print something just like this for you.</p>
-            </div>
-            <Link to="/contact"
-              className="primary-button px-8 py-3 rounded-2xl font-bold text-sm whitespace-nowrap">
-              Get A Custom Quote →
-            </Link>
-          </div>
-        </div>
-
-        {/* ══ LIGHTBOX ══ */}
-        {lightbox !== null && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-6"
-            style={{ background:"rgba(0,0,0,0.9)", backdropFilter:"blur(12px)" }}
-            onClick={() => setLightbox(null)}
-          >
-            <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
               <button
-                onClick={() => setLightbox(null)}
+                type="button"
+                onClick={() => navigate("/contact")}
                 style={{
-                  position:"absolute", top:-16, right:-16, zIndex:10,
-                  width:36, height:36, borderRadius:"50%",
-                  background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)",
-                  color:"white", fontSize:18, cursor:"pointer",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                }}>×</button>
-              <img
-                src={MY_WORK[lightbox].url}
-                alt={MY_WORK[lightbox].title}
-                style={{ width:"100%", borderRadius:20, display:"block", maxHeight:"80vh", objectFit:"contain" }}
-              />
-              <div className="mt-4 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-white">{MY_WORK[lightbox].title}</p>
-                  <p className="text-white/50 text-sm mt-1">{MY_WORK[lightbox].tech}</p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setLightbox((lightbox - 1 + MY_WORK.length) % MY_WORK.length)}
-                    style={{
-                      width:40, height:40, borderRadius:"50%",
-                      background:"rgba(139,92,246,0.2)", border:"1px solid rgba(139,92,246,0.4)",
-                      color:"#c4b5fd", fontSize:18, cursor:"pointer",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                    }}>‹</button>
-                  <button
-                    onClick={() => setLightbox((lightbox + 1) % MY_WORK.length)}
-                    style={{
-                      width:40, height:40, borderRadius:"50%",
-                      background:"rgba(139,92,246,0.2)", border:"1px solid rgba(139,92,246,0.4)",
-                      color:"#c4b5fd", fontSize:18, cursor:"pointer",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                    }}>›</button>
-                </div>
-              </div>
+                  background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                  color: "#ffffff", border: "none",
+                  borderRadius: "12px", padding: "14px 32px",
+                  fontSize: "15px", fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                Empezar mi proyecto →
+              </button>
             </div>
           </div>
-        )}
+        </section>
 
-        {/* ══ S2 — HOW IT WORKS ══ */}
+        {/* ══ S3 — HOW IT WORKS ══ */}
         <div className="mt-20 sm:mt-28">
           <div className="text-center mb-14">
             <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">PROCESS</p>
@@ -349,7 +396,7 @@ const Designer = () => {
           </div>
         </div>
 
-        {/* ══ S3 — WHAT WE DESIGN ══ */}
+        {/* ══ S4 — WHAT WE DESIGN ══ */}
         <div ref={servicesRef} className="mt-20 sm:mt-28" id="services">
           <div className="text-center sm:text-left mb-10">
             <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">SERVICES</p>
@@ -399,7 +446,7 @@ const Designer = () => {
           <div className="max-w-3xl mx-auto" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
             {FAQ_ITEMS.map((item, i) => (
               <div key={i} style={{ borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                <button type="button" onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between gap-4 py-5 text-left">
                   <span className={`font-semibold text-base sm:text-lg leading-snug transition-colors ${openFaq === i ? "text-violet-400" : "text-white"}`}>
                     {item.q}
