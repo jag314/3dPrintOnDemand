@@ -187,8 +187,8 @@ const Designer = () => {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  const scrollToPortfolio = () =>
-    portfolioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const scrollToWork = () =>
+    document.getElementById("our-work")?.scrollIntoView({ behavior: "smooth" });
 
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-32 pb-20 px-4 sm:px-6 relative overflow-hidden">
@@ -196,12 +196,27 @@ const Designer = () => {
       <div className="max-w-7xl mx-auto relative z-10">
 
         {/* ══ S1 — HERO ══ */}
-        <div className="py-8 sm:py-12">
-          <div>
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">
-              PROFESSIONAL 3D DESIGN SERVICES
-            </p>
-            <h1 className="premium-heading text-5xl sm:text-6xl lg:text-7xl font-black mt-6 leading-[0.92]">
+        <div style={{ paddingTop: "100px", paddingBottom: "80px", textAlign: "center" }}>
+          <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+
+            {/* Badge */}
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: "8px",
+              background: "rgba(124,58,237,0.15)",
+              border: "1px solid rgba(167,139,250,0.3)",
+              borderRadius: "20px", padding: "6px 16px",
+              marginBottom: "20px",
+            }}>
+              <span style={{
+                color: "#a78bfa", fontSize: "10px",
+                letterSpacing: "2px", fontFamily: "'Courier New', monospace",
+              }}>PROFESSIONAL 3D DESIGN SERVICES</span>
+            </div>
+
+            <h1
+              className="premium-heading text-5xl sm:text-6xl lg:text-7xl font-black leading-[0.92]"
+              style={{ textShadow: "0 0 80px rgba(124,58,237,0.3)" }}
+            >
               From Your{" "}
               <span className="text-violet-400">Idea</span>
               <br />
@@ -209,22 +224,25 @@ const Designer = () => {
               <br />
               <span className="text-violet-400">3D Model</span>
             </h1>
-            <p className="soft-text text-lg sm:text-xl mt-8 leading-relaxed max-w-xl">
+
+            <p className="soft-text text-lg sm:text-xl mt-8 leading-relaxed">
               We design custom 3D models ready for FDM and SLA printing.
               Send us a sketch, photo, or description — we handle the rest.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 mt-10">
+
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "40px", flexWrap: "wrap" }}>
               <Link to="/contact"
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold">
                 Start My Project →
               </Link>
-              <button type="button" onClick={scrollToPortfolio}
+              <button type="button" onClick={scrollToWork}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
                 style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.28)", color:"#c4b5fd" }}>
                 See Our Work
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-8">
+
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 12px", marginTop: "32px" }}>
               {["⚡ 48h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + 3MF included"].map((b, i) => (
                 <React.Fragment key={b}>
                   {i > 0 && <span className="text-white/20">·</span>}
@@ -236,7 +254,7 @@ const Designer = () => {
         </div>
 
         {/* ══ S2 — PROJECT GRID ══ */}
-        <section ref={portfolioRef} id="portfolio" style={{ padding: "80px 0" }}>
+        <section ref={portfolioRef} id="our-work" style={{ padding: "80px 0" }}>
           <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
 
             {/* Header */}
