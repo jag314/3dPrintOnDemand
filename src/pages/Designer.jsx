@@ -1,39 +1,36 @@
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Canvas } from "@react-three/fiber";
-import { useGLTF, OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
 
 // ── PROJECT DATA ───────────────────────────────────────────────────────────────
 
 const PROJECTS = [
   {
     id: 1,
-    file: "./projects/1.gltf",
+    image: "./images/1.png",
     name: "Exo-Armor Shoulder Plate",
     category: "Cosplay & Props",
     tag: "FDM · PLA+",
-    description: "Pieza de armadura articulada diseñada para cosplay de alta fidelidad.",
+    description: "Pieza de armadura articulada para cosplay de alta fidelidad.",
   },
   {
     id: 2,
-    file: "./projects/2.gltf",
+    image: "./images/2.png",
     name: "Planetary Gear System",
     category: "Mecánica Industrial",
     tag: "FDM · PETG",
-    description: "Sistema de engranajes planetarios funcionales para prototipo de transmisión.",
+    description: "Sistema de engranajes planetarios funcionales para prototipo.",
   },
   {
     id: 3,
-    file: "./projects/3.gltf",
+    image: "./images/3.png",
     name: "Architectural Façade",
     category: "Arquitectura",
     tag: "SLA · Resina",
-    description: "Maqueta de fachada estructural con detalle de 0.1mm para presentación.",
+    description: "Maqueta estructural con detalle de 0.1mm para presentación.",
   },
   {
     id: 4,
-    file: "./projects/4.gltf",
+    image: "./images/4.png",
     name: "Tactical Grip Housing",
     category: "Industrial",
     tag: "FDM · ABS",
@@ -41,19 +38,19 @@ const PROJECTS = [
   },
   {
     id: 5,
-    file: "./projects/5.gltf",
+    image: "./images/5.png",
     name: "Bio-Inspired Lattice",
     category: "Arte & Diseño",
     tag: "FDM · PLA+",
-    description: "Estructura lattice inspirada en patrones orgánicos, optimizada para peso.",
+    description: "Estructura lattice inspirada en patrones orgánicos.",
   },
   {
     id: 6,
-    file: "./projects/6.gltf",
+    image: "./images/6.png",
     name: "Drone Frame V2",
     category: "Aeronáutica",
     tag: "FDM · ASA",
-    description: "Chasis de drone ultraligero resistente a UV para uso en exteriores.",
+    description: "Chasis de drone ultraligero resistente a UV para exteriores.",
   },
 ];
 
@@ -110,145 +107,91 @@ const FAQ_ITEMS = [
   },
 ];
 
-// ── Error boundary — silently handles missing GLTF files ──────────────────────
-class ModelErrorBoundary extends React.Component {
-  state = { error: false };
-  static getDerivedStateFromError() { return { error: true }; }
-  render() {
-    if (this.state.error) return null;
-    return this.props.children;
-  }
-}
-
-// ── Auto-centering, auto-scaling, rotating model ───────────────────────────────
-const ProjectModel = ({ path }) => {
-  const { scene } = useGLTF(path);
-
-  useEffect(() => {
-    if (!scene) return;
-    const box = new THREE.Box3().setFromObject(scene);
-    const center = new THREE.Vector3();
-    const size   = new THREE.Vector3();
-    box.getCenter(center);
-    box.getSize(size);
-    scene.position.set(-center.x, -center.y, -center.z);
-    const maxDim = Math.max(size.x, size.y, size.z);
-    if (maxDim > 0) scene.scale.setScalar(1.8 / maxDim);
-    console.log(`[ProjectModel] size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}, maxDim: ${maxDim.toFixed(2)}`);
-  }, [scene]);
-
-  return (
-    <group>
-      <primitive object={scene} />
-    </group>
-  );
-};
-
-// ── Single project card ────────────────────────────────────────────────────────
-const ProjectCard = ({ project, isMobile }) => {
+// ── Project card — image-based ─────────────────────────────────────────────────
+const ProjectCard = ({ project }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
     <div
-      onMouseEnter={() => { if (!isMobile) setHovered(true);  }}
+      onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: "#120a22",
         borderRadius: "16px",
-        border: `1px solid ${hovered ? "rgba(167,139,250,0.5)" : "rgba(167,139,250,0.15)"}`,
-        boxShadow: hovered ? "0 0 30px rgba(124,58,237,0.2)" : "none",
-        transition: "all 0.3s ease",
         overflow: "hidden",
+        background: "#0f0622",
+        border: `1px solid ${hovered ? "rgba(167,139,250,0.5)" : "rgba(167,139,250,0.1)"}`,
+        boxShadow: hovered
+          ? "0 20px 60px rgba(124,58,237,0.25), 0 0 0 1px rgba(167,139,250,0.3)"
+          : "0 4px 20px rgba(0,0,0,0.4)",
+        transition: "all 0.35s ease",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
         cursor: "pointer",
       }}
     >
-      {/* MODEL AREA */}
-      <div style={{
-        height: isMobile ? "180px" : "220px",
-        position: "relative",
-        background: "#0a0618",
-      }}>
-        {hovered ? (
-          <Canvas
-            frameloop="demand"
-            dpr={[1, 1.5]}
-            camera={{ position: [0, 0, 3.5], fov: 50 }}
-            gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
-            style={{ background: "transparent" }}
-          >
-            <ambientLight intensity={1.5} />
-            <directionalLight position={[5, 5, 5]} intensity={2} />
-            <directionalLight position={[-5, -5, -5]} intensity={0.5} color="#c4b5fd" />
-            <pointLight position={[0, 3, 3]} intensity={1.5} />
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              enableDamping={true}
-              dampingFactor={0.05}
-              minPolarAngle={Math.PI / 4}
-              maxPolarAngle={Math.PI / 1.5}
-            />
-            <ModelErrorBoundary>
-              <Suspense fallback={null}>
-                <ProjectModel path={project.file} />
-              </Suspense>
-            </ModelErrorBoundary>
-          </Canvas>
-        ) : (
-          <div style={{
-            width: "100%", height: "100%",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            background: "linear-gradient(135deg, #1a0f30 0%, #0a0618 100%)",
-          }}>
-            <div style={{
-              width: "48px", height: "48px",
-              borderRadius: "50%",
-              border: "1px solid rgba(167,139,250,0.3)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              marginBottom: "8px",
-              color: "#6d28d9", fontSize: "20px",
-            }}>⬡</div>
-            <span style={{
-              fontFamily: "'Courier New', monospace",
-              fontSize: "9px", letterSpacing: "2px",
-              color: "#4c1d95", textTransform: "uppercase",
-            }}>
-              {isMobile ? project.name : "hover to view"}
-            </span>
-          </div>
-        )}
+      {/* IMAGE */}
+      <div style={{ height: "220px", position: "relative", overflow: "hidden" }}>
+        <img
+          src={project.image}
+          alt={project.name}
+          style={{
+            width: "100%", height: "100%", objectFit: "cover",
+            transition: "transform 0.5s ease",
+            transform: hovered ? "scale(1.08)" : "scale(1)",
+          }}
+          onError={e => {
+            e.target.style.display = "none";
+            e.target.parentElement.style.background = "linear-gradient(135deg,#1a0f30,#0a0618)";
+          }}
+        />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(to bottom, transparent 40%, rgba(15,6,34,0.8) 100%)",
+        }} />
+        <div style={{
+          position: "absolute", top: "12px", right: "12px",
+          background: "rgba(10,4,24,0.85)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(167,139,250,0.4)",
+          borderRadius: "20px", padding: "4px 10px",
+          fontSize: "9px", color: "#c4b5fd",
+          fontFamily: "'Courier New', monospace",
+          letterSpacing: "1px",
+        }}>{project.tag}</div>
       </div>
 
       {/* INFO */}
-      <div style={{ padding: "16px" }}>
-        <div style={{
-          display: "flex", justifyContent: "space-between",
-          alignItems: "flex-start", marginBottom: "6px",
-        }}>
-          <h3 style={{
-            color: "#ffffff", fontSize: "14px",
-            fontWeight: "700", margin: 0, lineHeight: 1.3,
-          }}>{project.name}</h3>
-          <span style={{
-            background: "rgba(124,58,237,0.25)",
-            border: "1px solid rgba(167,139,250,0.3)",
-            borderRadius: "20px", padding: "2px 8px",
-            fontSize: "9px", color: "#c4b5fd",
-            fontFamily: "'Courier New', monospace",
-            whiteSpace: "nowrap", marginLeft: "8px",
-            letterSpacing: "0.5px",
-          }}>{project.tag}</span>
-        </div>
+      <div style={{ padding: "18px 20px 20px" }}>
         <p style={{
-          color: "#6d28d9", fontSize: "10px",
-          letterSpacing: "1px", textTransform: "uppercase",
-          marginBottom: "6px", fontFamily: "'Courier New', monospace",
+          fontFamily: "'Courier New', monospace",
+          fontSize: "9px", letterSpacing: "2px",
+          color: "#7c3aed", textTransform: "uppercase",
+          margin: "0 0 6px 0",
         }}>{project.category}</p>
+        <h3 style={{
+          color: "#ffffff", fontSize: "15px",
+          fontWeight: "700", margin: "0 0 8px 0", lineHeight: 1.3,
+        }}>{project.name}</h3>
         <p style={{
-          color: "#9ca3af", fontSize: "12px",
-          lineHeight: 1.5, margin: 0,
+          color: "#6b7280", fontSize: "12px",
+          lineHeight: 1.6, margin: "0 0 16px 0",
         }}>{project.description}</p>
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          borderTop: "1px solid rgba(167,139,250,0.1)", paddingTop: "12px",
+        }}>
+          <span style={{
+            color: "#4c1d95", fontSize: "11px",
+            fontFamily: "'Courier New', monospace",
+          }}>Ver proyecto →</span>
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%",
+            background: hovered ? "rgba(124,58,237,0.4)" : "rgba(124,58,237,0.15)",
+            border: "1px solid rgba(167,139,250,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.3s ease",
+            fontSize: "12px", color: "#a78bfa",
+          }}>⬡</div>
+        </div>
       </div>
     </div>
   );
@@ -260,7 +203,9 @@ const Designer = () => {
   const servicesRef  = useRef(null);
   const portfolioRef = useRef(null);
   const [openFaq, setOpenFaq] = useState(null);
-  const isMobile = window.innerWidth < 768;
+
+  const w    = window.innerWidth;
+  const cols = w < 768 ? "1fr" : w < 1024 ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
 
   const scrollToPortfolio = () =>
     portfolioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -293,7 +238,7 @@ const Designer = () => {
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold">
                 Start My Project →
               </Link>
-              <button onClick={scrollToPortfolio}
+              <button type="button" onClick={scrollToPortfolio}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
                 style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.28)", color:"#c4b5fd" }}>
                 See Our Work
@@ -310,43 +255,62 @@ const Designer = () => {
           </div>
         </div>
 
-        {/* ══ S2 — 3D PROJECT GRID ══ */}
+        {/* ══ S2 — PROJECT GRID ══ */}
         <section ref={portfolioRef} id="portfolio" style={{ padding: "80px 0" }}>
           <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
 
-            <p style={{
-              fontFamily: "'Courier New', monospace",
-              fontSize: "11px", letterSpacing: "3px",
-              color: "#7c3aed", marginBottom: "12px",
-              textTransform: "uppercase",
-            }}>OUR WORK</p>
-            <h2 style={{
-              fontSize: "36px", fontWeight: "900",
-              color: "#ffffff", marginBottom: "8px",
-            }}>
-              Proyectos <span style={{ color: "#a78bfa" }}>Reales</span>
-            </h2>
-            <p style={{
-              color: "#6b7280", fontSize: "15px", marginBottom: "48px",
-            }}>
-              Cada modelo diseñado e impreso por nuestro equipo en Costa Rica.
-              {!isMobile && " Hover sobre cada card para ver el modelo en 3D."}
-            </p>
+            {/* Header */}
+            <div style={{ marginBottom: "48px" }}>
+              <p style={{
+                fontFamily: "'Courier New', monospace",
+                fontSize: "11px", letterSpacing: "3px",
+                color: "#7c3aed", marginBottom: "12px",
+                textTransform: "uppercase",
+              }}>OUR WORK</p>
+              <div style={{
+                display: "flex", justifyContent: "space-between",
+                alignItems: "flex-end", flexWrap: "wrap", gap: "16px",
+              }}>
+                <h2 style={{
+                  fontSize: "40px", fontWeight: "900",
+                  color: "#ffffff", margin: 0, lineHeight: 1.1,
+                }}>
+                  Proyectos <span style={{ color: "#a78bfa" }}>Reales</span>
+                </h2>
+                <p style={{
+                  color: "#6b7280", fontSize: "14px",
+                  maxWidth: "400px", margin: 0, lineHeight: 1.6,
+                }}>
+                  Cada modelo diseñado e impreso por nuestro equipo en Costa Rica.
+                </p>
+              </div>
+            </div>
 
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-              gap: "20px",
-            }}>
+            {/* Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: cols, gap: "24px" }}>
               {PROJECTS.map(project => (
-                <ProjectCard key={project.id} project={project} isMobile={isMobile} />
+                <ProjectCard key={project.id} project={project} />
               ))}
             </div>
 
-            <div style={{ textAlign: "center", marginTop: "48px" }}>
-              <p style={{ color: "#6b7280", marginBottom: "16px", fontSize: "14px" }}>
+            {/* CTA strip */}
+            <div style={{
+              textAlign: "center", marginTop: "56px",
+              padding: "48px 32px",
+              background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(109,40,217,0.05) 100%)",
+              border: "1px solid rgba(167,139,250,0.1)",
+              borderRadius: "20px",
+            }}>
+              <p style={{ color: "#9ca3af", marginBottom: "8px", fontSize: "14px" }}>
                 ¿Tenés un proyecto en mente?
               </p>
+              <h3 style={{
+                color: "#ffffff", fontSize: "24px",
+                fontWeight: "800", marginBottom: "24px",
+              }}>
+                Convertimos tu idea en un modelo{" "}
+                <span style={{ color: "#a78bfa" }}>imprimible</span>
+              </h3>
               <button
                 type="button"
                 onClick={() => navigate("/contact")}
@@ -356,6 +320,7 @@ const Designer = () => {
                   borderRadius: "12px", padding: "14px 32px",
                   fontSize: "15px", fontWeight: "700",
                   cursor: "pointer",
+                  boxShadow: "0 8px 30px rgba(124,58,237,0.3)",
                 }}
               >
                 Empezar mi proyecto →
