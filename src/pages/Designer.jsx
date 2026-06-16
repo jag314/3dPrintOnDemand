@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Suspense } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
 // ── PROJECT DATA ───────────────────────────────────────────────────────────────
@@ -123,7 +123,6 @@ class ModelErrorBoundary extends React.Component {
 // ── Auto-centering, auto-scaling, rotating model ───────────────────────────────
 const ProjectModel = ({ path }) => {
   const { scene } = useGLTF(path);
-  const groupRef = useRef();
 
   useEffect(() => {
     if (!scene) return;
@@ -134,15 +133,12 @@ const ProjectModel = ({ path }) => {
     box.getSize(size);
     scene.position.set(-center.x, -center.y, -center.z);
     const maxDim = Math.max(size.x, size.y, size.z);
-    if (maxDim > 0) scene.scale.setScalar(2.5 / maxDim);
+    if (maxDim > 0) scene.scale.setScalar(1.8 / maxDim);
+    console.log(`[ProjectModel] size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}, maxDim: ${maxDim.toFixed(2)}`);
   }, [scene]);
 
-  useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += delta * 0.5;
-  });
-
   return (
-    <group ref={groupRef}>
+    <group>
       <primitive object={scene} />
     </group>
   );
@@ -174,15 +170,24 @@ const ProjectCard = ({ project, isMobile }) => {
       }}>
         {hovered ? (
           <Canvas
-            frameloop="always"
+            frameloop="demand"
             dpr={[1, 1.5]}
-            camera={{ position: [0, 0, 4], fov: 45 }}
+            camera={{ position: [0, 0, 3.5], fov: 50 }}
             gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
             style={{ background: "transparent" }}
           >
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[-4, 6, 4]} intensity={2.5} />
-            <directionalLight position={[4, -2, -4]} intensity={0.8} color="#c4b5fd" />
+            <ambientLight intensity={1.5} />
+            <directionalLight position={[5, 5, 5]} intensity={2} />
+            <directionalLight position={[-5, -5, -5]} intensity={0.5} color="#c4b5fd" />
+            <pointLight position={[0, 3, 3]} intensity={1.5} />
+            <OrbitControls
+              enableZoom={false}
+              enablePan={false}
+              enableDamping={true}
+              dampingFactor={0.05}
+              minPolarAngle={Math.PI / 4}
+              maxPolarAngle={Math.PI / 1.5}
+            />
             <ModelErrorBoundary>
               <Suspense fallback={null}>
                 <ProjectModel path={project.file} />
