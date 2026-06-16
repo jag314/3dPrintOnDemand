@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const uploadRef = useRef();
+  const { t, i18n } = useTranslation();
 
   return (
 
@@ -35,91 +37,49 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 h-[88px] flex items-center justify-between">
 
         {/* LOGO */}
-
-        <Link
-          to="/"
-          className="text-4xl font-black tracking-tight"
-        >
-
-          INITY
-          <span className="text-violet-400">
-
-            3D
-
-          </span>
-
+        <Link to="/" className="text-4xl font-black tracking-tight">
+          INITY<span className="text-violet-400">3D</span>
         </Link>
 
         {/* MENU */}
-
         <div className="hidden lg:flex items-center gap-12 text-lg text-white/70">
-
-          <Link
-            to="/"
-            className="hover:text-white transition-all duration-300"
-          >
-
-            Home
-
-          </Link>
-
-          <Link
-            to="/about"
-            className="hover:text-white transition-all duration-300"
-          >
-
-            About
-
-          </Link>
-
-          <Link
-            to="/teach"
-            className="hover:text-white transition-all duration-300"
-          >
-
-            We Teach
-
-          </Link>
-
-          <Link
-            to="/designer"
-            className="hover:text-white transition-all duration-300"
-          >
-
-            Need A Designer?
-
-          </Link>
-
-          <Link
-            to="/contact"
-            className="hover:text-white transition-all duration-300"
-          >
-
-            Contact
-
-          </Link>
-
+          <Link to="/"          className="hover:text-white transition-all duration-300">{t("nav.home")}</Link>
+          <Link to="/about"     className="hover:text-white transition-all duration-300">{t("nav.about")}</Link>
+          <Link to="/teach"     className="hover:text-white transition-all duration-300">{t("nav.weTeach")}</Link>
+          <Link to="/designer"  className="hover:text-white transition-all duration-300">{t("nav.needDesigner")}</Link>
+          <Link to="/contact"   className="hover:text-white transition-all duration-300">{t("nav.contact")}</Link>
         </div>
 
         {/* RIGHT SIDE */}
+        <div className="flex items-center gap-3">
 
-        <div className="flex items-center gap-4">
-
-          {/* CTA */}
-
+          {/* Language toggle */}
           <button
-            onClick={() => uploadRef.current?.click()}
-            className="
-            primary-button
-            px-8
-            py-4
-            rounded-2xl
-            font-semibold
-            "
+            type="button"
+            onClick={() => i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}
+            style={{
+              background: "rgba(124,58,237,0.15)",
+              border: "1px solid rgba(167,139,250,0.3)",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              color: "#a78bfa",
+              fontSize: "12px",
+              fontFamily: "'Courier New', monospace",
+              letterSpacing: "1px",
+              cursor: "pointer",
+              fontWeight: "700",
+            }}
           >
+            {i18n.language === "es" ? "EN" : "ES"}
+          </button>
 
-            Upload Model
-
+          {/* Upload CTA */}
+          <button
+            type="button"
+            onClick={() => uploadRef.current?.click()}
+            className="primary-button px-8 py-4 rounded-2xl font-semibold"
+          >
+            {t("nav.uploadModel")}
           </button>
 
         </div>

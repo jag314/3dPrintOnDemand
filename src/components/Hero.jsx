@@ -1,12 +1,14 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import ModelCarousel from "./canvas/Computers";
 import Stats from "./Stats";
 
 const Hero = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const { t }     = useTranslation();
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef();
 
@@ -36,19 +38,19 @@ const Hero = () => {
         <div className="pb-20 lg:pb-0">
 
           <div className="inline-flex items-center px-6 py-3 rounded-full border border-violet-400/20 bg-violet-500/10 text-violet-200 backdrop-blur-xl mb-10">
-            Professional Additive Manufacturing Platform
+            {t("hero.badge")}
           </div>
 
           <h1 className="premium-heading text-6xl sm:text-7xl lg:text-8xl font-black leading-[0.92]">
-            Professional
+            {t("hero.title1")}
             <br />
-            <span className="text-violet-400">3D Printing</span>
+            <span className="text-violet-400">{t("hero.title2")}</span>
             <br />
-            Costa Rica
+            {t("hero.title3")}
           </h1>
 
           <p className="soft-text text-lg sm:text-xl leading-relaxed mt-10 max-w-xl">
-            Upload STL, OBJ or 3MF files and receive instant manufacturing quotes, premium materials and professional 3D printing services in Costa Rica.
+            {t("hero.subtitle")}
           </p>
 
           <div
@@ -74,13 +76,13 @@ const Hero = () => {
             </div>
             <div>
               <p className="text-white text-base font-bold">
-                {dragging ? "Soltá el archivo aquí" : "Subí tu archivo STL, OBJ o 3MF"}
+                {dragging ? t("hero.uploadHint") : t("hero.uploadTitle")}
               </p>
               <p className="text-violet-300/70 text-sm mt-1 font-medium">
-                Obtené tu cotización en segundos
+                {t("hero.uploadSubtitle")}
               </p>
               <p className="text-white/40 text-xs mt-1">
-                Drag &amp; drop o click para seleccionar
+                {t("hero.uploadHint")}
               </p>
             </div>
           </div>
