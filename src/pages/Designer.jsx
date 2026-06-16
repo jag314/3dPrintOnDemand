@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 // ── PROJECT DATA ───────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ const FAQ_ITEMS = [
 ];
 
 // ── Project card — image-based ─────────────────────────────────────────────────
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, onImageClick }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -87,7 +87,10 @@ const ProjectCard = ({ project }) => {
       }}
     >
       {/* IMAGE */}
-      <div style={{ height: "220px", position: "relative", overflow: "hidden" }}>
+      <div
+        onClick={() => onImageClick(project)}
+        style={{ height: "220px", position: "relative", overflow: "hidden", cursor: "zoom-in" }}
+      >
         <img
           src={project.image}
           alt={project.name}
@@ -105,6 +108,22 @@ const ProjectCard = ({ project }) => {
           position: "absolute", inset: 0,
           background: "linear-gradient(to bottom, transparent 40%, rgba(15,6,34,0.8) 100%)",
         }} />
+        {/* Zoom hint on hover */}
+        <div style={{
+          position: "absolute", inset: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.3s ease",
+          background: "rgba(0,0,0,0.3)",
+        }}>
+          <div style={{
+            width: "44px", height: "44px", borderRadius: "50%",
+            background: "rgba(124,58,237,0.8)",
+            border: "1px solid rgba(167,139,250,0.6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "18px", color: "#ffffff",
+          }}>⤢</div>
+        </div>
         <div style={{
           position: "absolute", top: "12px", right: "12px",
           background: "rgba(10,4,24,0.85)",
@@ -156,10 +175,17 @@ const Designer = () => {
   const navigate     = useNavigate();
   const servicesRef  = useRef(null);
   const portfolioRef = useRef(null);
-  const [openFaq, setOpenFaq] = useState(null);
+  const [openFaq, setOpenFaq]   = useState(null);
+  const [lightbox, setLightbox] = useState(null);
 
   const w    = window.innerWidth;
   const cols = w < 768 ? "1fr" : w < 1024 ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") setLightbox(null); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   const scrollToPortfolio = () =>
     portfolioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -243,7 +269,7 @@ const Designer = () => {
             {/* Grid */}
             <div style={{ display: "grid", gridTemplateColumns: cols, gap: "24px" }}>
               {PROJECTS.map(project => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard key={project.id} project={project} onImageClick={setLightbox} />
               ))}
             </div>
 
@@ -282,6 +308,70 @@ const Designer = () => {
             </div>
           </div>
         </section>
+
+        {/* ══ LIGHTBOX ══ */}
+        {lightbox && (
+          <div
+            onClick={() => setLightbox(null)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,0.92)",
+              backdropFilter: "blur(12px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "24px", cursor: "zoom-out",
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ position: "relative", maxWidth: "900px", width: "100%", cursor: "default" }}
+            >
+              <button
+                type="button"
+                onClick={() => setLightbox(null)}
+                style={{
+                  position: "absolute", top: "-48px", right: "0",
+                  background: "rgba(124,58,237,0.3)",
+                  border: "1px solid rgba(167,139,250,0.4)",
+                  borderRadius: "50%", width: "36px", height: "36px",
+                  color: "#a78bfa", fontSize: "16px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 10,
+                }}
+              >✕</button>
+              <img
+                src={lightbox.image}
+                alt={lightbox.name}
+                style={{
+                  width: "100%", borderRadius: "16px",
+                  border: "1px solid rgba(167,139,250,0.2)",
+                  display: "block",
+                }}
+              />
+              <div style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                marginTop: "16px", padding: "0 4px",
+              }}>
+                <div>
+                  <h3 style={{ color: "#ffffff", fontSize: "18px", fontWeight: "700", margin: "0 0 4px 0" }}>
+                    {lightbox.name}
+                  </h3>
+                  <p style={{
+                    color: "#7c3aed", fontSize: "11px",
+                    fontFamily: "'Courier New', monospace",
+                    letterSpacing: "1px", margin: 0, textTransform: "uppercase",
+                  }}>{lightbox.category}</p>
+                </div>
+                <span style={{
+                  background: "rgba(124,58,237,0.25)",
+                  border: "1px solid rgba(167,139,250,0.4)",
+                  borderRadius: "20px", padding: "6px 14px",
+                  fontSize: "11px", color: "#c4b5fd",
+                  fontFamily: "'Courier New', monospace", letterSpacing: "1px",
+                }}>{lightbox.tag}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ══ S3 — HOW IT WORKS ══ */}
         <div className="mt-20 sm:mt-28">
