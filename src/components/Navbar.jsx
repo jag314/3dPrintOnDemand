@@ -1,6 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useRef } from "react";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const uploadRef = useRef();
 
   return (
 
@@ -17,6 +20,17 @@ const Navbar = () => {
       border-white/5
       "
     >
+
+      <input
+        ref={uploadRef}
+        type="file"
+        accept=".stl,.obj,.3mf"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) navigate("/quote", { state: { file } });
+        }}
+      />
 
       <div className="max-w-7xl mx-auto px-6 h-[88px] flex items-center justify-between">
 
@@ -91,12 +105,10 @@ const Navbar = () => {
 
         <div className="flex items-center gap-4">
 
-         
-
           {/* CTA */}
 
-          <Link
-            to="/#upload-hero"
+          <button
+            onClick={() => uploadRef.current?.click()}
             className="
             primary-button
             px-8
@@ -108,7 +120,7 @@ const Navbar = () => {
 
             Upload Model
 
-          </Link>
+          </button>
 
         </div>
 

@@ -63,7 +63,7 @@ const Model = ({ config, isHovering }) => {
 
   useFrame((state, delta) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * (isHovering ? 0.15 : 0.4);
+      groupRef.current.rotation.y += delta * (isHovering ? 0.05 : 0.12);
 
       if (isHovering) {
         groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.2) * 0.08;
@@ -162,6 +162,15 @@ const ModelCarousel = () => {
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.4,
           outputColorSpace: THREE.SRGBColorSpace,
+        }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener("webglcontextlost", (e) => {
+            e.preventDefault();
+            console.warn("WebGL context lost, will restore...");
+          });
+          gl.domElement.addEventListener("webglcontextrestored", () => {
+            console.log("WebGL context restored");
+          });
         }}
       >
         <Suspense fallback={<CanvasLoader />}>

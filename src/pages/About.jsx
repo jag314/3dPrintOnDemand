@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 const timeline = [
 
   {
-    title: "Started With An Ender 3 Pro",
+    title: "Started With a Dream",
     description:
       "The journey began exploring additive manufacturing, prototyping and advanced 3D printing workflows.",
     icon: PrinterIcon3D,

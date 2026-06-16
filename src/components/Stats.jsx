@@ -23,7 +23,7 @@ const Stats = () => {
 
   return (
 
-    <div className="grid grid-cols-3 gap-10 mt-20 max-w-2xl">
+    <div className="grid grid-cols-3 gap-10 max-w-2xl">
 
       {stats.map((stat, index) => (
 

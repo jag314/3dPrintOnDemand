@@ -1,10 +1,24 @@
-import { Link } from "react-router-dom";
+import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const LivePreview = () => {
+  const navigate = useNavigate();
+  const livequoteRef = useRef();
 
   return (
 
     <section className="section-background py-32 px-6 overflow-hidden">
+
+      <input
+        ref={livequoteRef}
+        type="file"
+        accept=".stl,.obj,.3mf"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) navigate("/quote", { state: { file } });
+        }}
+      />
 
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
 
@@ -31,18 +45,18 @@ const LivePreview = () => {
 
           <p className="text-white/60 mt-8 text-lg leading-relaxed">
 
-            Upload STL, STEP, OBJ or GLTF files and instantly calculate manufacturing cost, estimated weight, complexity and material pricing.
+            Upload STL, OBJ or 3MF files and instantly calculate manufacturing cost, estimated weight, complexity and material pricing.
 
           </p>
 
-          <Link
-            to="/quote"
+          <button
+            onClick={() => livequoteRef.current?.click()}
             className="inline-flex mt-10 bg-violet-600 hover:bg-violet-500 transition px-8 py-4 rounded-2xl font-semibold"
           >
 
             Try Live Quote
 
-          </Link>
+          </button>
 
         </div>
 

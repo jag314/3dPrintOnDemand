@@ -48,7 +48,7 @@ const Hero = () => {
           </h1>
 
           <p className="soft-text text-lg sm:text-xl leading-relaxed mt-10 max-w-xl">
-            Upload STL, OBJ or STEP files and receive instant manufacturing quotes, premium materials and professional 3D printing services in Costa Rica.
+            Upload STL, OBJ or 3MF files and receive instant manufacturing quotes, premium materials and professional 3D printing services in Costa Rica.
           </p>
 
           <div
@@ -56,7 +56,7 @@ const Hero = () => {
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-            className={`mt-12 border-2 border-dashed rounded-2xl p-8 cursor-pointer transition-all flex items-center gap-5 ${dragging ? "border-violet-500/80 bg-violet-500/15" : "border-violet-500/60 bg-violet-500/10 hover:bg-violet-500/15 hover:border-violet-500/80"}`}
+            className={`mt-6 border-2 border-dashed rounded-2xl p-8 cursor-pointer transition-all flex items-center gap-5 ${dragging ? "border-violet-500/80 bg-violet-500/15" : "border-violet-500/60 bg-violet-500/10 hover:bg-violet-500/15 hover:border-violet-500/80"}`}
           >
             <input
               ref={inputRef}
@@ -85,11 +85,9 @@ const Hero = () => {
             </div>
           </div>
 
-          <a href="#materials" className="text-white/40 hover:text-white/70 text-sm transition-colors mt-3 inline-block">
-            Explorar materiales →
-          </a>
-
-          <Stats />
+          <div style={{ marginTop: "20px" }}>
+            <Stats />
+          </div>
 
         </div>
 

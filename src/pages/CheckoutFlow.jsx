@@ -128,10 +128,6 @@ const DeliveryStep = ({ form, setForm, deliveryMethod, setDeliveryMethod, delive
         </div>
         <div className="grid grid-cols-2 gap-3 mt-3">
           <div>
-            <Lbl>Cantidad de piezas</Lbl>
-            <input type="number" min="1" value={form.quantity} onChange={e=>set("quantity",e.target.value)} className={ic} />
-          </div>
-          <div>
             <Lbl>Tiempo de entrega</Lbl>
             <div className="space-y-1.5 mt-1">
               {URGENCY_OPTS.map(opt => (
@@ -305,59 +301,108 @@ const BillingStep = ({ billing, setBilling, errors }) => {
         </div>
       )}
 
-      <div style={{ padding:"10px 14px", borderRadius:10, background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.18)", fontSize:11, color:"rgba(167,139,250,0.7)" }}>
-        IVA 13% se aplica sobre el costo de la pieza. El envío (Correos CR) está exento de IVA.
-      </div>
     </div>
   );
 };
 
-// ── Step 3: SINPE Móvil payment ───────────────────────────────────────────────
+// ── Step 3: Payment (SINPE Móvil or Transferencia BAC) ───────────────────────
 const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors }) => {
   const set = (k,v) => setSinpe(p=>({ ...p, [k]:v }));
+  const method = sinpe.paymentMethod || "sinpe";
   const pieceCrc = totalPrice - (ivaCrc || 0) - (shippingCrc || 0);
+
+  const TotalBreakdown = () => (
+    <div style={{ background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
+      <div style={{ marginBottom:10 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
+          <span>Costo de la pieza</span>
+          <span>{formatCRC(pieceCrc)}</span>
+        </div>
+        {ivaCrc > 0 && (
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
+            <span>IVA 13%</span>
+            <span>{formatCRC(ivaCrc)}</span>
+          </div>
+        )}
+        {shippingCrc > 0 && (
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
+            <span>Envío PYMEXPRESS</span>
+            <span>{formatCRC(shippingCrc)}</span>
+          </div>
+        )}
+        <div style={{ height:1, background:"rgba(255,255,255,0.1)", margin:"8px 0" }} />
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+          <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>Total a pagar</span>
+          <span style={{ fontSize:28, fontWeight:900, color:"#a78bfa" }}>{formatCRC(totalPrice)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-5">
+      {/* Method selector */}
+      <div style={{ display:"flex", gap:10 }}>
+        {[
+          { value:"sinpe", label:"SINPE Móvil" },
+          { value:"bac",   label:"Transferencia BAC" },
+        ].map(opt => (
+          <button key={opt.value} onClick={() => set("paymentMethod", opt.value)}
+            style={{
+              flex:1, padding:"10px 0", borderRadius:12, fontSize:13, fontWeight:700, cursor:"pointer",
+              background: method === opt.value ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)",
+              border: method === opt.value ? "1.5px solid rgba(139,92,246,0.6)" : "1px solid rgba(255,255,255,0.1)",
+              color: method === opt.value ? "#c4b5fd" : "rgba(255,255,255,0.5)",
+              transition:"all 0.2s ease",
+            }}>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* SINPE instructions */}
-      <div style={{ background:"rgba(139,92,246,0.07)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:18, padding:"20px 22px" }}>
-        <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Pagar via SINPE Móvil</p>
-        <div style={{ background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 16px", marginBottom:16 }}>
-          {/* Breakdown */}
-          <div style={{ marginBottom:10 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
-              <span>Costo de la pieza</span>
-              <span>{formatCRC(pieceCrc)}</span>
-            </div>
-            {ivaCrc > 0 && (
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
-                <span>IVA 13%</span>
-                <span>{formatCRC(ivaCrc)}</span>
-              </div>
-            )}
-            {shippingCrc > 0 && (
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>
-                <span>Envío PYMEXPRESS</span>
-                <span>{formatCRC(shippingCrc)}</span>
-              </div>
-            )}
-            <div style={{ height:1, background:"rgba(255,255,255,0.1)", margin:"8px 0" }} />
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
-              <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>Total a pagar</span>
-              <span style={{ fontSize:28, fontWeight:900, color:"#a78bfa" }}>{formatCRC(totalPrice)}</span>
-            </div>
-          </div>
+      {method === "sinpe" && (
+        <div style={{ background:"rgba(139,92,246,0.07)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:18, padding:"20px 22px" }}>
+          <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Pagar via SINPE Móvil</p>
+          <TotalBreakdown />
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginTop:6 }}>a:</p>
           <p style={{ fontSize:22, fontWeight:900, color:"#fff", marginTop:2, letterSpacing:"0.05em" }}>{SINPE_PHONE}</p>
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.55)", marginTop:2 }}>{SINPE_NAME}</p>
+          <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.6, marginTop:14 }}>
+            <p>1. Abrí la app de tu banco y seleccioná <strong style={{ color:"rgba(255,255,255,0.75)" }}>SINPE Móvil</strong>.</p>
+            <p>2. Enviá el monto exacto al número indicado.</p>
+            <p>3. Adjuntá el comprobante abajo para confirmar el pedido.</p>
+          </div>
         </div>
-        <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.6 }}>
-          <p>1. Abrí la app de tu banco y seleccioná <strong style={{ color:"rgba(255,255,255,0.75)" }}>SINPE Móvil</strong>.</p>
-          <p>2. Enviá el monto exacto al número indicado.</p>
-          <p>3. Adjuntá el comprobante abajo para confirmar el pedido.</p>
-        </div>
-      </div>
+      )}
 
-      {/* Screenshot upload — required */}
+      {/* BAC instructions */}
+      {method === "bac" && (
+        <div style={{ background:"rgba(139,92,246,0.07)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:18, padding:"20px 22px" }}>
+          <p style={{ fontSize:13, fontWeight:700, color:"#c4b5fd", marginBottom:14 }}>Transferencia BAC Credomatic</p>
+          <TotalBreakdown />
+          <div style={{ background:"rgba(0,0,0,0.2)", borderRadius:10, padding:"12px 14px", marginBottom:14 }}>
+            {[
+              ["Nombre",  "Jonathan Aguilar González"],
+              ["Cuenta",  "970069183"],
+              ["IBAN",    "CR38010200009700691836"],
+              ["Banco",   "BAC Credomatic"],
+            ].map(([k, v]) => (
+              <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:4 }}>
+                <span style={{ color:"rgba(255,255,255,0.4)" }}>{k}</span>
+                <span style={{ color:"#fff", fontWeight:700, letterSpacing:"0.03em" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.6 }}>
+            <p>1. Realizá la transferencia por el monto exacto indicado.</p>
+            <p>2. Adjuntá el comprobante abajo.</p>
+            <p>3. Confirmá tu pedido.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Comprobante upload — required for both methods */}
       <div>
         <Lbl>Comprobante de pago *</Lbl>
         <label style={{ display:"block", cursor:"pointer", padding:"16px", borderRadius:12, background:"rgba(255,255,255,0.03)", border: errors.screenshot ? "1px solid rgba(239,68,68,0.5)" : sinpe.screenshot ? "1px solid rgba(16,185,129,0.35)" : "1px dashed rgba(255,255,255,0.18)", textAlign:"center" }}>
@@ -377,7 +422,7 @@ const PaymentStep = ({ totalPrice, shippingCrc, ivaCrc, sinpe, setSinpe, errors 
 
       <div style={{ padding:"10px 14px", borderRadius:10, background:"rgba(245,158,11,0.06)", border:"1px solid rgba(245,158,11,0.2)" }}>
         <p style={{ fontSize:11, color:"#f59e0b", fontWeight:600 }}>
-          Adjuntá el comprobante de tu transferencia SINPE. Verificaremos el pago y actualizaremos tu pedido.
+          Adjuntá el comprobante de tu pago. Verificaremos el pago y actualizaremos tu pedido.
         </p>
       </div>
     </div>
@@ -404,11 +449,9 @@ const ConfirmStep = ({ savedOrder, onNewOrder, onClose, settings }) => {
     ["Escala aplicada",o.modelFile?.scalePct != null ? `${o.modelFile.scalePct}% ${o.modelFile.scalePct===100?"(tamaño original)":""}` : "Original"],
     ["Dimensiones",    o.quote?.dimensions || "—"],
     ["Material",       `${o.quote?.material || "—"}${o.quote?.color ? ` — ${o.quote.color}` : ""}`],
-    ["Tecnología",     o.admin?.printer ? o.admin.printer.name : (o.quote?.material?.includes("Resina") ? "SLA" : "FDM")],
-    ["Peso estimado",  `${o.admin?.weightG}g`],
+    ["Cantidad",       `${o.quote?.quantity || 1} pieza${(o.quote?.quantity || 1) > 1 ? "s" : ""}`],
     ["Envío",          deliveryLabel()],
     ["Total",          formatCRC(o.quote?.totalPrice || 0)],
-    ["Confirmación SINPE", o.payment?.sinpeConfirmation || "—"],
   ];
 
   return (
@@ -455,6 +498,7 @@ const CheckoutFlow = ({
   pricing, modelStats, selectedMaterial, selectedColor,
   settings, parsedWeight, activePrinter, buildCheck,
   modelScale, file,
+  quantity: quantityProp,
   // fileBase64 is no longer used — file goes directly to the server as multipart
 }) => {
   const [modalStep, setModalStep] = useState(1); // 1=Delivery, 2=Billing, 3=Payment, 4=Confirm
@@ -465,7 +509,7 @@ const CheckoutFlow = ({
   // Customer / urgency form
   const [form, setForm] = useState({
     name:"", company:"", email:"", phone:"",
-    quantity:"1", urgency:"normal", notes:"",
+    urgency:"normal", notes:"",
   });
 
   // Delivery state
@@ -481,7 +525,7 @@ const CheckoutFlow = ({
   });
 
   // Payment state
-  const [sinpe, setSinpe] = useState({ screenshot:null, screenshotFile:null });
+  const [sinpe, setSinpe] = useState({ paymentMethod:"sinpe", screenshot:null, screenshotFile:null });
 
   // Validation errors
   const [errors, setErrors] = useState({});
@@ -504,7 +548,7 @@ const CheckoutFlow = ({
   }, [delivery.province, deliveryMethod]);
 
   const urgencyOpt  = URGENCY_OPTS.find(o => o.value === form.urgency) || URGENCY_OPTS[0];
-  const qty         = Math.max(1, parseInt(form.quantity) || 1);
+  const qty         = Math.max(1, quantityProp || 1);
   const unitPrice   = Math.round((pricing.salePrice * urgencyOpt.multiplier) / 500) * 500;
   const totalPrice  = unitPrice * qty;
   const ivaCrc      = Math.round(totalPrice * 0.13);
@@ -743,7 +787,7 @@ const CheckoutFlow = ({
     }
   };
 
-  const titleMap  = { 1:"Datos & Entrega", 2:"Facturación", 3:"Pago SINPE Móvil", 4:"¡Pedido Confirmado!" };
+  const titleMap  = { 1:"Datos & Entrega", 2:"Facturación", 3:"Método de Pago", 4:"¡Pedido Confirmado!" };
   const btnLabel  = {
     1: "Continuar →",
     2: "Continuar al pago →",

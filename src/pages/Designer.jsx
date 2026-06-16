@@ -3,33 +3,6 @@ import { Link } from "react-router-dom";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
-const PORTFOLIO_CARDS = [
-  {
-    url: "https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=500",
-    label: "3D Printed Parts",
-    category: "FDM · PLA",
-    position: "center center",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1565043666747-69f6646db940?w=500",
-    label: "Mechanical Parts",
-    category: "Engineering",
-    position: "center 40%",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500",
-    label: "Precision Gears",
-    category: "SLA Resin",
-    position: "center center",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=500",
-    label: "Custom Prototypes",
-    category: "High Detail",
-    position: "center 30%",
-  },
-];
-
 const MY_WORK = [
   {
     url: "/images/1.png",
@@ -74,7 +47,7 @@ const STEPS = [
     number: "02",
     icon: "✏️",
     title: "We Design It",
-    description: "Our designers create your 3D model in Onshape. You get a first draft within 24 hours and we refine until you are 100% satisfied.",
+    description: "Our designers create your 3D model in Onshape. You get a first draft within 48 hours and we refine until you are 100% satisfied.",
   },
   {
     number: "03",
@@ -124,7 +97,6 @@ const Designer = () => {
   const portfolioRef = useRef(null);
 
   const [openFaq, setOpenFaq]         = useState(null);
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [hoveredWork, setHoveredWork] = useState(null);
   const [lightbox, setLightbox]       = useState(null);
 
@@ -136,7 +108,7 @@ const Designer = () => {
       <div className="max-w-7xl mx-auto relative z-10">
 
         {/* ══ S1 — HERO ══ */}
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center py-8 sm:py-12">
+        <div className="py-8 sm:py-12">
 
           {/* Left */}
           <div>
@@ -167,7 +139,7 @@ const Designer = () => {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-8">
-              {["⚡ 24h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + STEP included"].map((b,i) => (
+              {["⚡ 48h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + 3MF included"].map((b,i) => (
                 <React.Fragment key={b}>
                   {i > 0 && <span className="text-white/20">·</span>}
                   <span className="text-white/55 text-sm font-semibold">{b}</span>
@@ -176,80 +148,6 @@ const Designer = () => {
             </div>
           </div>
 
-          {/* Right — photo grid */}
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-3" style={{ height:"clamp(280px,42vw,480px)" }}>
-              {PORTFOLIO_CARDS.map((card, i) => (
-                <div key={i}
-                  onMouseEnter={() => setHoveredCard(i)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  className="relative overflow-hidden cursor-pointer"
-                  style={{
-                    borderRadius:20,
-                    border: hoveredCard === i ? "1px solid rgba(139,92,246,0.6)" : "1px solid rgba(255,255,255,0.1)",
-                    transform: hoveredCard === i ? "scale(1.03)" : "scale(1)",
-                    boxShadow: hoveredCard === i ? "0 20px 40px rgba(0,0,0,0.5)" : "0 4px 20px rgba(0,0,0,0.3)",
-                    transition:"all 0.3s ease",
-                  }}>
-                  <div style={{
-                    position:"absolute", inset:0,
-                    backgroundImage:`url(${card.url})`,
-                    backgroundSize:"cover",
-                    backgroundPosition:card.position,
-                    transform: hoveredCard === i ? "scale(1.06)" : "scale(1)",
-                    transition:"transform 0.5s ease",
-                  }} />
-                  <div style={{
-                    position:"absolute", inset:0,
-                    background: hoveredCard === i
-                      ? "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.1) 100%)"
-                      : "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)",
-                    transition:"all 0.3s ease",
-                  }} />
-                  <div style={{
-                    position:"absolute", top:12, right:12,
-                    background:"rgba(255,255,255,0.12)",
-                    backdropFilter:"blur(8px)",
-                    WebkitBackdropFilter:"blur(8px)",
-                    border:"1px solid rgba(255,255,255,0.2)",
-                    borderRadius:999, padding:"3px 10px",
-                    fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.9)",
-                    letterSpacing:"0.04em",
-                  }}>{card.category}</div>
-                  <div style={{
-                    position:"absolute", bottom:0, left:0, right:0,
-                    padding:"12px 14px",
-                    display:"flex", alignItems:"center", justifyContent:"space-between",
-                    transform: hoveredCard === i ? "translateY(-3px)" : "translateY(0)",
-                    transition:"transform 0.3s ease",
-                  }}>
-                    <span style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,0.95)" }}>{card.label}</span>
-                    <span style={{
-                      fontSize:14, color:"#a78bfa",
-                      opacity: hoveredCard === i ? 1 : 0,
-                      transform: hoveredCard === i ? "translateX(0)" : "translateX(-6px)",
-                      transition:"all 0.3s ease",
-                    }}>→</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Social proof banner */}
-            <div className="flex items-center justify-between px-5"
-              style={{
-                height:64, borderRadius:16,
-                background:"rgba(139,92,246,0.08)",
-                border:"1px solid rgba(139,92,246,0.22)",
-              }}>
-              <span style={{ fontSize:13, color:"rgba(255,255,255,0.55)", fontWeight:600 }}>
-                ✦ Trusted by engineers, artists and entrepreneurs
-              </span>
-              <span style={{ fontSize:13, color:"#a78bfa", fontWeight:700, whiteSpace:"nowrap" }}>
-                50+ Projects Delivered
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* ══ REAL PORTFOLIO SECTION ══ */}

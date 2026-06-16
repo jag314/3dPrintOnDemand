@@ -304,6 +304,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   );
   const [selectedMaterial, setSelectedMaterial] = useState(materialNames[0]);
   const [selectedColor,    setSelectedColor]    = useState(materials[materialNames[0]]?.colors?.[0] || null);
+  const [quantity,         setQuantity]         = useState(1);
 
   React.useEffect(() => {
     if (!materialNames.includes(selectedMaterial)) {
@@ -730,8 +731,27 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                 </div>
               )}
 
+              {/* Quantity selector */}
+              <div style={{ marginBottom: "20px", marginTop: "28px" }}>
+                <p style={{ fontSize: "11px", letterSpacing: "2px", color: "#9ca3af", marginBottom: "10px" }}>CANTIDAD</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <button
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    style={{ width:"36px", height:"36px", borderRadius:"8px", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(167,139,250,0.3)", color:"#a78bfa", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}
+                  >−</button>
+                  <span style={{ color:"#ffffff", fontSize:"18px", fontWeight:"700", minWidth:"32px", textAlign:"center" }}>{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(q => Math.min(99, q + 1))}
+                    style={{ width:"36px", height:"36px", borderRadius:"8px", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(167,139,250,0.3)", color:"#a78bfa", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}
+                  >+</button>
+                  {quantity > 1 && (
+                    <span style={{ color:"#6d28d9", fontSize:"12px" }}>{quantity} piezas</span>
+                  )}
+                </div>
+              </div>
+
               {/* Price section */}
-              <div className="mt-8 pt-6 border-t border-white/10">
+              <div className="pt-6 border-t border-white/10">
                 {technology === "sla" ? (
                   <div style={{
                     background:"rgba(124,58,237,0.06)",
@@ -766,24 +786,15 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                   <>
                     <p style={{ fontSize:9, letterSpacing:"0.22em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", fontWeight:700, marginBottom:6 }}>COSTO DE MANUFACTURA</p>
                     <h3 className="text-4xl sm:text-5xl font-black text-violet-400 leading-none break-all">
-                      {formatCRC(pricing.salePrice)}
+                      {formatCRC(pricing.salePrice * quantity)}
                     </h3>
+                    {quantity > 1 && (
+                      <p style={{ fontSize:12, color:"rgba(167,139,250,0.7)", marginTop:4 }}>
+                        {formatCRC(pricing.salePrice)} × {quantity} piezas
+                      </p>
+                    )}
                     <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontStyle:"italic", marginTop:4 }}>
-                      * Precio estimado basado en el análisis del modelo. El precio final puede variar.
-                    </p>
-                    <ul className="mt-4 space-y-1.5">
-                      {[
-                        "✓ Material de impresión incluido",
-                        "✓ Mano de obra profesional",
-                        "✓ Control de calidad",
-                        ...(modelStats.needsSupports ? ["✓ Material de soporte"] : []),
-                        "✓ Entrega en 3-5 días hábiles",
-                      ].map(item => (
-                        <li key={item} style={{ fontSize:12, color:"rgba(255,255,255,0.55)" }}>{item}</li>
-                      ))}
-                    </ul>
-                    <p style={{ fontSize:10, color:"rgba(255,255,255,0.3)", marginTop:8, fontStyle:"italic" }}>
-                      Precio para clientes empresariales · IVA no incluido
+                      * Precio estimado basado en el análisis del modelo.
                     </p>
                   </>
                 )}
@@ -815,6 +826,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
           modelScale={modelScale}
           file={file}
           fileBase64={fileBase64}
+          quantity={quantity}
         />
       )}
     </main>
