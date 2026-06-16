@@ -27,7 +27,7 @@ const MODELS = [
   },
   {
     path: "./robot/porshe_911.glb",
-    label: "Porsche 911",
+    label: "Collectibles",
     scaleFactor: 3.0,
     position: [0, 0, 0],
     rotation: [0, 0, 0],
