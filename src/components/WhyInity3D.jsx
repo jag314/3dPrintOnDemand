@@ -10,45 +10,45 @@ import {
 const features = [
 
   {
-    title: "Instant Pricing",
+    title: "Precio Instantáneo",
     icon: Zap,
     description:
-      "Receive real-time manufacturing pricing instantly after uploading your 3D file.",
+      "Recibí el precio de manufactura en tiempo real al subir tu archivo 3D.",
   },
 
   {
-    title: "Industrial Accuracy",
+    title: "Precisión Industrial",
     icon: ShieldCheck,
     description:
-      "Precision-focused additive manufacturing for engineering-grade projects.",
+      "Manufactura aditiva enfocada en precisión para proyectos de grado industrial.",
   },
 
   {
-    title: "Premium Materials",
+    title: "Materiales Premium",
     icon: Sparkles,
     description:
-      "Choose from high-end materials, premium finishes and custom color variants.",
+      "Elegí entre materiales de alta gama, acabados premium y variantes de color personalizados.",
   },
 
   {
-    title: "Fast Turnaround",
+    title: "Entrega Rápida",
     icon: Rocket,
     description:
-      "Optimized workflow and automated quoting reduce production delays.",
+      "El flujo optimizado y la cotización automática reducen los tiempos de producción.",
   },
 
   {
-    title: "Real-Time Preview",
+    title: "Vista Previa en Tiempo Real",
     icon: Box,
     description:
-      "Preview your STL and 3D models directly in-browser before production.",
+      "Visualizá tus modelos STL y 3D directamente en el navegador antes de producir.",
   },
 
   {
-    title: "Engineering Quality",
+    title: "Calidad de Ingeniería",
     icon: Cpu,
     description:
-      "Designed for professional prototyping, production parts and technical validation.",
+      "Diseñado para prototipado profesional, piezas de producción y validación técnica.",
   },
 
 ];
@@ -71,22 +71,22 @@ const WhyInity3D = () => {
 
           <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
 
-            WHY INITY 3D
+            POR QUÉ INITY 3D
 
           </p>
 
           <h2 className="text-6xl font-black mt-6 leading-tight">
 
-            Built For Modern
+            Hecho para la Manufactura
             <br />
 
-            Manufacturing
+            Moderna
 
           </h2>
 
           <p className="soft-text text-lg mt-8 leading-relaxed">
 
-            A next-generation additive manufacturing platform focused on automation, precision and premium production workflows.
+            Una plataforma de manufactura aditiva de nueva generación, enfocada en automatización, precisión y flujos de producción premium.
 
           </p>
 

@@ -1,27 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useRef } from "react";
-import { useTranslation } from "react-i18next";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const uploadRef = useRef();
-  const { t, i18n } = useTranslation();
 
   return (
-
-    <nav
-      className="
-      fixed
-      top-0
-      left-0
-      w-full
-      z-[20]
-      backdrop-blur-2xl
-      bg-[#0b1020]/70
-      border-b
-      border-white/5
-      "
-    >
+    <nav className="fixed top-0 left-0 w-full z-[20] backdrop-blur-2xl bg-[#0b1020]/70 border-b border-white/5">
 
       <input
         ref={uploadRef}
@@ -42,54 +27,27 @@ const Navbar = () => {
         </Link>
 
         {/* MENU */}
-        <div className="hidden lg:flex items-center gap-12 text-lg text-white/70">
-          <Link to="/"          className="hover:text-white transition-all duration-300">{t("nav.home")}</Link>
-          <Link to="/about"     className="hover:text-white transition-all duration-300">{t("nav.about")}</Link>
-          <Link to="/teach"     className="hover:text-white transition-all duration-300">{t("nav.weTeach")}</Link>
-          <Link to="/designer"  className="hover:text-white transition-all duration-300">{t("nav.needDesigner")}</Link>
-          <Link to="/contact"   className="hover:text-white transition-all duration-300">{t("nav.contact")}</Link>
+        <div className="hidden lg:flex items-center gap-8 text-sm text-white/70">
+          <Link to="/"         className="hover:text-white transition-all duration-300">Inicio</Link>
+          <Link to="/about"    className="hover:text-white transition-all duration-300">Nosotros</Link>
+          <Link to="/teach"    className="hover:text-white transition-all duration-300">Enseñamos</Link>
+          <Link to="/designer" className="hover:text-white transition-all duration-300 whitespace-nowrap">¿Necesitás un Diseñador?</Link>
+          <Link to="/contact"  className="hover:text-white transition-all duration-300">Contacto</Link>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="flex items-center gap-3">
-
-          {/* Language toggle */}
-          <button
-            type="button"
-            onClick={() => i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}
-            style={{
-              background: "rgba(124,58,237,0.15)",
-              border: "1px solid rgba(167,139,250,0.3)",
-              borderRadius: "8px",
-              padding: "6px 12px",
-              color: "#a78bfa",
-              fontSize: "12px",
-              fontFamily: "'Courier New', monospace",
-              letterSpacing: "1px",
-              cursor: "pointer",
-              fontWeight: "700",
-            }}
-          >
-            {i18n.language === "es" ? "EN" : "ES"}
-          </button>
-
-          {/* Upload CTA */}
-          <button
-            type="button"
-            onClick={() => uploadRef.current?.click()}
-            className="primary-button px-8 py-4 rounded-2xl font-semibold"
-          >
-            {t("nav.uploadModel")}
-          </button>
-
-        </div>
+        {/* Upload CTA */}
+        <button
+          type="button"
+          onClick={() => uploadRef.current?.click()}
+          className="primary-button px-8 py-4 rounded-2xl font-semibold"
+        >
+          Subir Modelo
+        </button>
 
       </div>
 
     </nav>
-
   );
-
 };
 
 export default Navbar;

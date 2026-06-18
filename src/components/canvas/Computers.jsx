@@ -13,21 +13,21 @@ useGLTF.preload("./robot/porshe_911.glb");
 const MODELS = [
   {
     path: "./robot/helmet.glb",
-    label: "Tactical Helmet",
+    label: "Casco Táctico",
     scaleFactor: 3.0,
     position: [0, 0, 0],
     rotation: [0, 0, 0],
   },
   {
     path: "./robot/gear_box.glb",
-    label: "Mechanical Gearbox",
+    label: "Caja de Engranajes",
     scaleFactor: 3.0,
     position: [0, 0, 0],
     rotation: [0, 0, 0],
   },
   {
     path: "./robot/porshe_911.glb",
-    label: "Collectibles",
+    label: "Coleccionables",
     scaleFactor: 3.0,
     position: [0, 0, 0],
     rotation: [0, 0, 0],

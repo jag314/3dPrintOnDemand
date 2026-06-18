@@ -26,11 +26,11 @@ const Footer = () => (
           </h3>
           <ul className="space-y-3">
             {[
-              { label: "Home",             to: "/" },
-              { label: "About",            to: "/about" },
-              { label: "We Teach",         to: "/teach" },
-              { label: "Need A Designer?", to: "/designer" },
-              { label: "Contact",          to: "/contact" },
+              { label: "Inicio",                   to: "/" },
+              { label: "Nosotros",               to: "/about" },
+              { label: "Enseñamos",              to: "/teach" },
+              { label: "¿Necesitás un Diseñador?", to: "/designer" },
+              { label: "Contacto",               to: "/contact" },
             ].map(({ label, to }) => (
               <li key={to}>
                 <Link

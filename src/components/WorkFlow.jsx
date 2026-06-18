@@ -7,7 +7,7 @@ import {
 const PrinterIcon3D = ({ size = 38 }) => (
   <img
     src="/materials/3d-printer.png"
-    alt="3D Printer"
+    alt="Impresora 3D"
     width={size}
     height={size}
     style={{ objectFit: "contain", filter: "invert(72%) sepia(40%) saturate(600%) hue-rotate(215deg) brightness(110%)" }}
@@ -17,31 +17,31 @@ const PrinterIcon3D = ({ size = 38 }) => (
 const workflow = [
 
   {
-    title: "Upload Model",
+    title: "Subí tu Modelo",
     icon: Upload,
     description:
-      "Upload STL, OBJ or STEP files directly through the instant manufacturing platform.",
+      "Subí archivos STL, OBJ o STEP directamente a nuestra plataforma de manufactura instantánea.",
   },
 
   {
-    title: "Live Analysis",
+    title: "Análisis en Vivo",
     icon: ScanSearch,
     description:
-      "Automatic geometry analysis and real-time 3D visualization before production.",
+      "Análisis geométrico automático y visualización 3D en tiempo real antes de producir.",
   },
 
   {
-    title: "Instant Quote",
+    title: "Cotización Instantánea",
     icon: Calculator,
     description:
-      "Receive automated pricing based on material, volume, finishes and production complexity.",
+      "Recibí precios automáticos según material, volumen, acabados y complejidad de producción.",
   },
 
   {
-    title: "Production",
+    title: "Producción",
     icon: PrinterIcon3D,
     description:
-      "Your project enters professional additive manufacturing workflow and quality validation.",
+      "Tu proyecto entra al flujo profesional de manufactura aditiva con validación de calidad.",
   },
 
 ];
@@ -67,22 +67,22 @@ const Workflow = () => {
 
           <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
 
-            HOW INITY 3D WORKS
+            CÓMO FUNCIONA INITY 3D
 
           </p>
 
           <h2 className="text-6xl font-black mt-6 leading-tight">
 
-            Automated
+            Flujo de Fabricación
             <br />
 
-            Manufacturing Workflow
+            Automatizado
 
           </h2>
 
           <p className="soft-text text-lg mt-8 leading-relaxed">
 
-            A simplified digital manufacturing pipeline focused on speed, precision and production efficiency.
+            Un flujo de fabricación digital simplificado, enfocado en velocidad, precisión y eficiencia productiva.
 
           </p>
 

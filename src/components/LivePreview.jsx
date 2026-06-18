@@ -26,26 +26,24 @@ const LivePreview = () => {
 
           <p className="uppercase tracking-[0.3em] text-violet-400 text-sm">
 
-            Instant Quoting
+            Cotización Instantánea
 
           </p>
 
           <h2 className="text-5xl font-black mt-5 leading-tight">
 
-            Real-Time 3D
+            Análisis de Fabricación 3D
             <span className="text-violet-500">
 
-              {" "}Manufacturing{" "}
+              {" "}en Tiempo Real
 
             </span>
-
-            Analysis
 
           </h2>
 
           <p className="text-white/60 mt-8 text-lg leading-relaxed">
 
-            Upload STL, OBJ or 3MF files and instantly calculate manufacturing cost, estimated weight, complexity and material pricing.
+            Subí archivos STL, OBJ o 3MF y calculá al instante el costo de fabricación, peso estimado, complejidad y precio del material.
 
           </p>
 
@@ -54,7 +52,7 @@ const LivePreview = () => {
             className="inline-flex mt-10 bg-violet-600 hover:bg-violet-500 transition px-8 py-4 rounded-2xl font-semibold"
           >
 
-            Try Live Quote
+            Probá la Cotización en Vivo
 
           </button>
 
@@ -74,7 +72,7 @@ const LivePreview = () => {
 
               <h3 className="text-3xl font-black">
 
-                Live 3D Preview
+                Vista Previa 3D en Vivo
 
               </h3>
 

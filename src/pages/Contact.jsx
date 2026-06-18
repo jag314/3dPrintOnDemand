@@ -25,27 +25,22 @@ const Contact = () => {
 
           <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
 
-            CONTACT INITY 3D
+            CONTACTO INITY 3D
 
           </p>
 
           <h1 className="text-6xl lg:text-7xl font-black leading-[0.95] mt-8">
 
-            Let's Build
+            Hagamos Algo
             <br />
 
-            Something
-            <span className="text-violet-400">
-
-              {" "}Amazing
-
-            </span>
+            <span className="text-violet-400">Extraordinario</span>
 
           </h1>
 
           <p className="soft-text text-xl leading-relaxed mt-10">
 
-            Whether you need manufacturing, educational programs, product design or maintenance services, INITY 3D is ready to help bring your ideas to life.
+            Ya sea que necesités manufactura, programas educativos, diseño de producto o servicios de mantenimiento, INITY 3D está listo para ayudarte a dar vida a tus ideas.
 
           </p>
 
@@ -61,13 +56,13 @@ const Contact = () => {
 
             <h2 className="text-4xl font-black">
 
-              Send Us A Message
+              Envianos un Mensaje
 
             </h2>
 
             <p className="soft-text mt-4 leading-relaxed">
 
-              Tell us about your project, institution or idea and we'll get back to you soon.
+              Contanos sobre tu proyecto, institución o idea y te respondemos pronto.
 
             </p>
 
@@ -81,13 +76,13 @@ const Contact = () => {
 
                 <label className="block text-white/70 mb-3">
 
-                  Full Name
+                  Nombre Completo
 
                 </label>
 
                 <input
                   type="text"
-                  placeholder="Your name"
+                  placeholder="Tu nombre"
                   className="
                   w-full
                   rounded-2xl
@@ -111,13 +106,13 @@ const Contact = () => {
 
                 <label className="block text-white/70 mb-3">
 
-                  Email Address
+                  Correo Electrónico
 
                 </label>
 
                 <input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="correo@ejemplo.com"
                   className="
                   w-full
                   rounded-2xl
@@ -141,13 +136,13 @@ const Contact = () => {
 
                 <label className="block text-white/70 mb-3">
 
-                  Institution / Company
+                  Institución / Empresa
 
                 </label>
 
                 <input
                   type="text"
-                  placeholder="Optional"
+                  placeholder="Opcional"
                   className="
                   w-full
                   rounded-2xl
@@ -171,7 +166,7 @@ const Contact = () => {
 
                 <label className="block text-white/70 mb-3">
 
-                  Service Type
+                  Tipo de Servicio
 
                 </label>
 
@@ -193,37 +188,37 @@ const Contact = () => {
 
                   <option className="bg-[#111827]">
 
-                    3D Printing
+                    Impresión 3D
 
                   </option>
 
                   <option className="bg-[#111827]">
 
-                    Educational Programs
+                    Programas Educativos
 
                   </option>
 
                   <option className="bg-[#111827]">
 
-                    Need A Designer
+                    Necesito un Diseñador
 
                   </option>
 
                   <option className="bg-[#111827]">
 
-                    Product Development
+                    Desarrollo de Producto
 
                   </option>
 
                   <option className="bg-[#111827]">
 
-                    Maintenance & Repair
+                    Mantenimiento y Reparación
 
                   </option>
 
                   <option className="bg-[#111827]">
 
-                    Other
+                    Otro
 
                   </option>
 
@@ -237,13 +232,13 @@ const Contact = () => {
 
                 <label className="block text-white/70 mb-3">
 
-                  Project Details
+                  Detalles del Proyecto
 
                 </label>
 
                 <textarea
                   rows="6"
-                  placeholder="Tell us about your project..."
+                  placeholder="Cuéntanos sobre tu proyecto..."
                   className="
                   w-full
                   rounded-2xl
@@ -276,7 +271,7 @@ const Contact = () => {
                 "
               >
 
-                Send Message
+                Enviar Mensaje
 
               </button>
 
@@ -294,7 +289,7 @@ const Contact = () => {
 
               <h2 className="text-4xl font-black">
 
-                Contact Information
+                Información de Contacto
 
               </h2>
 
@@ -312,7 +307,7 @@ const Contact = () => {
 
                     <p className="text-white/50">
 
-                      Email
+                      Correo
 
                     </p>
 
@@ -364,7 +359,7 @@ const Contact = () => {
 
                     <p className="text-white/50">
 
-                      Location
+                      Ubicación
 
                     </p>
 
@@ -388,7 +383,7 @@ const Contact = () => {
 
               <h2 className="text-4xl font-black">
 
-                What We Offer
+                Lo Que Ofrecemos
 
               </h2>
 
@@ -396,11 +391,11 @@ const Contact = () => {
 
                 <div className="rounded-3xl border border-white/10 p-6 bg-white/[0.03]">
 
-                  <img src="/materials/3d-printer.png" alt="3D Printer" width={34} height={34} style={{ objectFit: "contain", filter: "invert(72%) sepia(40%) saturate(600%) hue-rotate(215deg) brightness(110%)" }} />
+                  <img src="/materials/3d-printer.png" alt="Impresora 3D" width={34} height={34} style={{ objectFit: "contain", filter: "invert(72%) sepia(40%) saturate(600%) hue-rotate(215deg) brightness(110%)" }} />
 
                   <h3 className="text-xl font-bold mt-5">
 
-                    3D Printing
+                    Impresión 3D
 
                   </h3>
 
@@ -412,7 +407,7 @@ const Contact = () => {
 
                   <h3 className="text-xl font-bold mt-5">
 
-                    Educational Programs
+                    Programas Educativos
 
                   </h3>
 
@@ -424,7 +419,7 @@ const Contact = () => {
 
                   <h3 className="text-xl font-bold mt-5">
 
-                    Design Services
+                    Diseño y Modelado
 
                   </h3>
 
@@ -436,7 +431,7 @@ const Contact = () => {
 
                   <h3 className="text-xl font-bold mt-5">
 
-                    Maintenance
+                    Mantenimiento
 
                   </h3>
 

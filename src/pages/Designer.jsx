@@ -16,52 +16,52 @@ const STEPS = [
   {
     number: "01",
     icon: "💬",
-    title: "Tell Us Your Idea",
-    description: "Send us a description, sketch, photo or reference image. The more detail the better — but even a napkin sketch works.",
+    title: "Contanos Tu Idea",
+    description: "Envianos una descripción, boceto, foto o imagen de referencia. Cuanto más detalle, mejor — incluso un boceto en servilleta sirve.",
   },
   {
     number: "02",
     icon: "✏️",
-    title: "We Design It",
-    description: "Our designers create your 3D model in Onshape. You get a first draft within 48 hours and we refine until you are 100% satisfied.",
+    title: "Lo Diseñamos",
+    description: "Nuestros diseñadores crean tu modelo 3D en Onshape. Recibís un primer borrador en 48 horas y refinamos hasta que quedés 100% satisfecho.",
   },
   {
     number: "03",
     icon: "📦",
-    title: "Print-Ready Files",
-    description: "Receive your STL, STEP and OBJ files optimized for 3D printing. We can also print it for you directly through our quote system.",
+    title: "Archivos Listos para Imprimir",
+    description: "Recibís tus archivos STL, STEP y OBJ optimizados para impresión 3D. También podemos imprimirlo directamente a través de nuestro sistema de cotización.",
   },
 ];
 
 const SERVICES = [
-  { emoji:"🔩", title:"Mechanical Parts",      description:"Brackets, enclosures, gears, mounts, fixtures and functional components." },
-  { emoji:"🏠", title:"Architectural Models",  description:"Scale models of buildings, rooms, urban planning and real estate presentations." },
-  { emoji:"💍", title:"Jewelry & Art",          description:"Custom rings, pendants, sculptures and artistic pieces for SLA printing." },
-  { emoji:"📱", title:"Product Prototypes",    description:"Turn your product idea into a physical prototype. Perfect for investor demos." },
-  { emoji:"🎮", title:"Gaming & Collectibles", description:"Miniatures, figurines, cosplay props and custom gaming accessories." },
-  { emoji:"🏭", title:"Industrial Components", description:"Replacement parts, jigs, tools and custom industrial solutions." },
+  { emoji:"🔩", title:"Piezas Mecánicas",        description:"Brackets, carcasas, engranajes, soportes, fixtures y componentes funcionales." },
+  { emoji:"🏠", title:"Modelos Arquitectónicos", description:"Maquetas a escala de edificios, habitaciones, planificación urbana y presentaciones inmobiliarias." },
+  { emoji:"💍", title:"Joyería y Arte",           description:"Anillos, colgantes, esculturas y piezas artísticas personalizadas para impresión SLA." },
+  { emoji:"📱", title:"Prototipos de Productos", description:"Convertí tu idea en un prototipo físico. Perfecto para demos con inversores." },
+  { emoji:"🎮", title:"Juegos y Coleccionables", description:"Miniaturas, figurines, props de cosplay y accesorios de juego personalizados." },
+  { emoji:"🏭", title:"Componentes Industriales",description:"Piezas de repuesto, jigs, herramientas y soluciones industriales a medida." },
 ];
 
 const FAQ_ITEMS = [
   {
-    q: "Do I need to know anything about 3D design?",
-    a: "Not at all. Just send us your idea in any format — text, photo, sketch or even a voice note. We handle all the technical work.",
+    q: "¿Necesito saber algo de diseño 3D?",
+    a: "Para nada. Solo envianos tu idea en cualquier formato — texto, foto, boceto o hasta una nota de voz. Nosotros nos encargamos de todo el trabajo técnico.",
   },
   {
-    q: "How long does a design take?",
-    a: "Simple parts are delivered within 24-48 hours. Complex assemblies may take 3-5 business days. We always give you a timeline before starting.",
+    q: "¿Cuánto tarda un diseño?",
+    a: "Las piezas simples se entregan en 24-48 horas. Los ensamblajes complejos pueden tardar 3-5 días hábiles. Siempre te damos un plazo antes de empezar.",
   },
   {
-    q: "What if I don't like the design?",
-    a: "We offer revisions until you are completely satisfied. Standard and Premium tiers include unlimited revisions.",
+    q: "¿Qué pasa si no me gusta el diseño?",
+    a: "Ofrecemos revisiones hasta que estés completamente satisfecho. Los planes Estándar y Premium incluyen revisiones ilimitadas.",
   },
   {
-    q: "What files will I receive?",
-    a: "You always receive STL files ready for printing. Standard and Premium tiers also include STEP and OBJ files compatible with all major CAD software.",
+    q: "¿Qué archivos recibiré?",
+    a: "Siempre recibís archivos STL listos para imprimir. Los planes Estándar y Premium también incluyen archivos STEP y OBJ compatibles con los principales programas CAD.",
   },
   {
-    q: "Can you print the design too?",
-    a: "Yes! Once your design is approved, you can send it directly to our quote system and we'll print it for you.",
+    q: "¿Pueden imprimir el diseño también?",
+    a: "¡Sí! Una vez aprobado el diseño, podés enviarlo directamente a nuestro sistema de cotización y lo imprimimos por vos.",
   },
 ];
 
@@ -210,40 +210,40 @@ const Designer = () => {
               <span style={{
                 color: "#a78bfa", fontSize: "10px",
                 letterSpacing: "2px", fontFamily: "'Courier New', monospace",
-              }}>PROFESSIONAL 3D DESIGN SERVICES</span>
+              }}>SERVICIOS PROFESIONALES DE DISEÑO 3D</span>
             </div>
 
             <h1
               className="premium-heading text-5xl sm:text-6xl lg:text-7xl font-black leading-[0.92]"
               style={{ textShadow: "0 0 80px rgba(124,58,237,0.3)" }}
             >
-              From Your{" "}
+              De Tu{" "}
               <span className="text-violet-400">Idea</span>
               <br />
-              To A Printable
+              A Un Modelo
               <br />
-              <span className="text-violet-400">3D Model</span>
+              <span className="text-violet-400">Imprimible</span>
             </h1>
 
             <p className="soft-text text-lg sm:text-xl mt-8 leading-relaxed">
-              We design custom 3D models ready for FDM and SLA printing.
-              Send us a sketch, photo, or description — we handle the rest.
+              Diseñamos modelos 3D personalizados listos para impresión FDM y SLA.
+              Enviános un sketch, foto o descripción — nosotros hacemos el resto.
             </p>
 
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "40px", flexWrap: "wrap" }}>
               <Link to="/contact"
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold">
-                Start My Project →
+                Empezar Mi Proyecto →
               </Link>
               <button type="button" onClick={scrollToWork}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
                 style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.28)", color:"#c4b5fd" }}>
-                See Our Work
+                Ver Nuestro Trabajo
               </button>
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 12px", marginTop: "32px" }}>
-              {["⚡ 48h First Draft","✓ Print-Ready Files","🔄 Unlimited Revisions","📦 STL + 3MF included"].map((b, i) => (
+              {["⚡ 48h Primer Borrador","✓ Archivos Listos Para Imprimir","🔄 Revisiones Ilimitadas","📦 STL + 3MF incluido"].map((b, i) => (
                 <React.Fragment key={b}>
                   {i > 0 && <span className="text-white/20">·</span>}
                   <span className="text-white/55 text-sm font-semibold">{b}</span>
@@ -264,7 +264,7 @@ const Designer = () => {
                 fontSize: "11px", letterSpacing: "3px",
                 color: "#7c3aed", marginBottom: "12px",
                 textTransform: "uppercase",
-              }}>OUR WORK</p>
+              }}>NUESTRO TRABAJO</p>
               <div style={{
                 display: "flex", justifyContent: "space-between",
                 alignItems: "flex-end", flexWrap: "wrap", gap: "16px",
@@ -395,9 +395,9 @@ const Designer = () => {
         {/* ══ S3 — HOW IT WORKS ══ */}
         <div className="mt-20 sm:mt-28">
           <div className="text-center mb-14">
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">PROCESS</p>
-            <h2 className="text-3xl sm:text-4xl font-black mt-3">How It Works</h2>
-            <p className="soft-text text-base mt-3">From idea to printed part in 3 simple steps</p>
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">PROCESO</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Cómo Funciona</h2>
+            <p className="soft-text text-base mt-3">De la idea a la pieza impresa en 3 simples pasos</p>
           </div>
           <div className="flex flex-col md:flex-row items-start gap-10 md:gap-0">
             {STEPS.map((step, i) => (
@@ -432,9 +432,9 @@ const Designer = () => {
         {/* ══ S4 — WHAT WE DESIGN ══ */}
         <div ref={servicesRef} className="mt-20 sm:mt-28" id="services">
           <div className="text-center sm:text-left mb-10">
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">SERVICES</p>
-            <h2 className="text-3xl sm:text-4xl font-black mt-3">What We Can Design For You</h2>
-            <p className="soft-text text-base mt-3">No project too small or too complex</p>
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">SERVICIOS</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Qué Podemos Diseñar Para Vos</h2>
+            <p className="soft-text text-base mt-3">Ningún proyecto es demasiado pequeño o complejo</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {SERVICES.map((svc) => (
@@ -474,7 +474,7 @@ const Designer = () => {
         <div className="mt-20 sm:mt-28">
           <div className="text-center mb-10">
             <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">FAQ</p>
-            <h2 className="text-3xl sm:text-4xl font-black mt-3">Common Questions</h2>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Preguntas Frecuentes</h2>
           </div>
           <div className="max-w-3xl mx-auto" style={{ borderTop:"1px solid rgba(255,255,255,0.07)" }}>
             {FAQ_ITEMS.map((item, i) => (

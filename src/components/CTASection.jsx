@@ -12,16 +12,16 @@ const CTASection = () => {
 
           <h2 className="text-6xl font-black leading-tight">
 
-            Ready To Print
+            ¿Listo para Imprimir
             <br />
 
-            Your Next Project?
+            tu Próximo Proyecto?
 
           </h2>
 
           <p className="text-white/60 text-xl mt-8 max-w-2xl mx-auto">
 
-            Upload your 3D model and receive real-time manufacturing pricing instantly.
+            Subí tu modelo 3D y recibí el precio de manufactura en tiempo real, al instante.
 
           </p>
 
@@ -30,7 +30,7 @@ const CTASection = () => {
             className="inline-flex mt-10 bg-violet-600 hover:bg-violet-500 transition px-10 py-5 rounded-2xl font-bold text-lg"
           >
 
-            Upload Your 3D File
+            Subí tu Archivo 3D
 
           </Link>
 

@@ -51,13 +51,13 @@ const InlineUpload = ({ onFileUpload }) => {
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <span style={{ fontSize:9, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:"rgba(167,139,250,0.8)", fontFamily:"Inter, sans-serif" }}>{dragging?"Drop it!":"Upload"}</span>
+          <span style={{ fontSize:9, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:"rgba(167,139,250,0.8)", fontFamily:"Inter, sans-serif" }}>{dragging?"¡Soltá!":"Subir"}</span>
         </div>
         <h2 style={{ marginTop:28, fontSize:"clamp(22px,5vw,48px)", fontWeight:900, color:"#fff", lineHeight:1.1, fontFamily:"Inter, sans-serif", letterSpacing:"-0.03em" }}>
-          Upload Your <span style={{ color:active?"#c4b5fd":"#a78bfa", transition:"color 0.3s ease" }}>3D Files</span>
+          Subí tus <span style={{ color:active?"#c4b5fd":"#a78bfa", transition:"color 0.3s ease" }}>Archivos 3D</span>
         </h2>
         <p style={{ marginTop:14, fontSize:"clamp(11px,2vw,13px)", color:active?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.3)", fontFamily:"Inter, sans-serif", transition:"color 0.3s ease" }}>
-          {dragging?"Release to analyze instantly":"Drag & drop or click to browse  ·  STL, OBJ & 3MF supported"}
+          {dragging?"Soltá para analizar":"Arrastrá o hacé clic para explorar  ·  STL, OBJ y 3MF soportados"}
         </p>
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginTop:20 }}>
           {[".STL",".OBJ",".3MF"].map(ext => (
@@ -72,12 +72,12 @@ const InlineUpload = ({ onFileUpload }) => {
 const InlineUploadCompact = ({ onFileUpload }) => {
   const inputRef = React.useRef();
   return (
-    <div onClick={() => inputRef.current?.click()} title="Upload new file" style={{ width:58, height:58, borderRadius:16, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3, cursor:"pointer", background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.28)", backdropFilter:"blur(16px)", transition:"all 0.2s ease", boxShadow:"0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
+    <div onClick={() => inputRef.current?.click()} title="Subir nuevo archivo" style={{ width:58, height:58, borderRadius:16, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3, cursor:"pointer", background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.28)", backdropFilter:"blur(16px)", transition:"all 0.2s ease", boxShadow:"0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
       <input ref={inputRef} type="file" accept=".stl,.obj,.3mf" style={{ display:"none" }} onChange={(e) => { const f = e.target.files[0]; if (f) onFileUpload(f); }} />
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
       </svg>
-      <span style={{ fontSize:8, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color:"rgba(167,139,250,0.7)", fontFamily:"Inter, sans-serif" }}>Upload</span>
+      <span style={{ fontSize:8, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color:"rgba(167,139,250,0.7)", fontFamily:"Inter, sans-serif" }}>Subir</span>
     </div>
   );
 };
@@ -86,39 +86,39 @@ const InlineUploadCompact = ({ onFileUpload }) => {
 
 const MATERIAL_INFO = {
   fdm: {
-    title:"FDM 3D Printing", subtitle:"Fused Deposition Modeling",
-    description:"FDM builds parts layer by layer by melting thermoplastic filament. Best for prototypes, functional parts, and large models.",
-    priced:"Priced by weight (grams)", badge:"FDM · Fused Deposition",
+    title:"Impresión 3D FDM", subtitle:"Deposición de Filamento Fundido",
+    description:"FDM fabrica piezas capa a capa fundiendo filamento termoplástico. Ideal para prototipos, piezas funcionales y modelos de gran tamaño.",
+    priced:"Cotizado por peso (gramos)", badge:"FDM · Deposición de Material",
     photos:[
-      { url:"/materials/fdm-1.png", caption:"FDM PLA — functional prototype",  position:"center center" },
-      { url:"/materials/fdm-2.png", caption:"FDM PETG — mechanical part",      position:"center center" },
-      { url:"/materials/fdm-3.png", caption:"FDM ABS — structural component",  position:"center center" },
+      { url:"/materials/fdm-1.png", caption:"FDM PLA — prototipo funcional",      position:"center center" },
+      { url:"/materials/fdm-2.png", caption:"FDM PETG — pieza mecánica",          position:"center center" },
+      { url:"/materials/fdm-3.png", caption:"FDM ABS — componente estructural",   position:"center center" },
     ],
     characteristics:[
-      { icon:"⚡", title:"Fast Turnaround",  description:"Parts ready in 24–48 hours for most sizes" },
-      { icon:"💰", title:"Most Affordable",  description:"Lowest cost per part, ideal for prototypes" },
-      { icon:"📐", title:"Large Format",     description:"Up to 300×300×400mm build volume" },
-      { icon:"🎨", title:"Many Colors",      description:"20+ filament colors available" },
-      { icon:"♻️", title:"Eco Friendly",     description:"PLA is biodegradable and sustainable" },
-      { icon:"🔧", title:"Functional Parts", description:"Strong enough for real mechanical use" },
+      { icon:"⚡", title:"Entrega Rápida",           description:"Piezas listas en 24–48 horas para la mayoría de tamaños" },
+      { icon:"💰", title:"Más Económico",             description:"Menor costo por pieza, ideal para prototipos" },
+      { icon:"📐", title:"Gran Formato",              description:"Volumen de fabricación de hasta 300×300×400mm" },
+      { icon:"🎨", title:"Gran Variedad de Colores",  description:"Más de 20 colores de filamento disponibles" },
+      { icon:"♻️", title:"Eco Sostenible",            description:"El PLA es biodegradable y sostenible" },
+      { icon:"🔧", title:"Piezas Funcionales",        description:"Resistentes para uso mecánico real" },
     ],
   },
   sla: {
-    title:"SLA 3D Printing", subtitle:"Stereolithography · MSLA · DLP",
-    description:"SLA cures liquid photopolymer resin with UV light. Produces ultra-fine details, smooth surfaces and excellent accuracy.",
-    priced:"Priced by volume (ml)", badge:"SLA · Stereolithography",
+    title:"Impresión 3D SLA", subtitle:"Estereolitografía · MSLA · DLP",
+    description:"SLA cura resina fotopolimérica líquida con luz UV. Produce detalles ultra-finos, superficies lisas y excelente precisión.",
+    priced:"Cotizado por volumen (ml)", badge:"SLA · Estereolitografía",
     photos:[
-      { url:"/materials/sla-1.png", caption:"SLA Standard Resin — smooth prototype", position:"center center" },
-      { url:"/materials/sla-2.png", caption:"SLA High Detail — miniature & jewelry",  position:"center center" },
-      { url:"/materials/sla-3.png", caption:"SLA ABS-Like — tough functional part",   position:"center center" },
+      { url:"/materials/sla-1.png", caption:"SLA Resina Estándar — prototipo liso",       position:"center center" },
+      { url:"/materials/sla-2.png", caption:"SLA Alta Definición — miniaturas y joyería", position:"center center" },
+      { url:"/materials/sla-3.png", caption:"SLA tipo ABS — pieza funcional resistente",  position:"center center" },
     ],
     characteristics:[
-      { icon:"🔬", title:"Ultra High Detail",   description:"50 micron layer height, smooth surfaces" },
-      { icon:"✨", title:"Smooth Finish",        description:"Near injection-molded surface quality" },
-      { icon:"💎", title:"Jewelry & Miniatures", description:"Perfect for intricate small parts" },
-      { icon:"🦷", title:"Dental & Medical",     description:"Biocompatible resins available" },
-      { icon:"📏", title:"High Accuracy",        description:"±0.05mm dimensional accuracy" },
-      { icon:"🌊", title:"Watertight Parts",     description:"Fully sealed, no layer gaps" },
+      { icon:"🔬", title:"Ultra Alta Definición",  description:"Capas de 50 micrones, superficies lisas" },
+      { icon:"✨", title:"Acabado Liso",            description:"Calidad de superficie casi inyectada" },
+      { icon:"💎", title:"Joyería y Miniaturas",   description:"Perfecto para piezas pequeñas e intrincadas" },
+      { icon:"🦷", title:"Dental y Médico",         description:"Resinas biocompatibles disponibles" },
+      { icon:"📏", title:"Alta Precisión",          description:"Precisión dimensional de ±0.05mm" },
+      { icon:"🌊", title:"Piezas Herméticas",       description:"Totalmente selladas, sin huecos entre capas" },
     ],
   },
 };
@@ -137,7 +137,7 @@ const TechnologySelector = ({ technology, setTechnology }) => {
   return (
     <>
       <div className="absolute top-6 z-30" style={{ left:"50%", transform:"translateX(-50%)", background:"rgba(10,10,20,0.72)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"10px 10px", boxShadow:"0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize:"9px", letterSpacing:"0.14em", color:"rgba(255,255,255,0.25)", fontWeight:600, textTransform:"uppercase", marginBottom:8, paddingLeft:4 }}>Technology</div>
+        <div style={{ fontSize:"9px", letterSpacing:"0.14em", color:"rgba(255,255,255,0.25)", fontWeight:600, textTransform:"uppercase", marginBottom:8, paddingLeft:4 }}>Tecnología</div>
         <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
           {[{id:"fdm",label:"FDM",desc:"PLA · PETG · ABS",icon:"⬡"},{id:"sla",label:"SLA",desc:"High detail · Resin",icon:"◈"}].map(({id,label,desc,icon}) => (
             <div key={id} style={{ display:"flex", alignItems:"stretch" }}>
@@ -204,18 +204,18 @@ const AnalysisBadge = ({ modelStats, parsedWeight, displayDimensions }) => {
   return (
     <div style={{ background:"rgba(10,10,20,0.52)", backdropFilter:"blur(32px) saturate(200%)", WebkitBackdropFilter:"blur(32px) saturate(200%)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"14px 16px", boxShadow:"0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
-        <span style={{ fontSize:"10px", letterSpacing:"0.16em", color:"rgba(255,255,255,0.3)", fontWeight:600, textTransform:"uppercase" }}>Analysis</span>
+        <span style={{ fontSize:"10px", letterSpacing:"0.16em", color:"rgba(255,255,255,0.3)", fontWeight:600, textTransform:"uppercase" }}>Análisis</span>
         <span style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"10px", fontWeight:700, color:"#4ade80", background:"rgba(74,222,128,0.1)", border:"1px solid rgba(74,222,128,0.18)", borderRadius:"999px", padding:"2px 7px" }}>
-          <span style={{ width:4, height:4, borderRadius:"50%", background:"#4ade80", display:"inline-block" }} />Ready
+          <span style={{ width:4, height:4, borderRadius:"50%", background:"#4ade80", display:"inline-block" }} />Listo
         </span>
       </div>
       <div style={{ height:"1px", background:"rgba(255,255,255,0.06)", margin:"0 0 10px" }} />
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
-        <span style={{ fontSize:"11px", color:"rgba(255,255,255,0.32)" }}>File</span>
+        <span style={{ fontSize:"11px", color:"rgba(255,255,255,0.32)" }}>Archivo</span>
         <span style={{ fontSize:"11px", fontWeight:600, color:"rgba(255,255,255,0.82)", maxWidth:"140px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{modelStats.fileName}</span>
       </div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <span style={{ fontSize:"11px", color:"rgba(255,255,255,0.32)" }}>Weight</span>
+        <span style={{ fontSize:"11px", color:"rgba(255,255,255,0.32)" }}>Peso</span>
         <span style={{ fontSize:"11px", fontWeight:700, color:"rgba(255,255,255,0.88)" }}>{parsedWeight} g</span>
       </div>
       {hasDims && (
@@ -625,7 +625,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
               </div>
 
               <p className="text-white/40 text-xs sm:text-sm uppercase tracking-[0.2em]">COTIZACIÓN</p>
-              <h2 className="text-4xl sm:text-5xl font-black leading-[0.9] mt-3 sm:mt-5">Precio<br />Instant</h2>
+              <h2 className="text-4xl sm:text-5xl font-black leading-[0.9] mt-3 sm:mt-5">Precio<br />Instantáneo</h2>
 
               {/* Applied scale badge */}
               {modelScale !== 1.0 && (

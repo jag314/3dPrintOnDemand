@@ -7,7 +7,7 @@ import {
 const PrinterIcon3D = ({ size = 38 }) => (
   <img
     src="/materials/3d-printer.png"
-    alt="3D Printer"
+    alt="Impresora 3D"
     width={size}
     height={size}
     style={{ objectFit: "contain", filter: "invert(72%) sepia(40%) saturate(600%) hue-rotate(215deg) brightness(110%)" }}
@@ -19,30 +19,30 @@ import { Link } from "react-router-dom";
 const timeline = [
 
   {
-    title: "Started With a Dream",
+    title: "Comenzó con un Sueño",
     description:
-      "The journey began exploring additive manufacturing, prototyping and advanced 3D printing workflows.",
+      "El camino comenzó explorando la manufactura aditiva, el prototipado y los flujos avanzados de impresión 3D.",
     icon: PrinterIcon3D,
   },
 
   {
-    title: "Designing Real Client Projects",
+    title: "Diseñando Proyectos Reales",
     description:
-      "Created custom 3D models, prototypes and manufacturing solutions for real-world applications.",
+      "Creación de modelos 3D personalizados, prototipos y soluciones de manufactura para aplicaciones del mundo real.",
     icon: Lightbulb,
   },
 
   {
-    title: "Teaching 3D Printing & Design",
+    title: "Enseñando Impresión 3D y Diseño",
     description:
-      "Developed educational experiences for schools, universities, institutions and innovation events.",
+      "Desarrollo de experiencias educativas para escuelas, universidades, instituciones y eventos de innovación.",
     icon: GraduationCap,
   },
 
   {
-    title: "Building INITY 3D",
+    title: "Construyendo INITY 3D",
     description:
-      "A platform focused on additive manufacturing, engineering, education and innovation in Costa Rica.",
+      "Una plataforma enfocada en manufactura aditiva, ingeniería, educación e innovación en Costa Rica.",
     icon: Wrench,
   },
 
@@ -70,22 +70,22 @@ const About = () => {
 
             <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
 
-              ABOUT INITY 3D
+              SOBRE INITY 3D
 
             </p>
 
             <h1 className="text-6xl lg:text-7xl font-black leading-[0.92] mt-8">
 
-              Building
+              Construyendo
               <br />
 
-              Innovation
+              Innovación
               <br />
 
-              Through
+              a Través de la
               <span className="text-violet-400">
 
-                {" "}3D Printing
+                {" "}Impresión 3D
 
               </span>
 
@@ -93,14 +93,15 @@ const About = () => {
 
             <p className="soft-text text-xl leading-relaxed mt-12 max-w-2xl">
 
-              INITY 3D was created from a passion for additive manufacturing,
-              engineering, education and product development. What started with
-              an Ender 3 Pro evolved into a platform focused on innovation,
-              prototyping and educational impact across Costa Rica.
+              INITY 3D nació de la pasión por la manufactura aditiva,
+              la ingeniería, la educación y el desarrollo de productos.
+              Lo que comenzó con una Ender 3 Pro evolucionó hacia una
+              plataforma enfocada en innovación, prototipado e impacto
+              educativo en Costa Rica.
 
             </p>
 
-           
+
 
             {/* CTA BUTTON */}
 
@@ -121,7 +122,7 @@ const About = () => {
                 "
               >
 
-                Let's Work Together
+                Trabajemos Juntos
 
               </Link>
 
@@ -238,22 +239,22 @@ const About = () => {
 
             <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
 
-              OUR JOURNEY
+              NUESTRA TRAYECTORIA
 
             </p>
 
             <h2 className="text-6xl font-black mt-6 leading-tight">
 
-              From Passion
+              De la Pasión
               <br />
 
-              To Platform
+              a la Plataforma
 
             </h2>
 
             <p className="soft-text text-lg mt-8 leading-relaxed">
 
-              INITY 3D combines manufacturing, education and design into a modern platform focused on innovation and engineering.
+              INITY 3D combina manufactura, educación y diseño en una plataforma moderna enfocada en innovación e ingeniería.
 
             </p>
 

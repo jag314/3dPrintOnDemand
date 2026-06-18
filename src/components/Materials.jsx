@@ -13,7 +13,7 @@ const materials = [
     name: "PLA",
     icon: Boxes,
     description:
-      "Reliable and versatile material perfect for prototypes and visual parts.",
+      "Material confiable y versátil, perfecto para prototipos y piezas visuales.",
     color: "#84cc16",
   },
 
@@ -21,7 +21,7 @@ const materials = [
     name: "PETG",
     icon: Shield,
     description:
-      "Strong and chemical-resistant material ideal for functional components.",
+      "Material resistente y con buena tolerancia química, ideal para piezas funcionales.",
     color: "#06b6d4",
   },
 
@@ -29,7 +29,7 @@ const materials = [
     name: "ABS",
     icon: Flame,
     description:
-      "Heat-resistant engineering filament designed for durable parts.",
+      "Filamento de ingeniería resistente al calor, diseñado para piezas duraderas.",
     color: "#f97316",
   },
 
@@ -37,23 +37,23 @@ const materials = [
     name: "TPU",
     icon: Waves,
     description:
-      "Flexible material optimized for impact resistance and elasticity.",
+      "Material flexible optimizado para resistencia al impacto y elasticidad.",
     color: "#22c55e",
   },
 
   {
-    name: "Carbon Fiber",
+    name: "Fibra de Carbono",
     icon: Cpu,
     description:
-      "Premium reinforced composite for lightweight engineering applications.",
+      "Compuesto reforzado premium para aplicaciones de ingeniería ligera.",
     color: "#64748b",
   },
 
   {
-    name: "Silk Finishes",
+    name: "Acabados Seda",
     icon: Sparkles,
     description:
-      "Premium aesthetic materials with metallic and glossy finishes.",
+      "Materiales estéticos premium con acabados metálicos y brillantes.",
     color: "#d946ef",
   },
 
@@ -73,22 +73,22 @@ const Materials = () => {
 
           <p className="uppercase tracking-[0.35em] text-violet-400 text-sm">
 
-            MANUFACTURING MATERIALS
+            MATERIALES DE MANUFACTURA
 
           </p>
 
           <h2 className="text-6xl font-black mt-6">
 
-            Professional
+            Materiales de Impresión
             <br />
 
-            Printing Materials
+            Profesionales
 
           </h2>
 
           <p className="text-white/50 text-lg mt-8 leading-relaxed">
 
-            Choose from industrial-grade materials, premium finishes, and engineering composites for your next manufacturing project.
+            Elegí entre materiales industriales, acabados premium y compuestos de ingeniería para tu próximo proyecto de manufactura.
 
           </p>
 

@@ -6,64 +6,64 @@ import { Link } from "react-router-dom";
 const COURSES = [
   {
     id: 1,
-    title: "3D Design & Printing from Scratch",
+    title: "Diseño e Impresión 3D desde Cero",
     originalTitle: "Diseño e Impresión 3D desde Cero con Onshape",
-    description: "Learn CAD design with Onshape and print your first part. Perfect for complete beginners.",
+    description: "Aprendé diseño CAD con Onshape e imprimí tu primera pieza. Perfecto para principiantes completos.",
     platform: "Udemy",
     language: "Spanish",
-    level: "Beginner",
+    level: "Principiante",
     rating: 5.0,
     students: "500+",
     duration: "16h",
-    topics: ["Onshape CAD basics", "FDM printing workflow", "First print setup"],
+    topics: ["Bases de CAD con Onshape", "Flujo de impresión FDM", "Configuración de la primera impresión"],
     thumbnail: "https://img-c.udemycdn.com/course/125_H/4689258_30fe_2.jpg",
     url: "https://www.udemy.com/course/diseno-e-impresion-3d-desde-cero-con-onshape/?referralCode=04D6F15A784B910A7695",
     available: true,
   },
   {
     id: 2,
-    title: "Concrete Mold Design",
+    title: "Diseño de Moldes de Concreto",
     originalTitle: "Diseño de Moldes de Concreto con Impresión 3D",
-    description: "Learn to design and print custom concrete molds for construction and architecture. Available as a private workshop for your team or as a live online session.",
+    description: "Aprendé a diseñar e imprimir moldes de concreto personalizados para construcción y arquitectura. Disponible como taller privado para tu equipo o sesión en línea.",
     platform: "Live Training",
     language: "Spanish",
-    level: "Intermediate",
+    level: "Intermedio",
     rating: null,
     students: null,
     duration: "16h",
-    topics: ["Mold design principles", "Material selection", "Casting techniques"],
+    topics: ["Principios de diseño de moldes", "Selección de material", "Técnicas de vaciado"],
     thumbnail: null,
     url: null,
     available: false,
   },
   {
     id: 3,
-    title: "3D Print Finishing & Post-Processing",
+    title: "Acabado y Posprocesado de Piezas 3D",
     originalTitle: "Acabado de Piezas 3D",
-    description: "Take your prints from raw to professional finish. Sanding, painting, resin coating and more. Book a hands-on session with our expert instructors.",
+    description: "Llevá tus piezas de un acabado bruto a uno profesional. Lijado, pintura, recubrimiento con resina y más. Agendá una sesión práctica con nuestros instructores.",
     platform: "Live Training",
     language: "Spanish",
-    level: "Beginner",
+    level: "Principiante",
     rating: null,
     students: null,
     duration: "16h",
-    topics: ["Sanding & smoothing", "Painting techniques", "Resin coating"],
+    topics: ["Lijado y suavizado", "Técnicas de pintura", "Recubrimiento con resina"],
     thumbnail: null,
     url: null,
     available: false,
   },
   {
     id: 4,
-    title: "3D Modeling First Steps",
+    title: "Primeros Pasos en Modelado 3D",
     originalTitle: "Primeros Pasos en Modelado 3D",
-    description: "Never used CAD before? This is your starting point. A practical intro session designed for complete beginners. Available in-person or online.",
+    description: "¿Nunca usaste CAD antes? Acá empieza tu camino. Una sesión introductoria práctica para principiantes completos. Disponible presencial o en línea.",
     platform: "Live Training",
     language: "Spanish",
-    level: "Beginner",
+    level: "Principiante",
     rating: null,
     students: null,
     duration: "16h",
-    topics: ["What is CAD and why it matters", "Basic shapes and operations", "Your first 3D model"],
+    topics: ["Qué es CAD y por qué importa", "Formas y operaciones básicas", "Tu primer modelo 3D"],
     thumbnail: null,
     url: null,
     available: false,
@@ -72,16 +72,16 @@ const COURSES = [
   },
   {
     id: 5,
-    title: "3D Design with Onshape",
+    title: "Diseño 3D con Onshape",
     originalTitle: "Diseño 3D con Onshape",
-    description: "Go beyond the basics. Master Onshape for real engineering and product design work. Perfect for professionals who want to level up their skills.",
+    description: "Superá las bases. Dominá Onshape para ingeniería real y diseño de producto. Perfecto para profesionales que quieren llevar sus habilidades al siguiente nivel.",
     platform: "Live Training",
     language: "Spanish",
-    level: "Intermediate",
+    level: "Intermedio",
     rating: null,
     students: null,
     duration: "16h",
-    topics: ["Advanced Onshape features", "Assemblies and constraints", "Export for manufacturing"],
+    topics: ["Funciones avanzadas de Onshape", "Ensambles y restricciones", "Exportar para manufactura"],
     thumbnail: null,
     url: null,
     available: false,
@@ -90,19 +90,19 @@ const COURSES = [
   },
   {
     id: 6,
-    title: "Advanced Onshape for Engineers",
+    title: "Onshape Avanzado para Ingenieros",
     originalTitle: "Onshape Avanzado para Ingenieros",
-    description: "Master advanced Onshape features for professional engineering work. Assemblies, simulations, drawings and real manufacturing workflows. Perfect for engineers and product designers who already know the basics.",
+    description: "Dominá las funciones avanzadas de Onshape para trabajo de ingeniería profesional. Ensambles, simulaciones, planos y flujos de manufactura reales. Perfecto para ingenieros y diseñadores de producto que ya conocen las bases.",
     platform: "Live Training",
     language: "Spanish",
-    level: "Advanced",
+    level: "Avanzado",
     rating: null,
     students: null,
     duration: "16h",
     topics: [
-      "Complex assemblies and constraints",
-      "Technical drawings and tolerances",
-      "Design for manufacturing (DFM)",
+      "Ensambles complejos y restricciones",
+      "Planos técnicos y tolerancias",
+      "Diseño para manufactura (DFM)",
     ],
     thumbnail: null,
     url: null,
@@ -122,42 +122,42 @@ const UDEMY_REVIEWS = [
   {
     name: "Carlos M.",
     stars: 5,
-    date: "November 2024",
+    date: "Noviembre 2024",
     text: "Excelente curso, muy bien explicado paso a paso. Aprendí a usar Onshape desde cero y ya estoy imprimiendo mis propios diseños.",
     verified: true,
   },
   {
     name: "María G.",
     stars: 5,
-    date: "October 2024",
+    date: "Octubre 2024",
     text: "El instructor explica muy claro y el contenido es práctico. Lo recomiendo a cualquiera que quiera aprender diseño 3D.",
     verified: true,
   },
   {
     name: "Roberto A.",
     stars: 5,
-    date: "October 2024",
+    date: "Octubre 2024",
     text: "Muy completo y fácil de seguir. Desde instalar Onshape hasta imprimir la primera pieza. Vale cada minuto.",
     verified: true,
   },
   {
     name: "Daniela V.",
     stars: 5,
-    date: "September 2024",
+    date: "Septiembre 2024",
     text: "No tenía ninguna experiencia en diseño y ahora puedo crear mis propias piezas. El curso es muy didáctico y práctico.",
     verified: true,
   },
   {
     name: "Andrés P.",
     stars: 5,
-    date: "September 2024",
+    date: "Septiembre 2024",
     text: "El mejor curso de impresión 3D que he encontrado en Udemy. Muy bien estructurado y con ejemplos reales.",
     verified: true,
   },
   {
     name: "Laura S.",
     stars: 5,
-    date: "August 2024",
+    date: "Agosto 2024",
     text: "Increíble curso. Aprendí a diseñar en Onshape y a configurar mi impresora. El soporte del instructor es excelente.",
     verified: true,
   },
@@ -166,30 +166,30 @@ const UDEMY_REVIEWS = [
 const REVIEW_COLORS = ["#7c3aed", "#9333ea", "#2563eb", "#0891b2", "#ea580c", "#16a34a"];
 
 const mosaicPanels = [
-  { img: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&q=80", label: "Workshop Sessions" },
-  { img: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80", label: "Team Learning"     },
-  { img: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=400&q=80", label: "Printed Results"   },
-  { img: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80", label: "Corporate Events"  },
+  { img: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&q=80", label: "Talleres Prácticos"     },
+  { img: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80", label: "Aprendizaje en Equipo"  },
+  { img: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=400&q=80", label: "Resultados Impresos"    },
+  { img: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80", label: "Eventos Corporativos"   },
 ];
 
 const audiences = [
   {
     icon: "🏢",
-    title: "Corporate Training",
-    desc: "Upskill your engineering and design teams",
-    bullets: ["CAD design fundamentals", "FDM & SLA printing workflows", "Hands-on machine operation"],
+    title: "Capacitación Corporativa",
+    desc: "Formá a tus equipos de ingeniería y diseño",
+    bullets: ["Fundamentos de diseño CAD", "Flujos de trabajo FDM y SLA", "Operación práctica de la máquina"],
   },
   {
     icon: "🎓",
-    title: "Academic Programs",
-    desc: "Curriculum integration and lab setup",
-    bullets: ["Ready-to-teach lesson plans", "Student certification included", "Lab equipment guidance"],
+    title: "Programas Académicos",
+    desc: "Integración curricular y configuración de laboratorio",
+    bullets: ["Planes de clase listos para enseñar", "Certificación de estudiantes incluida", "Orientación sobre equipos de laboratorio"],
   },
   {
     icon: "🎪",
-    title: "Live Experiences",
-    desc: "Interactive demos for your event",
-    bullets: ["Live printing demonstrations", "Attendees take home a print", "Available nationwide"],
+    title: "Experiencias en Vivo",
+    desc: "Demostraciones interactivas para tu evento",
+    bullets: ["Demostraciones de impresión en vivo", "Los asistentes se llevan una pieza impresa", "Disponible en todo el país"],
   },
 ];
 
@@ -234,7 +234,7 @@ const CourseCard = ({ course }) => {
           <div className="w-full h-full relative flex items-center justify-center" style={{ background: thumb.gradient }}>
             <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.18)" }} />
             <span style={{ fontSize: 48, position: "relative", zIndex: 1 }}>{thumb.emoji}</span>
-            {/* LIVE TRAINING badge — emerald green */}
+            {/* ENTRENAMIENTO EN VIVO badge — emerald green */}
             <div className="absolute top-3 right-3">
               <span style={{
                 background: "rgba(16,185,129,0.2)", backdropFilter: "blur(6px)",
@@ -242,7 +242,7 @@ const CourseCard = ({ course }) => {
                 borderRadius: 5, padding: "3px 9px",
                 fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase",
                 color: "#10b981",
-              }}>LIVE TRAINING</span>
+              }}>ENTRENAMIENTO EN VIVO</span>
             </div>
           </div>
         )}
@@ -275,7 +275,7 @@ const CourseCard = ({ course }) => {
           </span>
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.38)" }}>· {course.duration}</span>
           {course.students && (
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.38)" }}>· {course.students} students</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.38)" }}>· {course.students} estudiantes</span>
           )}
         </div>
 
@@ -323,7 +323,7 @@ const CourseCard = ({ course }) => {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: "#a435f0", color: "#fff", textDecoration: "none" }}
             >
-              View on Udemy →
+              Ver en Udemy →
             </a>
           ) : (
             <>
@@ -332,10 +332,10 @@ const CourseCard = ({ course }) => {
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
                 style={{ background: "linear-gradient(135deg,#7c3aed,#9333ea)", color: "#fff", textDecoration: "none" }}
               >
-                I Want This Course →
+                Quiero Este Curso →
               </Link>
               <p className="text-white/40 text-xs text-center mt-2">
-                📅 Flexible scheduling &nbsp;·&nbsp; 👥 Group &amp; individual available
+                📅 Horario flexible &nbsp;·&nbsp; 👥 Grupos e individuales
               </p>
             </>
           )}
@@ -366,16 +366,14 @@ const Teach = () => {
           {/* Left */}
           <div>
             <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">
-              CORPORATE TRAINING & EDUCATION
+              CAPACITACIONES CORPORATIVAS Y EDUCACIÓN
             </p>
             <h1 className="premium-heading text-5xl sm:text-6xl lg:text-7xl font-black mt-6 leading-[0.92]">
-              Bring 3D Printing
-              <br />
-              <span className="text-violet-400">To Your Team</span>
+              Aprendé Impresión 3D
             </h1>
             <p className="soft-text text-lg sm:text-xl mt-8 leading-relaxed max-w-xl">
-              Professional workshops for companies, schools and events.
-              Hands-on learning that delivers real results.
+              Cursos diseñados para empresas, estudiantes y makers en Costa Rica.
+              Aprendizaje práctico con resultados reales.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-10">
@@ -383,19 +381,19 @@ const Teach = () => {
                 to="/contact"
                 className="primary-button flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-bold"
               >
-                Request a Workshop
+                Solicitar un Taller
               </Link>
               <button
                 onClick={scrollToCourses}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold transition-all duration-300 hover:bg-violet-500/15"
                 style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.28)", color: "#c4b5fd" }}
               >
-                View Our Courses
+                Ver Cursos
               </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-8">
-              {["500+ Students Trained", "50+ Companies", "4.9★ Rating"].map((stat, i) => (
+              {["500+ Estudiantes", "50+ Empresas", "4.9★ Calificación"].map((stat, i) => (
                 <React.Fragment key={stat}>
                   {i > 0 && <span className="text-white/20">·</span>}
                   <span className="text-white/55 text-sm font-semibold">{stat}</span>
@@ -466,11 +464,11 @@ const Teach = () => {
         <div ref={coursesRef} className="mt-20 sm:mt-24" id="courses">
 
           <div className="text-center sm:text-left mb-10">
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">ONLINE COURSES</p>
-            <h2 className="text-3xl sm:text-4xl font-black mt-3">Learn At Your Own Pace</h2>
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">CURSOS EN LÍNEA</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Aprendé A Tu Propio Ritmo</h2>
             <p className="soft-text text-base mt-3 max-w-xl">
-              One recorded course available now on Udemy. All other topics available as live
-              in-person or online training — contact us to book.
+              Un curso grabado disponible ahora en Udemy. El resto de los temas están disponibles
+              como capacitación presencial u online — contactanos para agendar.
             </p>
           </div>
 
@@ -488,12 +486,12 @@ const Teach = () => {
           </div>
 
           <p className="text-white/35 text-sm mt-7 text-center">
-            Need something custom?{" "}
+            ¿Necesitás algo personalizado?{" "}
             <Link
               to="/contact"
               className="text-violet-400 font-semibold hover:text-violet-300 transition-colors"
             >
-              Request a tailored workshop →
+              Solicitar un taller a medida →
             </Link>
           </p>
         </div>
@@ -504,9 +502,9 @@ const Teach = () => {
         <div className="mt-20 sm:mt-24">
 
           <div className="mb-10">
-            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">WHAT STUDENTS SAY</p>
-            <h2 className="text-3xl sm:text-4xl font-black mt-3">Real Reviews from Udemy</h2>
-            <p className="soft-text text-base mt-2">From our Diseño e Impresión 3D course</p>
+            <p className="uppercase tracking-[0.35em] text-violet-400 text-xs sm:text-sm">QUÉ DICEN LOS ESTUDIANTES</p>
+            <h2 className="text-3xl sm:text-4xl font-black mt-3">Reseñas Reales de Udemy</h2>
+            <p className="soft-text text-base mt-2">De nuestro curso Diseño e Impresión 3D</p>
             <div className="flex items-center gap-2 mt-4 flex-wrap">
               <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map(s => (
@@ -516,7 +514,7 @@ const Teach = () => {
                 ))}
               </div>
               <span className="font-bold text-yellow-400 text-sm">5.0</span>
-              <span className="text-white/40 text-sm">· Verified Udemy Reviews</span>
+              <span className="text-white/40 text-sm">· Reseñas Verificadas de Udemy</span>
             </div>
           </div>
 
@@ -544,7 +542,7 @@ const Teach = () => {
                         borderRadius: 4, padding: "2px 6px",
                         fontSize: 8, fontWeight: 800, color: "#fb923c", letterSpacing: "0.07em", textTransform: "uppercase",
                       }}>
-                        Verified
+                        Verificado
                       </span>
                     )}
                   </div>
@@ -583,7 +581,7 @@ const Teach = () => {
           </div>
 
           <div className="mt-10 text-center">
-            <p className="text-white/45 text-sm mb-5">Join 500+ students learning 3D printing</p>
+            <p className="text-white/45 text-sm mb-5">Únete a 500+ estudiantes aprendiendo impresión 3D</p>
             <a
               href="https://www.udemy.com/course/diseno-e-impresion-3d-desde-cero-con-onshape/?referralCode=04D6F15A784B910A7695"
               target="_blank"
@@ -591,7 +589,7 @@ const Teach = () => {
               className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: "#a435f0", color: "#fff", textDecoration: "none" }}
             >
-              View Course on Udemy →
+              Ver Curso en Udemy →
             </a>
           </div>
         </div>

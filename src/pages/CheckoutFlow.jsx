@@ -61,7 +61,7 @@ const Err = ({ msg }) => msg ? <p style={{ fontSize:11, color:"#f87171", marginT
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 // modalStep: 1=Delivery, 2=Billing, 3=Payment, 4=Confirm → overall steps 3, 4, 5, 6
-const STEPS = ["Model","Configure","Delivery","Facturación","Payment","Confirm"];
+const STEPS = ["Modelo","Configurar","Entrega","Facturación","Pago","Confirmar"];
 
 const StepIndicator = ({ modalStep }) => {
   const overall = modalStep + 2; // 3, 4, 5, or 6

@@ -4,17 +4,17 @@ const stats = [
 
   {
     value: "500+",
-    label: "Manufactured Parts",
+    label: "Piezas Fabricadas",
   },
 
   {
     value: "40+",
-    label: "Material Variants",
+    label: "Variantes de Material",
   },
 
   {
     value: "CR",
-    label: "Nationwide Delivery",
+    label: "Entrega Nacional",
   },
 
 ];

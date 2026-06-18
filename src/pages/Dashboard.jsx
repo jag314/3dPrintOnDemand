@@ -30,8 +30,8 @@ const SUPPORT_CFG = {
 };
 
 const TECH_STYLES = {
-  fdm: { label:"FDM", bg:"rgba(139,92,246,0.15)", border:"rgba(139,92,246,0.4)", color:"#c4b5fd", desc:"Fused Deposition · PLA / PETG / ABS", icon:"⬡" },
-  sla: { label:"SLA", bg:"rgba(251,191,36,0.12)",  border:"rgba(251,191,36,0.35)",  color:"#fde68a", desc:"Stereolithography · High Detail",      icon:"◈" },
+  fdm: { label:"FDM", bg:"rgba(139,92,246,0.15)", border:"rgba(139,92,246,0.4)", color:"#c4b5fd", desc:"Deposición de Filamento · PLA / PETG / ABS", icon:"⬡" },
+  sla: { label:"SLA", bg:"rgba(251,191,36,0.12)",  border:"rgba(251,191,36,0.35)",  color:"#fde68a", desc:"Estereolitografía · Alta Definición",         icon:"◈" },
 };
 
 const PRINTER_STATUS_CFG = {
@@ -46,7 +46,7 @@ const labelCls = "text-xs text-white/40 uppercase tracking-widest block mb-2";
 const formatDate = (iso) => {
   if (!iso) return "—";
   const d = new Date(iso);
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Set","Oct","Nov","Dic"];
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 };
 
@@ -291,7 +291,7 @@ const AdminLogin = ({ onLogin }) => {
         body: JSON.stringify(creds),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
       sessionStorage.setItem("inity_admin_token", data.token);
       onLogin(data.token);
     } catch (err) {
@@ -305,7 +305,7 @@ const AdminLogin = ({ onLogin }) => {
     <div className="min-h-screen flex items-center justify-center" style={{ background:"#050816" }}>
       <div style={{ width:360, background:"linear-gradient(145deg,#0d0c1a,#121020)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:28, padding:"36px 32px", boxShadow:"0 24px 80px rgba(0,0,0,0.7)" }}>
         <p className="uppercase tracking-[0.3em] text-violet-400 text-xs mb-2">INITY 3D</p>
-        <h2 className="text-2xl font-black text-white mb-2">Admin Dashboard</h2>
+        <h2 className="text-2xl font-black text-white mb-2">Panel de Administración</h2>
         <p style={{ fontSize:12, color:"rgba(255,255,255,0.35)", marginBottom:28 }}>Inicia sesión para gestionar pedidos</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -521,7 +521,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                                 title={adminToken ? "Descargar STL original desde Supabase Storage" : "Inicia sesión para descargar"}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
                                 style={{ background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", color:"#c4b5fd" }}>
-                                ⬇ Original STL
+                                ⬇ STL Original
                               </button>
                               {order.stlScaledPath && (
                                 <button
@@ -530,7 +530,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                                   title={adminToken ? `Descargar STL escalado al ${order.modelFile.scalePct}%` : "Inicia sesión para descargar"}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:opacity-80 disabled:opacity-35 disabled:cursor-not-allowed"
                                   style={{ background:"rgba(245,158,11,0.12)", border:"1px solid rgba(245,158,11,0.35)", color:"#fde68a" }}>
-                                  ⬇ Scaled {order.modelFile.scalePct}% STL
+                                  ⬇ STL Escalado al {order.modelFile.scalePct}%
                                 </button>
                               )}
                             </div>

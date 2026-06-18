@@ -127,7 +127,7 @@ const ViewerCanvas = ({ children, loading, hasFile, glowMode, glowColor }) => {
           <GizmoHelper alignment="bottom-left" margin={[72,72]}>
             <GizmoViewcube
               opacity={1}
-              faces={["Right","Left","Top","Bottom","Front","Back"]}
+              faces={["Derecha","Izquierda","Arriba","Abajo","Frente","Atrás"]}
               color="#1c1838" strokeColor="#9d8fe0" textColor="#ffffff"
               hoverColor="#312870" font="700 13px Inter, sans-serif"
             />
