@@ -51,7 +51,7 @@ const analyzeSupportNeeds = (geometry, extraLookup) => {
     const avgNY = (ny1 + ny2 + ny3) / 3;
 
     totalFaces++;
-    if (avgNY < -0.5) overhangFaces++;
+    if (avgNY < -0.766) overhangFaces++;
   }
 
   const overhangRatio = totalFaces > 0 ? overhangFaces / totalFaces : 0;
@@ -275,6 +275,7 @@ const ModelViewer = ({
   technology = "fdm",
   modelScale = 1,
   supportConfig,
+  infillFactor = 0.65,
 }) => {
   const [model, setModel] = useState(null);
   const [modelSize, setModelSize] = useState(null);
@@ -331,6 +332,7 @@ const ModelViewer = ({
     const url = URL.createObjectURL(file);
     prevUrlRef.current = url;
     const density = materials?.[selectedMaterial]?.density || 1.24;
+    const effectiveFactor = technology === "fdm" ? infillFactor : 1;
     const colorHex = selectedColor?.hex || "#8b5cf6";
     const colorFinish = selectedColor?.finish;
     onLoadingChange?.(true);
@@ -341,7 +343,7 @@ const ModelViewer = ({
       mesh.position.y = sz.y / 2;
       mesh.castShadow = true;
       applyTechnologyMaterial(mesh, colorHex, technology, colorFinish);
-      const weight = ((volumeMM3 / 1000) * density).toFixed(1);
+      const weight = ((volumeMM3 / 1000) * density * effectiveFactor).toFixed(1);
       originalSizeRef.current = sz;
       setModel(mesh);
       setModelSize(sz);
@@ -405,7 +407,7 @@ const ModelViewer = ({
         const sz = finalBox.getSize(new THREE.Vector3());
         const ctr = finalBox.getCenter(new THREE.Vector3());
         obj.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
-        const weight = ((totalVol / 1000) * density).toFixed(1);
+        const weight = ((totalVol / 1000) * density * effectiveFactor).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
         originalSizeRef.current = sz;
         setModel(obj);
@@ -460,7 +462,7 @@ const ModelViewer = ({
         const sz = finalBox.getSize(new THREE.Vector3());
         const ctr = finalBox.getCenter(new THREE.Vector3());
         object.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
-        const weight = ((totalVol / 1000) * density).toFixed(1);
+        const weight = ((totalVol / 1000) * density * effectiveFactor).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
         originalSizeRef.current = sz;
         setModel(object);

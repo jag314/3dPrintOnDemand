@@ -16,6 +16,19 @@ export const getDensity = (materialName, technology) => {
 
 export const COMMERCIAL_MARKUP = 2.5;
 
+export const SUPPORT_POST_HOURS = {
+  none:     0,
+  light:    0.25,
+  moderate: 0.75,
+  heavy:    1.5,
+};
+
+export const SMALL_FAST_PART_THRESHOLD = {
+  maxWeightGrams:    30,
+  maxPrintHours:     1.0,
+  reducedLaborHours: 0.25,
+};
+
 export const calculateSalePrice = (costReal, markup = COMMERCIAL_MARKUP, minimumPrice = 0) => {
   const raw     = costReal * markup;
   const rounded = Math.round(raw / 500) * 500;
@@ -62,18 +75,26 @@ export const calculateFDMPrice = ({
   markup = COMMERCIAL_MARKUP,
   minimumPrice = 0,
   supportLevel = "none",
+  smallFastThreshold = SMALL_FAST_PART_THRESHOLD,
 }) => {
   const effectiveWeight = weightGrams * (1 + supportExtraMaterial);
   const basePrintHours  = weightGrams / costs.gPerHour;
   const printHours      = basePrintHours * (1 + supportExtraTime);
 
-  const materialBase   = weightGrams * pricePerGram;
-  const supportMatCost = (effectiveWeight - weightGrams) * pricePerGram;
-  const materialCost   = materialBase + supportMatCost;
-  const electricity    = printHours * costs.elecPerHour;
-  const amortization   = printHours * costs.amortPerHour;
-  const labor          = costs.operatorRate * (costs.prepHours + costs.postHours);
-  const subtotal       = materialCost + electricity + amortization + labor;
+  const materialBase    = weightGrams * pricePerGram;
+  const supportMatCost  = (effectiveWeight - weightGrams) * pricePerGram;
+  const materialCost    = materialBase + supportMatCost;
+  const electricity     = printHours * costs.elecPerHour;
+  const amortization    = printHours * costs.amortPerHour;
+  const supportPostHrs  = SUPPORT_POST_HOURS[supportLevel] || 0;
+  const isSmallFastPart =
+    weightGrams    < smallFastThreshold.maxWeightGrams &&
+    basePrintHours < smallFastThreshold.maxPrintHours  &&
+    (supportLevel === "none" || supportLevel === "light");
+  const labor = isSmallFastPart
+    ? costs.operatorRate * smallFastThreshold.reducedLaborHours
+    : costs.operatorRate * (costs.prepHours + costs.postHours + supportPostHrs);
+  const subtotal        = materialCost + electricity + amortization + labor;
   const failureCost    = subtotal * costs.failureRate;
   const costReal       = Math.round(subtotal + failureCost);
   const salePrice      = calculateSalePrice(costReal, markup, minimumPrice);
@@ -96,7 +117,8 @@ export const calculateFDMPrice = ({
     margin:       0.60,
     markup,
     // Support info
-    isSLA:        false,
+    isSLA:         false,
+    isSmallFastPart,
     needsSupports: supportExtraMaterial > 0,
     supportLevel,
   };

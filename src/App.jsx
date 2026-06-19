@@ -36,7 +36,7 @@ const DEFAULT_PRINTERS = [
     maxTempNozzle: 300,
     maxTempBed: 110,
     hasEnclosure: false,
-    operatorRateCRC: 2000,
+    operatorRateCRC: 3500,
     prepHours: 0.5,
     postHours: 0.5,
     failureRate: 0.10,
@@ -64,7 +64,7 @@ const DEFAULT_PRINTERS = [
     maxTempNozzle: 300,
     maxTempBed: 110,
     hasEnclosure: true,
-    operatorRateCRC: 2000,
+    operatorRateCRC: 3500,
     prepHours: 0.5,
     postHours: 0.5,
     failureRate: 0.10,
@@ -153,6 +153,9 @@ export const DEFAULT_SETTINGS = {
   currency:          "CRC",
   applyVAT:          false,
   vatRate:           13,
+  // Fixed business decision: 2.5× over costReal (material + electricity + amortization
+  // + labor + failure buffer). Do not change without explicit business approval —
+  // see pricing diagnostic discussion.
   commercialMarkup:  2.5,
   urgencySemi:       0.20,
   urgencyUrgent:     0.50,
@@ -169,6 +172,18 @@ export const DEFAULT_SETTINGS = {
   supportModerateTime: 20,
   supportHeavyMat:     30,
   supportHeavyTime:    40,
+  // FDM infill correction: ratio of real printed weight to 100%-solid mesh volume × density.
+  // Calibrated against 3DBenchy.stl — solid calc 19.28g, real sliced 12.25g (Creality Slicer
+  // Standard profile, ~15-20% infill + 3 walls) = 63.5% ratio. Applied in ModelViewer for
+  // FDM only; SLA is effectively solid and uses factor 1.0.
+  infillWeightFactor:  0.65,
+  // Small/fast parts (< 30g AND base print time < 1h) with no or light supports get a
+  // reduced flat labor charge instead of the standard prepHours+postHours flat fee.
+  SMALL_FAST_PART_THRESHOLD: {
+    maxWeightGrams:    30,
+    maxPrintHours:     1.0,
+    reducedLaborHours: 0.25,
+  },
 };
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -185,19 +200,28 @@ const App = () => {
 
   // Printers — inity_printers key, with migration from old "printers" key
   const [printers, setPrinters] = useState(() => {
+    // Merge saved printers over defaults per-printer (matched by id) so new default
+    // fields propagate to existing sessions while preserving intentional admin edits.
+    const mergePrinters = (parsed) => {
+      if (!Array.isArray(parsed) || !parsed[0]?.printSpeedProfiles) return null;
+      return DEFAULT_PRINTERS.map(def => {
+        const match = parsed.find(p => p.id === def.id);
+        return match ? { ...def, ...match } : def;
+      });
+    };
     try {
       const saved = localStorage.getItem("inity_printers");
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed[0]?.printSpeedProfiles) return parsed;
+        const merged = mergePrinters(JSON.parse(saved));
+        if (merged) return merged;
       }
       // Migrate from old key
       const old = localStorage.getItem("printers");
       if (old) {
-        const parsed = JSON.parse(old);
-        if (Array.isArray(parsed) && parsed[0]?.printSpeedProfiles) {
+        const merged = mergePrinters(JSON.parse(old));
+        if (merged) {
           localStorage.removeItem("printers");
-          return parsed;
+          return merged;
         }
       }
     } catch {}
@@ -239,7 +263,16 @@ const App = () => {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("inity_settings");
-      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // One-time migration: reset markup to locked default on first load after pricing v2.
+        // After this runs once, admin can adjust via dashboard and the change persists.
+        if (!localStorage.getItem("pricing_v2_applied")) {
+          parsed.commercialMarkup = DEFAULT_SETTINGS.commercialMarkup;
+          localStorage.setItem("pricing_v2_applied", "1");
+        }
+        return { ...DEFAULT_SETTINGS, ...parsed };
+      }
     } catch {}
     return DEFAULT_SETTINGS;
   });

@@ -394,7 +394,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
       return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppMat, supportExtraTime:suppTime, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
-    return calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppMat, supportExtraTime:suppTime, costs, markup, minimumPrice, supportLevel:suppLevel });
+    return calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppMat, supportExtraTime:suppTime, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
   }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice]);
 
   // Live price for scale panel (uses currentScale for instant feedback)
@@ -409,7 +409,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
       return calculateSLAPrice({ weightGrams:panelLiveWeight, density, pricePerML, costs, markup, minimumPrice, supportLevel:suppLevel }).salePrice;
     }
-    return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, costs, markup, minimumPrice, supportLevel:suppLevel }).salePrice;
+    return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD }).salePrice;
   }, [panelLiveWeight, selectedMaterial, materials, activePrinter, technology, markup, minimumPrice, modelStats.supportLevel]);
 
   // waNumber/waSupport not needed here — compact banner uses /contact route; CheckoutFlow handles WhatsApp
@@ -474,6 +474,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     technology={technology}
                     modelScale={modelScaleProp}
                     supportConfig={supportConfig}
+                    infillFactor={settings?.infillWeightFactor ?? 0.65}
                   />
                 )}
               </ViewerCanvas>
