@@ -584,7 +584,12 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                         <p style={{ fontSize:9, fontWeight:800, letterSpacing:"0.14em", textTransform:"uppercase", color:"#a78bfa", marginBottom:8 }}>🔧 DATOS TÉCNICOS</p>
                         <div className="flex justify-between text-sm">
                           <span className="text-white/40">Peso</span>
-                          <span className="text-white/80">{admin.weightG}g{admin.needsSupports && ` → ${admin.effectiveWeightG?.toFixed(1)}g efectivo`}</span>
+                          <span className="text-white/80">
+                            {admin.rawWeightG != null && admin.modelScale && admin.modelScale !== 1
+                              ? `${admin.rawWeightG}g → ${(admin.weightG || 0).toFixed(1)}g (${Math.round((admin.modelScale || 1) * 100)}% escala)`
+                              : `${admin.weightG}g`
+                            }{admin.needsSupports && admin.effectiveWeightG ? ` → ${admin.effectiveWeightG.toFixed(1)}g efectivo` : ""}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-white/40">Tiempo est.</span>
