@@ -296,7 +296,6 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const [modelStats, setModelStats] = useState({
     fileName:"-", dimensions:"-", materialUsage:"0", complexity:"-",
     supportLevel:"none", needsSupports:false, overhangRatio:0,
-    supportExtraMaterial:0, supportExtraTime:0,
   });
 
   const materialNames = Object.keys(materials).filter(
@@ -385,32 +384,32 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
     if (!activePrinter) return { ...empty, needsPrinter:true };
     const materialData = materials[selectedMaterial];
     if (!materialData || weightForPricing === 0) return empty;
-    const costs  = calculatePrinterCosts(activePrinter);
-    const suppMat  = modelStats.supportExtraMaterial || 0;
-    const suppTime = modelStats.supportExtraTime || 0;
-    const suppLevel= modelStats.supportLevel || "none";
+    const costs    = calculatePrinterCosts(activePrinter);
+    const suppLevel = modelStats.supportLevel || "none";
+    const suppCfg   = supportConfig[suppLevel] || { material: 0, time: 0 };
     if (technology === "sla") {
       const density    = materialData.density || 1.10;
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
-      return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppMat, supportExtraTime:suppTime, costs, markup, minimumPrice, supportLevel:suppLevel });
+      return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
-    return calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppMat, supportExtraTime:suppTime, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
-  }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice]);
+    return calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
+  }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
 
   // Live price for scale panel (uses currentScale for instant feedback)
   const panelLiveWeight = parsedWeight * Math.pow(currentScale / 100, 3);
   const panelLivePrice  = useMemo(() => {
     const materialData = materials[selectedMaterial];
     if (!activePrinter || !materialData || panelLiveWeight === 0) return 0;
-    const costs = calculatePrinterCosts(activePrinter);
+    const costs    = calculatePrinterCosts(activePrinter);
     const suppLevel = modelStats.supportLevel || "none";
+    const suppCfg   = supportConfig[suppLevel] || { material: 0, time: 0 };
     if (technology === "sla") {
       const density    = materialData.density || 1.10;
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
-      return calculateSLAPrice({ weightGrams:panelLiveWeight, density, pricePerML, costs, markup, minimumPrice, supportLevel:suppLevel }).salePrice;
+      return calculateSLAPrice({ weightGrams:panelLiveWeight, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel }).salePrice;
     }
-    return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD }).salePrice;
-  }, [panelLiveWeight, selectedMaterial, materials, activePrinter, technology, markup, minimumPrice, modelStats.supportLevel]);
+    return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD }).salePrice;
+  }, [panelLiveWeight, selectedMaterial, materials, activePrinter, technology, markup, minimumPrice, modelStats.supportLevel, supportConfig]);
 
   // waNumber/waSupport not needed here — compact banner uses /contact route; CheckoutFlow handles WhatsApp
 
@@ -473,7 +472,6 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     onModelSizeChange={setModelSize} onLoadingChange={setIsLoading}
                     technology={technology}
                     modelScale={modelScaleProp}
-                    supportConfig={supportConfig}
                     infillFactor={settings?.infillWeightFactor ?? 0.65}
                   />
                 )}

@@ -52,21 +52,13 @@ const _sliceDilate = (src, cols, rows, k) => {
   return dst;
 };
 
-const analyzeSupportNeeds = (geometry, extraLookup) => {
+const analyzeSupportNeeds = (geometry) => {
   const geo = geometry.index ? geometry.toNonIndexed() : geometry;
   const arr = geo.attributes.position.array; // Float32Array [x,y,z per vertex]
   const count = arr.length / 3;
 
-  const EXTRA = extraLookup || {
-    none:     { material: 0.00, time: 0.00 },
-    light:    { material: 0.05, time: 0.08 },
-    moderate: { material: 0.15, time: 0.20 },
-    heavy:    { material: 0.30, time: 0.40 },
-  };
-
   if (count < 3) {
-    return { supportLevel: "none", needsSupports: false, overhangRatio: 0,
-             supportExtraMaterial: 0, supportExtraTime: 0 };
+    return { supportLevel: "none", needsSupports: false, overhangRatio: 0, supportWeightedPct: 0 };
   }
 
   // Bounding box (Y = height in Three.js Y-up space)
@@ -150,8 +142,6 @@ const analyzeSupportNeeds = (geometry, extraLookup) => {
     needsSupports:        supportLevel !== "none",
     overhangRatio:        globalAvg / 100,
     supportWeightedPct:   weighted,
-    supportExtraMaterial: EXTRA[supportLevel].material,
-    supportExtraTime:     EXTRA[supportLevel].time,
   };
 };
 
@@ -351,7 +341,6 @@ const ModelViewer = ({
   selectedMaterial, materials, onModelSizeChange, onLoadingChange,
   technology = "fdm",
   modelScale = 1,
-  supportConfig,
   infillFactor = 0.65,
 }) => {
   const [model, setModel] = useState(null);
@@ -398,13 +387,6 @@ const ModelViewer = ({
     if (!file) return;
     if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
 
-    const extraLookup = supportConfig ? {
-      none:     { material: 0,                           time: 0 },
-      light:    { material: supportConfig.light.material,    time: supportConfig.light.time    },
-      moderate: { material: supportConfig.moderate.material, time: supportConfig.moderate.time },
-      heavy:    { material: supportConfig.heavy.material,    time: supportConfig.heavy.time    },
-    } : null;
-
     const ext = file.name.split(".").pop().toLowerCase();
     const url = URL.createObjectURL(file);
     prevUrlRef.current = url;
@@ -427,16 +409,14 @@ const ModelViewer = ({
       onModelSizeChange?.(sz);
       onLoadingChange?.(false);
       setModelStats({
-        fileName:             file.name,
-        dimensions:           `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-        materialUsage:        weight,
+        fileName:           file.name,
+        dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+        materialUsage:      weight,
         complexity,
-        supportLevel:         support.supportLevel,
-        needsSupports:        support.needsSupports,
-        overhangRatio:        support.overhangRatio,
-        supportWeightedPct:   support.supportWeightedPct,
-        supportExtraMaterial: support.supportExtraMaterial,
-        supportExtraTime:     support.supportExtraTime,
+        supportLevel:       support.supportLevel,
+        needsSupports:      support.needsSupports,
+        overhangRatio:      support.overhangRatio,
+        supportWeightedPct: support.supportWeightedPct,
       });
     };
 
@@ -444,7 +424,7 @@ const ModelViewer = ({
       new STLLoader().load(url, (geo) => {
         geo.computeVertexNormals();
         const { sz, volumeMM3 } = prepareGeometry(geo);
-        const support = analyzeSupportNeeds(geo, extraLookup);
+        const support = analyzeSupportNeeds(geo);
         const mesh = new THREE.Mesh(geo, createMaterial(colorHex, technology, colorFinish));
         const complexity = geo.attributes.position.count > 200000 ? "High" : geo.attributes.position.count > 80000 ? "Medium" : "Low";
         finish(mesh, sz, volumeMM3, complexity, support);
@@ -479,7 +459,7 @@ const ModelViewer = ({
         const mergedGeo = new THREE.BufferGeometry();
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
         mergedGeo.computeVertexNormals();
-        const support = analyzeSupportNeeds(mergedGeo, extraLookup);
+        const support = analyzeSupportNeeds(mergedGeo);
         const totalVol = calcVolume(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(obj);
         const sz = finalBox.getSize(new THREE.Vector3());
@@ -493,15 +473,14 @@ const ModelViewer = ({
         onModelSizeChange?.(sz);
         onLoadingChange?.(false);
         setModelStats({
-          fileName:             file.name,
-          dimensions:           `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-          materialUsage:        weight,
+          fileName:           file.name,
+          dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          materialUsage:      weight,
           complexity,
-          supportLevel:         support.supportLevel,
-          needsSupports:        support.needsSupports,
-          overhangRatio:        support.overhangRatio,
-          supportExtraMaterial: support.supportExtraMaterial,
-          supportExtraTime:     support.supportExtraTime,
+          supportLevel:       support.supportLevel,
+          needsSupports:      support.needsSupports,
+          overhangRatio:      support.overhangRatio,
+          supportWeightedPct: support.supportWeightedPct,
         });
       });
     }
@@ -534,7 +513,7 @@ const ModelViewer = ({
         const mergedGeo = new THREE.BufferGeometry();
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
         mergedGeo.computeVertexNormals();
-        const support = analyzeSupportNeeds(mergedGeo, extraLookup);
+        const support = analyzeSupportNeeds(mergedGeo);
         const totalVol = calcVolume(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(object);
         const sz = finalBox.getSize(new THREE.Vector3());
@@ -548,15 +527,14 @@ const ModelViewer = ({
         onModelSizeChange?.(sz);
         onLoadingChange?.(false);
         setModelStats({
-          fileName:             file.name,
-          dimensions:           `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-          materialUsage:        weight,
+          fileName:           file.name,
+          dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          materialUsage:      weight,
           complexity,
-          supportLevel:         support.supportLevel,
-          needsSupports:        support.needsSupports,
-          overhangRatio:        support.overhangRatio,
-          supportExtraMaterial: support.supportExtraMaterial,
-          supportExtraTime:     support.supportExtraTime,
+          supportLevel:       support.supportLevel,
+          needsSupports:      support.needsSupports,
+          overhangRatio:      support.overhangRatio,
+          supportWeightedPct: support.supportWeightedPct,
         });
       });
     }
