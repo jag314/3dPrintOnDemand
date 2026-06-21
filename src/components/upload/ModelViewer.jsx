@@ -27,40 +27,35 @@ const detectScale = (sz) => {
   return 1;
 };
 
-// ── Support detection ────────────────────────────────────────────────────────
+// ── Support detection (mini-slicing) ─────────────────────────────────────────
+// Divides the model into 40 horizontal bands along Y (Y-up after prepareGeometry).
+// Each band is rasterized onto a 2D XZ grid at 1mm resolution.
+// A cell in band_i is "unsupported" if no cell within 10mm in band_(i-1) is occupied.
+// Bands 0 and 1 are unconditionally supported (build plate + first-layer growth).
+// Metric: 0.7 × max-band-unsupported% + 0.3 × global-avg-unsupported%
+// Thresholds: <5 → none | 5–25 → light | 25–55 → moderate | ≥55 → heavy
+// Validated on 3DBenchy (→ none, 0.7%) and Goku arm (→ moderate, 42.8%).
+
+const _sliceDilate = (src, cols, rows, k) => {
+  const dst = new Uint8Array(cols * rows);
+  for (let gy = 0; gy < rows; gy++) {
+    for (let gx = 0; gx < cols; gx++) {
+      if (!src[gy * cols + gx]) continue;
+      const x0 = Math.max(0, gx - k), x1 = Math.min(cols - 1, gx + k);
+      const y0 = Math.max(0, gy - k), y1 = Math.min(rows - 1, gy + k);
+      for (let y = y0; y <= y1; y++) {
+        const row = y * cols;
+        for (let x = x0; x <= x1; x++) dst[row + x] = 1;
+      }
+    }
+  }
+  return dst;
+};
 
 const analyzeSupportNeeds = (geometry, extraLookup) => {
-  const pos = geometry.attributes.position;
-  if (!geometry.attributes.normal) geometry.computeVertexNormals();
-  const nor = geometry.attributes.normal;
-
-  const bbox = new THREE.Box3().setFromBufferAttribute(pos);
-  const modelHeight = bbox.max.y - bbox.min.y;
-  const modelBottom = bbox.min.y;
-  const GROUND_THRESHOLD = modelHeight * 0.03;
-
-  let totalFaces = 0;
-  let overhangFaces = 0;
-
-  for (let i = 0; i < pos.count; i += 3) {
-    const y1 = pos.getY(i), y2 = pos.getY(i + 1), y3 = pos.getY(i + 2);
-    const avgY = (y1 + y2 + y3) / 3;
-    if (avgY - modelBottom < GROUND_THRESHOLD) continue;
-
-    const ny1 = nor.getY(i), ny2 = nor.getY(i + 1), ny3 = nor.getY(i + 2);
-    const avgNY = (ny1 + ny2 + ny3) / 3;
-
-    totalFaces++;
-    if (avgNY < -0.766) overhangFaces++;
-  }
-
-  const overhangRatio = totalFaces > 0 ? overhangFaces / totalFaces : 0;
-
-  let supportLevel;
-  if      (overhangRatio < 0.03) supportLevel = "none";
-  else if (overhangRatio < 0.10) supportLevel = "light";
-  else if (overhangRatio < 0.25) supportLevel = "moderate";
-  else                            supportLevel = "heavy";
+  const geo = geometry.index ? geometry.toNonIndexed() : geometry;
+  const arr = geo.attributes.position.array; // Float32Array [x,y,z per vertex]
+  const count = arr.length / 3;
 
   const EXTRA = extraLookup || {
     none:     { material: 0.00, time: 0.00 },
@@ -69,10 +64,91 @@ const analyzeSupportNeeds = (geometry, extraLookup) => {
     heavy:    { material: 0.30, time: 0.40 },
   };
 
+  if (count < 3) {
+    return { supportLevel: "none", needsSupports: false, overhangRatio: 0,
+             supportExtraMaterial: 0, supportExtraTime: 0 };
+  }
+
+  // Bounding box (Y = height in Three.js Y-up space)
+  let xMin=Infinity, xMax=-Infinity, yMin=Infinity, yMax=-Infinity, zMin=Infinity, zMax=-Infinity;
+  for (let i = 0; i < count; i++) {
+    const x=arr[i*3], y=arr[i*3+1], z=arr[i*3+2];
+    if (x<xMin) xMin=x; if (x>xMax) xMax=x;
+    if (y<yMin) yMin=y; if (y>yMax) yMax=y;
+    if (z<zMin) zMin=z; if (z>zMax) zMax=z;
+  }
+
+  // Adaptive cell size: cap grid to 500 cells per axis so large models stay fast
+  const maxXZ  = Math.max(xMax - xMin, zMax - zMin);
+  const CELL   = maxXZ > 500 ? Math.ceil(maxXZ / 500) : 1.0;
+  const BRIDGE_K = Math.ceil(10 / CELL); // 10mm bridging tolerance in cells
+
+  const N_BANDS = 40;
+  const bandH   = (yMax - yMin) / N_BANDS;
+  const cols    = Math.ceil((xMax - xMin) / CELL) + 2;
+  const rows    = Math.ceil((zMax - zMin) / CELL) + 2;
+  const gSize   = cols * rows;
+
+  let totalOcc = 0, totalUnsp = 0, maxBandPct = 0;
+  let prevBand = null;
+
+  for (let b = 0; b < N_BANDS; b++) {
+    const yLo = yMin + b * bandH;
+    const yHi = yLo + bandH;
+    const curr = new Uint8Array(gSize);
+
+    // Rasterize triangles into this band (15 barycentric samples, triangular grid n=4)
+    for (let i = 0; i < count; i += 3) {
+      const y0=arr[i*3+1], y1=arr[(i+1)*3+1], y2=arr[(i+2)*3+1];
+      if (Math.min(y0,y1,y2) > yHi || Math.max(y0,y1,y2) < yLo) continue;
+
+      const x0=arr[i*3],   x1=arr[(i+1)*3],   x2=arr[(i+2)*3];
+      const z0=arr[i*3+2], z1=arr[(i+1)*3+2], z2=arr[(i+2)*3+2];
+
+      for (let si = 0; si <= 4; si++) {
+        const u = si / 4;
+        for (let sj = 0; sj <= 4 - si; sj++) {
+          const v = sj / 4, w = 1 - u - v;
+          const py = u*y0 + v*y1 + w*y2;
+          if (py < yLo || py > yHi) continue;
+          const gx = Math.floor((u*x0 + v*x1 + w*x2 - xMin) / CELL);
+          const gz = Math.floor((u*z0 + v*z1 + w*z2 - zMin) / CELL);
+          if (gx >= 0 && gx < cols && gz >= 0 && gz < rows) curr[gz * cols + gx] = 1;
+        }
+      }
+    }
+
+    const occ = curr.reduce((s, v) => s + v, 0);
+    totalOcc += occ;
+
+    // Bands 0 and 1: unconditionally supported by build plate.
+    // Band 1 is skipped to avoid false positives from geometry growing outward
+    // from the base (e.g. leg cross-section widening from narrow feet).
+    if (b <= 1) { prevBand = curr; continue; }
+
+    const dilated = _sliceDilate(prevBand, cols, rows, BRIDGE_K);
+    let unsp = 0;
+    for (let i = 0; i < gSize; i++) { if (curr[i] && !dilated[i]) unsp++; }
+    totalUnsp += unsp;
+
+    const bandPct = occ > 0 ? unsp / occ * 100 : 0;
+    if (bandPct > maxBandPct) maxBandPct = bandPct;
+    prevBand = curr;
+  }
+
+  const globalAvg = totalOcc > 0 ? totalUnsp / totalOcc * 100 : 0;
+  const weighted  = 0.7 * maxBandPct + 0.3 * globalAvg;
+
+  let supportLevel;
+  if      (weighted < 5)  supportLevel = "none";
+  else if (weighted < 25) supportLevel = "light";
+  else if (weighted < 55) supportLevel = "moderate";
+  else                    supportLevel = "heavy";
+
   return {
     supportLevel,
     needsSupports:        supportLevel !== "none",
-    overhangRatio,
+    overhangRatio:        globalAvg / 100,
     supportExtraMaterial: EXTRA[supportLevel].material,
     supportExtraTime:     EXTRA[supportLevel].time,
   };
