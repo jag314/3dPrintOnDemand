@@ -392,7 +392,28 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
       return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
-    return calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
+    const result = calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
+    const basePrintHours = weightForPricing / costs.gPerHour;
+    console.log("[FDM DIAGNOSTIC]",
+      "\nsupportLevel detectado:       ", suppLevel,
+      "\nweighted % (métrica real):    ", modelStats.supportWeightedPct?.toFixed(2) ?? "n/a",
+      "\nsupportConfig usado:          ", JSON.stringify(suppCfg),
+      "\ngPerHour usado:               ", costs.gPerHour,
+      "\nbasePrintHours (sin soporte): ", basePrintHours.toFixed(4), "h =", (basePrintHours * 60).toFixed(1), "min",
+      "\nprintHours (con soporte):     ", result.printHours.toFixed(4), "h =", (result.printHours * 60).toFixed(1), "min",
+      "\npesoBase (sin soporte):       ", weightForPricing.toFixed(2), "g",
+      "\npesoConSoporte (efectivo):    ", result.effectiveWeight.toFixed(2), "g",
+      "\n-- desglose de costo --",
+      "\nmaterial:      ₡", Math.round(result.materialBase),
+      "\nsoporte mat.:  ₡", Math.round(result.supportMatCost),
+      "\nelectricidad:  ₡", Math.round(result.electricity),
+      "\namortización:  ₡", Math.round(result.amortization),
+      "\nmano de obra:  ₡", Math.round(result.labor),
+      "\nfallos 10%:    ₡", Math.round(result.failureCost),
+      "\ncostoReal:     ₡", result.costReal,
+      "\nprecioVenta:   ₡", result.salePrice,
+    );
+    return result;
   }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
 
   // Live price for scale panel (uses currentScale for instant feedback)
