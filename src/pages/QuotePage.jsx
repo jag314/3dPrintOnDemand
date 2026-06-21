@@ -646,18 +646,26 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                 ) : (
                   <div style={{
                     marginTop:16, marginBottom:4,
-                    background:"rgba(245,158,11,0.06)",
-                    borderTop:"1px solid rgba(245,158,11,0.2)",
-                    borderRight:"1px solid rgba(245,158,11,0.2)",
-                    borderBottom:"1px solid rgba(245,158,11,0.2)",
-                    borderLeft:"3px solid #f59e0b",
+                    background:"rgba(139,92,246,0.06)",
+                    border:"1px solid rgba(139,92,246,0.2)",
                     borderRadius:12,
                     padding:"18px 16px",
                   }}>
-                    <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:14 }}>
-                      <span style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>📐</span>
+                    <div style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:10 }}>
+                      {/* Diagram: dashed gray rect = printer bed, violet rect = model (taller), dashed line = cut */}
+                      <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style={{ flexShrink:0, marginTop:2 }}>
+                        <rect x="4" y="20" width="48" height="32" rx="2"
+                          stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" strokeDasharray="4 3"
+                          fill="rgba(255,255,255,0.03)" />
+                        <rect x="15" y="5" width="26" height="47" rx="2"
+                          stroke="#8b5cf6" strokeWidth="1.5"
+                          fill="rgba(139,92,246,0.13)" />
+                        <line x1="4" y1="20" x2="52" y2="20"
+                          stroke="#8b5cf6" strokeWidth="1" strokeDasharray="3 2" />
+                      </svg>
                       <div>
-                        <p style={{ fontSize:14, fontWeight:700, color:"#fde68a", margin:0, lineHeight:1.35 }}>Tu modelo supera nuestro volumen de impresión estándar</p>
+                        <p style={{ fontSize:14, fontWeight:700, color:"#c4b5fd", margin:0, lineHeight:1.35 }}>Tu modelo supera nuestro volumen de impresión estándar</p>
+                        <p style={{ fontSize:12, color:"rgba(255,255,255,0.45)", margin:"5px 0 0", lineHeight:1.4 }}>La parte sombreada es lo que no cabe en la cama estándar.</p>
                       </div>
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"auto 1fr", gap:"6px 14px", marginBottom:16 }}>
@@ -667,7 +675,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                       <span style={{ fontSize:12, color:"rgba(255,255,255,0.85)", fontWeight:600 }}>{buildCheck?.printerVolume}</span>
                     </div>
                     <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:12 }}>¿Cómo deseas continuar?</p>
-                    <div style={{ display:"flex", gap:8 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:16 }}>
                       <button
                         onClick={() => setScalePanelOpen(true)}
                         style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"10px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}
@@ -676,7 +684,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                       </button>
                       <button
                         onClick={() => navigate(`/contact?ref=oversized&file=${encodeURIComponent(modelStats.fileName)}&dims=${(buildCheck?.originalDimensions||"").replace(/ × /g,"x").replace(" mm","")}`)}
-                        style={{ flex:1, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.35)", color:"#fde68a", borderRadius:10, padding:"10px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}
+                        style={{ background:"none", border:"none", color:"rgba(255,255,255,0.4)", fontSize:12, fontWeight:500, cursor:"pointer", textDecoration:"underline", padding:"4px 0", whiteSpace:"nowrap" }}
                       >
                         ✉ Solicitar cotización
                       </button>
