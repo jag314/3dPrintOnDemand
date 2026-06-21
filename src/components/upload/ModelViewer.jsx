@@ -149,6 +149,7 @@ const analyzeSupportNeeds = (geometry, extraLookup) => {
     supportLevel,
     needsSupports:        supportLevel !== "none",
     overhangRatio:        globalAvg / 100,
+    supportWeightedPct:   weighted,
     supportExtraMaterial: EXTRA[supportLevel].material,
     supportExtraTime:     EXTRA[supportLevel].time,
   };
@@ -433,6 +434,7 @@ const ModelViewer = ({
         supportLevel:         support.supportLevel,
         needsSupports:        support.needsSupports,
         overhangRatio:        support.overhangRatio,
+        supportWeightedPct:   support.supportWeightedPct,
         supportExtraMaterial: support.supportExtraMaterial,
         supportExtraTime:     support.supportExtraTime,
       });

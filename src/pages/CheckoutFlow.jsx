@@ -675,7 +675,7 @@ const CheckoutFlow = ({
         effectiveWeightG: pricing.effectiveWeight || pricing.effectiveVol || parsedWeight,
         supportLevel:     modelStats.supportLevel || "none",
         needsSupports:    modelStats.needsSupports || false,
-        overhangPct:      ((modelStats.overhangRatio || 0) * 100).toFixed(1) + "%",
+        overhangPct:      (modelStats.supportWeightedPct ?? (modelStats.overhangRatio || 0) * 100).toFixed(1) + "%",
         modelScale,
         buildCheck: buildCheck ? {
           fitsOriginal:     buildCheck.fitsOriginal,
