@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./utils/supabase/client";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { MaterialsProvider } from "./context/MaterialsContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -27,9 +27,7 @@ const DEFAULT_PRINTERS = [
     wattsConsumption: 350,
     electricityRateCRC: 150,
     printSpeedProfiles: {
-      draft:    { gPerHour: 28, label: "Borrador rápido" },
       standard: { gPerHour: 18, label: "Estándar" },
-      quality:  { gPerHour: 10, label: "Alta calidad" },
     },
     defaultProfile: "standard",
     buildVolume: { x: 260, y: 260, z: 300 },
@@ -55,9 +53,7 @@ const DEFAULT_PRINTERS = [
     wattsConsumption: 350,
     electricityRateCRC: 150,
     printSpeedProfiles: {
-      draft:    { gPerHour: 22, label: "Borrador rápido" },
       standard: { gPerHour: 15, label: "Estándar" },
-      quality:  { gPerHour: 8,  label: "Alta calidad" },
     },
     defaultProfile: "standard",
     buildVolume: { x: 220, y: 220, z: 250 },
@@ -206,7 +202,13 @@ const App = () => {
       if (!Array.isArray(parsed) || !parsed[0]?.printSpeedProfiles) return null;
       return DEFAULT_PRINTERS.map(def => {
         const match = parsed.find(p => p.id === def.id);
-        return match ? { ...def, ...match } : def;
+        if (!match) return def;
+        // Deep-merge only the standard profile; discard legacy draft/quality keys.
+        const savedStd = match.printSpeedProfiles?.standard;
+        const profiles = savedStd
+          ? { standard: { ...def.printSpeedProfiles.standard, ...savedStd } }
+          : def.printSpeedProfiles;
+        return { ...def, ...match, printSpeedProfiles: profiles };
       });
     };
     try {
@@ -286,9 +288,12 @@ const App = () => {
     printers.find(p => p.technology === technology) ||
     null;
 
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/dashboard");
+
   return (
     <MaterialsProvider materials={materials} setMaterials={setMaterials}>
-      <Navbar />
+      {!isAdmin && <Navbar />}
       <Routes>
         <Route path="/"          element={<Home />} />
         <Route path="/quote"     element={
@@ -314,7 +319,7 @@ const App = () => {
         <Route path="/designer"  element={<Designer />} />
         <Route path="/contact"   element={<Contact />} />
       </Routes>
-      <Footer />
+      {!isAdmin && <Footer />}
     </MaterialsProvider>
   );
 };

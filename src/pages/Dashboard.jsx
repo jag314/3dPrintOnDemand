@@ -682,7 +682,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
 
 // ── SECTION 3: Impresoras ─────────────────────────────────────────────────────
 
-const FDM_DEFAULTS = { name:"", technology:"fdm", status:"inactive", purchasePriceCRC:0, amortizationYears:1, daysPerYear:312, hoursPerDay:10, wattsConsumption:300, electricityRateCRC:150, printSpeedProfiles:{ draft:{gPerHour:20,label:"Borrador rápido"}, standard:{gPerHour:12,label:"Estándar"}, quality:{gPerHour:6,label:"Alta calidad"} }, defaultProfile:"standard", buildVolume:{x:260,y:260,z:300}, maxTempNozzle:260, maxTempBed:100, hasEnclosure:false, operatorRateCRC:2000, prepHours:0.5, postHours:0.5, failureRate:0.10, notes:"" };
+const FDM_DEFAULTS = { name:"", technology:"fdm", status:"inactive", purchasePriceCRC:0, amortizationYears:1, daysPerYear:312, hoursPerDay:10, wattsConsumption:300, electricityRateCRC:150, printSpeedProfiles:{ standard:{gPerHour:12,label:"Estándar"} }, defaultProfile:"standard", buildVolume:{x:260,y:260,z:300}, maxTempNozzle:260, maxTempBed:100, hasEnclosure:false, operatorRateCRC:2000, prepHours:0.5, postHours:0.5, failureRate:0.10, notes:"" };
 const SLA_DEFAULTS = { ...FDM_DEFAULTS, technology:"sla", wattsConsumption:200, slaSpeedMLPerHour:17, prepHours:0.75, postHours:0.75, failureRate:0.12 };
 
 const PrinterEditForm = ({ draft, setDraft, onSave, onCancel }) => {
@@ -713,24 +713,16 @@ const PrinterEditForm = ({ draft, setDraft, onSave, onCancel }) => {
         </div>
       </div>
       <div>
-        <p className={labelCls} style={{ color:"#a78bfa" }}>VELOCIDADES</p>
-        <div className="space-y-2 mt-3">
-          {["draft","standard","quality"].map(profile => (
-            <div key={profile} className="grid grid-cols-3 gap-3 items-center">
-              <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)", textTransform:"capitalize" }}>{profile}</span>
-              <input type="number" className={inputCls} placeholder="g/h" value={draft.printSpeedProfiles[profile]?.gPerHour || ""} onChange={e => setProfile(profile, "gPerHour", +e.target.value)} />
-              <input className={inputCls} placeholder="Etiqueta" value={draft.printSpeedProfiles[profile]?.label || ""} onChange={e => setProfile(profile, "label", e.target.value)} />
-            </div>
-          ))}
-          <div className="flex items-center gap-4 pt-1">
-            <span style={{ fontSize:12, color:"rgba(255,255,255,0.4)" }}>Perfil por defecto:</span>
-            {["draft","standard","quality"].map(p => (
-              <label key={p} className="flex items-center gap-1.5 cursor-pointer">
-                <input type="radio" name={`profile-${draft.id || "new"}`} checked={draft.defaultProfile === p} onChange={() => set("defaultProfile", p)} style={{ accentColor:"#7c3aed" }} />
-                <span style={{ fontSize:12, color: draft.defaultProfile === p ? "#c4b5fd" : "rgba(255,255,255,0.4)" }}>{draft.printSpeedProfiles[p]?.label || p}</span>
-              </label>
-            ))}
+        <p className={labelCls} style={{ color:"#a78bfa" }}>VELOCIDAD DE IMPRESIÓN</p>
+        <div className="mt-3">
+          <label className={labelCls}>Perfil Estándar (g/h)</label>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:4 }}>
+            <input type="number" className={inputCls} style={{ width:120 }} value={draft.printSpeedProfiles?.standard?.gPerHour || ""} onChange={e => setProfile("standard", "gPerHour", +e.target.value)} />
+            <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)", fontWeight:600 }}>g/h</span>
           </div>
+          <p style={{ fontSize:11, color:"rgba(255,255,255,0.35)", marginTop:10, lineHeight:1.5 }}>
+            <strong style={{ color:"rgba(255,255,255,0.5)" }}>g/h = gramos de filamento por hora.</strong> Para obtenerlo: sliceá un modelo de referencia en tu slicer real con este perfil, y dividí peso (g) ÷ tiempo (h) del resultado. No lo estimes a partir de las velocidades en mm/s del slicer — no hay conversión directa.
+          </p>
         </div>
       </div>
       <div>
@@ -758,6 +750,15 @@ const PrintersSection = ({ printers, setPrinters, orders }) => {
   const cancelEdit = () => { setEditingId(null); setDraft(null); };
   const saveEdit  = () => { setPrinters(prev => editingId === "new" ? [...prev, draft] : prev.map(p => p.id === editingId ? draft : p)); cancelEdit(); };
   const activate  = (id, tech) => setPrinters(prev => prev.map(p => p.technology !== tech ? p : { ...p, status: p.id === id ? "active" : "inactive" }));
+  const deletePrinter = (printer) => {
+    const isOnlyActive = printer.status === "active" && printers.filter(p => p.technology === printer.technology && p.status === "active").length === 1;
+    if (isOnlyActive) {
+      if (!window.confirm(`"${printer.name}" es la única impresora ${printer.technology.toUpperCase()} activa. Sin ella no se pueden generar cotizaciones de ese tipo. ¿Eliminás de todos modos?`)) return;
+    } else {
+      if (!window.confirm(`¿Eliminás la impresora "${printer.name}"? Esta acción no se puede deshacer.`)) return;
+    }
+    setPrinters(prev => prev.filter(p => p.id !== printer.id));
+  };
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const monthOrders = orders.filter(o => new Date(o.timestamp) >= monthStart && o.status === "completed");
@@ -798,6 +799,7 @@ const PrintersSection = ({ printers, setPrinters, orders }) => {
                 <div className="flex gap-2">
                   {printer.status !== "active" && <button onClick={() => activate(printer.id, printer.technology)} className="px-3 py-1.5 rounded-xl text-xs font-bold" style={{ background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.3)", color:"#10b981" }}>Activar</button>}
                   <button onClick={() => isEditing ? cancelEdit() : startEdit(printer)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold" style={{ background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.3)", color:"#c4b5fd" }}><Pencil size={12} /> Editar</button>
+                  <button onClick={() => deletePrinter(printer)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold" style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.25)", color:"#f87171" }}><Trash2 size={12} /> Eliminar</button>
                 </div>
               </div>
               {costs && (
