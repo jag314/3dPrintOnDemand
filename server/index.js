@@ -12,18 +12,20 @@ const PORT = process.env.PORT || 3001;
 
 app.set('trust proxy', 1);
 
-// Allow the Vite dev server (and any CLIENT_ORIGIN) to call us.
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:4173',
+// In development, accept any localhost port (Vite increments the port when
+// 5173 is busy, so hardcoding a single port breaks login on port changes).
+// In production, restrict to the real Vercel domain + any CLIENT_ORIGIN override.
+const prodOrigins = [
   'https://3d-print-on-demand-gilt.vercel.app',
   process.env.CLIENT_ORIGIN,
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow server-to-server calls (no origin) and listed origins.
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true); // server-to-server / curl
+    if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin))
+      return cb(null, true);
+    if (prodOrigins.includes(origin)) return cb(null, true);
     cb(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true,
