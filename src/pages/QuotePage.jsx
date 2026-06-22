@@ -392,7 +392,18 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
       return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
-    return calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
+    const result = calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
+    const basePrintHours = weightForPricing / costs.gPerHour;
+    console.log("[FDM DIAGNOSTIC]",
+      "\narchivo:                      ", modelStats.fileName,
+      "\ngPerHour usado:               ", costs.gPerHour,
+      "\nweightForPricing:             ", weightForPricing.toFixed(2), "g",
+      "\nsupportLevel detectado:       ", suppLevel,
+      "\nsupportConfig usado:          ", JSON.stringify(suppCfg),
+      "\nbasePrintHours (sin soporte): ", basePrintHours.toFixed(4), "h =", (basePrintHours * 60).toFixed(1), "min",
+      "\nprintHours (con soporte):     ", result.printHours.toFixed(4), "h =", (result.printHours * 60).toFixed(1), "min",
+    );
+    return result;
   }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
 
   // Live price for scale panel (uses currentScale for instant feedback)
