@@ -499,7 +499,7 @@ const ConfirmStep = ({ savedOrder, onNewOrder, onClose, settings }) => {
 const CheckoutFlow = ({
   onClose, onNewOrder,
   pricing, modelStats, selectedMaterial, selectedColor,
-  settings, parsedWeight, activePrinter, buildCheck,
+  settings, parsedWeight, infillPct = 15, activePrinter, buildCheck,
   modelScale, file,
   quantity: quantityProp,
   // fileBase64 is no longer used — file goes directly to the server as multipart
@@ -670,8 +670,9 @@ const CheckoutFlow = ({
         margin:           pricing.margin,
         printHours:       pricing.printHours,
         printTimeLabel:   formatPrintTime(pricing.printHours || 0),
-        weightG:          parsedWeight * Math.pow(modelScale, 3),
+        weightG:          pricing.effectiveWeight || parsedWeight * Math.pow(modelScale, 3),
         rawWeightG:       parsedWeight,
+        infillPct,
         effectiveWeightG: pricing.effectiveWeight || pricing.effectiveVol || parsedWeight,
         supportLevel:     modelStats.supportLevel || "none",
         needsSupports:    modelStats.needsSupports || false,

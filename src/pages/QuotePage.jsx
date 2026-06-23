@@ -9,7 +9,28 @@ import {
   calculateSLAPrice,
   formatPrintTime,
   formatCRC,
+  getDensity,
 } from "../utils/pricingEngine";
+
+// Shell thickness assumed for the infill weight formula:
+// 2 perimeter walls × 0.42 mm standard line width = 0.84 mm.
+// Calibrated on Benchy (implied 0.97 mm) and piez.stl (implied 1.00 mm) — close enough
+// that the default is a good starting point for typical FDM prints.
+// Known limitation: fine/spiny geometry (e.g. Goku hair/fingers) prints solid regardless
+// of infill setting; the formula underestimates weight for those models (~47% for Goku
+// at 50% scale). Document this, don't try to fix it here.
+const SHELL_MM = 0.84;
+
+// weight(g) = (density/1000) × (shellVol + interiorVol × infill/100)
+// Shell vol scales with scale², interior vol with scale³ — correct handling of both.
+// For SLA, pass infillPct = 100 (solid).
+const computeWeightG = (volumeMM3, areaMM2, scale, infillPct, density) => {
+  if (!volumeMM3 || !density) return 0;
+  const scaledVol   = volumeMM3 * Math.pow(scale, 3);
+  const shellVol    = areaMM2 * Math.pow(scale, 2) * SHELL_MM;
+  const interiorVol = Math.max(0, scaledVol - shellVol);
+  return (density / 1000) * (shellVol + interiorVol * infillPct / 100);
+};
 
 // ── Upload zones ─────────────────────────────────────────────────────────────
 
@@ -294,9 +315,12 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const [debouncedScale, setDebouncedScale] = useState(100);   // debounced, drives Three.js model
 
   const [modelStats, setModelStats] = useState({
-    fileName:"-", dimensions:"-", materialUsage:"0", complexity:"-",
+    fileName:"-", dimensions:"-", volumeMM3:0, areaMM2:0, complexity:"-",
     supportLevel:"none", needsSupports:false, overhangRatio:0,
   });
+  const [infillPct,      setInfillPct]      = useState(15);
+  const [infillPanelOpen, setInfillPanelOpen] = useState(false);
+  const [showInfillInfo,  setShowInfillInfo]  = useState(false);
 
   const materialNames = Object.keys(materials).filter(
     name => !materials[name].technology || materials[name].technology === technology
@@ -348,8 +372,18 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   }, [currentScale]);
 
   const selectedColors = materials[selectedMaterial]?.colors || [];
-  const parsedWeight   = parseFloat(modelStats.materialUsage) || 0;
   const activePrinter  = getActivePrinter(technology);
+
+  const materialDensity = useMemo(() => {
+    if (technology === "sla") return materials[selectedMaterial]?.density || 1.10;
+    return getDensity(selectedMaterial, technology);
+  }, [selectedMaterial, technology, materials]);
+
+  // Base weight at scale 1.0 — used for display and as rawWeightG snapshot.
+  const baseWeight = computeWeightG(
+    modelStats.volumeMM3, modelStats.areaMM2, 1.0,
+    technology === "sla" ? 100 : infillPct, materialDensity
+  );
   const markup         = settings?.commercialMarkup || 2.5;
   const minimumPrice   = settings?.minimumPrice || 5000;
 
@@ -376,8 +410,12 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   // Live viewer scale — debounced so Three.js only updates after slider settles
   const modelScaleProp = scalePanelOpen ? debouncedScale / 100 : modelScale;
 
-  // Pricing uses the APPLIED scale (not live preview)
-  const weightForPricing = useMemo(() => parsedWeight * Math.pow(modelScale, 3), [parsedWeight, modelScale]);
+  // Pricing uses the APPLIED scale (not live preview).
+  // Shell vol scales with scale², interior vol with scale³ — handled in computeWeightG.
+  const weightForPricing = useMemo(() => computeWeightG(
+    modelStats.volumeMM3, modelStats.areaMM2, modelScale,
+    technology === "sla" ? 100 : infillPct, materialDensity
+  ), [modelStats.volumeMM3, modelStats.areaMM2, modelScale, infillPct, technology, materialDensity]);
 
   const pricing = useMemo(() => {
     const empty = { salePrice:0, costReal:0, printHours:0, needsPrinter:false, materialBase:0, supportMatCost:0, materialCost:0, electricity:0, amortization:0, labor:0, failureCost:0, subtotal:0, needsSupports:false, supportLevel:"none" };
@@ -407,7 +445,11 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
 
   // Live price for scale panel (uses currentScale for instant feedback)
-  const panelLiveWeight = parsedWeight * Math.pow(currentScale / 100, 3);
+  const panelLiveWeight = useMemo(() => computeWeightG(
+    modelStats.volumeMM3, modelStats.areaMM2, currentScale / 100,
+    technology === "sla" ? 100 : infillPct, materialDensity
+  ), [modelStats.volumeMM3, modelStats.areaMM2, currentScale, infillPct, technology, materialDensity]);
+
   const panelLivePrice  = useMemo(() => {
     const materialData = materials[selectedMaterial];
     if (!activePrinter || !materialData || panelLiveWeight === 0) return 0;
@@ -483,37 +525,207 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     onModelSizeChange={setModelSize} onLoadingChange={setIsLoading}
                     technology={technology}
                     modelScale={modelScaleProp}
-                    infillFactor={settings?.infillWeightFactor ?? 0.65}
                   />
                 )}
               </ViewerCanvas>
             </div>
 
-            {/* ── SCALE BUTTON (bottom-right of viewer) ── */}
+            {/* ── FLOATING BADGES (bottom-right of viewer): [i][Relleno%] [Escalar%] ── */}
             {file && (
-              <button
-                onClick={() => setScalePanelOpen(v => !v)}
-                style={{
-                  position:"absolute", bottom:80, right:16, zIndex:30,
-                  background:"rgba(10,10,20,0.72)", backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
-                  border: scalePanelOpen ? "1px solid rgba(139,92,246,0.5)" : "1px solid rgba(255,255,255,0.1)",
-                  borderRadius:14, padding:"0 14px", height:40,
-                  display:"flex", alignItems:"center", gap:8,
-                  cursor:"pointer", transition:"all 0.2s ease",
-                }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round">
-                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-                </svg>
-                <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.04em", color:"rgba(255,255,255,0.7)" }}>Escalar</span>
-                <span style={{
-                  background: modelScale !== 1.0 ? "rgba(245,158,11,0.2)" : "rgba(139,92,246,0.2)",
-                  border:     modelScale !== 1.0 ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(139,92,246,0.4)",
-                  borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:800,
-                  color: modelScale !== 1.0 ? "#fde68a" : "#c4b5fd",
-                }}>
-                  {Math.round(modelScale * 100)}%
-                </span>
-              </button>
+              <div style={{ position:"absolute", bottom:80, right:16, zIndex:30, display:"flex", gap:8, alignItems:"center" }}>
+
+                {/* ── Infill badge + i button (FDM only) ── */}
+                {technology !== "sla" && (
+                  <div style={{ display:"flex", gap:4, alignItems:"center" }}>
+
+                    {/* Info popover anchor */}
+                    <div style={{ position:"relative" }}>
+                      <button
+                        onClick={() => setShowInfillInfo(v => !v)}
+                        style={{
+                          width:26, height:26, borderRadius:"50%", cursor:"pointer",
+                          background: showInfillInfo ? "rgba(139,92,246,0.25)" : "rgba(10,10,20,0.72)",
+                          backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+                          border: showInfillInfo ? "1px solid rgba(139,92,246,0.6)" : "1px solid rgba(255,255,255,0.15)",
+                          color: showInfillInfo ? "#c4b5fd" : "rgba(255,255,255,0.55)",
+                          fontSize:11, fontWeight:800, fontFamily:"serif", fontStyle:"italic",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          transition:"all 0.2s ease",
+                        }}>i</button>
+
+                      {/* Backdrop to close popover on outside click */}
+                      {showInfillInfo && (
+                        <div onClick={() => setShowInfillInfo(false)} style={{ position:"fixed", inset:0, zIndex:40 }} />
+                      )}
+
+                      {/* Info popover */}
+                      {showInfillInfo && (
+                        <div
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            position:"absolute", bottom:34, right:0,
+                            width:270, background:"rgba(8,6,22,0.96)",
+                            backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+                            border:"1px solid rgba(139,92,246,0.35)",
+                            borderRadius:14, padding:"14px 16px",
+                            boxShadow:"0 8px 32px rgba(0,0,0,0.6)",
+                            zIndex:50,
+                          }}>
+                          <div style={{ fontSize:12, fontWeight:800, color:"#ede9fe", marginBottom:8 }}>¿Qué es el relleno (infill)?</div>
+                          <p style={{ fontSize:11, color:"rgba(255,255,255,0.65)", lineHeight:1.5, margin:"0 0 8px" }}>
+                            Es el patrón interno de la pieza — no es sólida, tiene una estructura tipo rejilla en su interior.
+                          </p>
+                          <div style={{ display:"flex", flexDirection:"column", gap:5, marginBottom:8 }}>
+                            <div style={{ fontSize:11, color:"rgba(255,255,255,0.6)", lineHeight:1.4 }}>
+                              <span style={{ color:"#a78bfa", fontWeight:700 }}>Más relleno →</span> pieza más resistente y pesada (precio mayor).
+                            </div>
+                            <div style={{ fontSize:11, color:"rgba(255,255,255,0.6)", lineHeight:1.4 }}>
+                              <span style={{ color:"#a78bfa", fontWeight:700 }}>Menos relleno →</span> pieza más liviana y económica, pero menos resistente a golpes.
+                            </div>
+                          </div>
+                          <div style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:8, padding:"7px 10px", fontSize:10, color:"rgba(255,255,255,0.5)", lineHeight:1.5 }}>
+                            Mínimo <strong style={{ color:"#c4b5fd" }}>15%</strong> — por debajo puede ser frágil.<br/>
+                            Decorativo: 15-20% · Funcional: 40%+
+                          </div>
+                          <div style={{ textAlign:"right", marginTop:6 }}>
+                            <span style={{ fontSize:9, color:"rgba(255,255,255,0.25)", letterSpacing:"0.05em" }}>Toca para cerrar</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Relleno badge */}
+                    <button
+                      onClick={() => { setInfillPanelOpen(v => !v); setScalePanelOpen(false); setShowInfillInfo(false); }}
+                      style={{
+                        background:"rgba(10,10,20,0.72)", backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+                        border: infillPanelOpen ? "1px solid rgba(139,92,246,0.5)" : infillPct !== 15 ? "1px solid rgba(245,158,11,0.35)" : "1px solid rgba(255,255,255,0.1)",
+                        borderRadius:14, padding:"0 12px", height:40,
+                        display:"flex", alignItems:"center", gap:7,
+                        cursor:"pointer", transition:"all 0.2s ease",
+                      }}>
+                      {/* Grid/infill icon */}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                      </svg>
+                      <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.04em", color:"rgba(255,255,255,0.7)" }}>Relleno</span>
+                      <span style={{
+                        background: infillPct !== 15 ? "rgba(245,158,11,0.2)" : "rgba(139,92,246,0.2)",
+                        border:     infillPct !== 15 ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(139,92,246,0.4)",
+                        borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:800,
+                        color: infillPct !== 15 ? "#fde68a" : "#c4b5fd",
+                      }}>{infillPct}%</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Scale badge ── */}
+                <button
+                  onClick={() => { setScalePanelOpen(v => !v); setInfillPanelOpen(false); setShowInfillInfo(false); }}
+                  style={{
+                    background:"rgba(10,10,20,0.72)", backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+                    border: scalePanelOpen ? "1px solid rgba(139,92,246,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius:14, padding:"0 14px", height:40,
+                    display:"flex", alignItems:"center", gap:8,
+                    cursor:"pointer", transition:"all 0.2s ease",
+                  }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                  </svg>
+                  <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.04em", color:"rgba(255,255,255,0.7)" }}>Escalar</span>
+                  <span style={{
+                    background: modelScale !== 1.0 ? "rgba(245,158,11,0.2)" : "rgba(139,92,246,0.2)",
+                    border:     modelScale !== 1.0 ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(139,92,246,0.4)",
+                    borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:800,
+                    color: modelScale !== 1.0 ? "#fde68a" : "#c4b5fd",
+                  }}>
+                    {Math.round(modelScale * 100)}%
+                  </span>
+                </button>
+
+              </div>
+            )}
+
+            {/* ── INFILL PANEL (slides up from bottom of viewer) ── */}
+            {file && technology !== "sla" && (
+              <div style={{
+                position:"absolute", bottom:0, left:0, right:0, zIndex:35,
+                background:"rgba(8,6,22,0.92)",
+                backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+                borderTop:"1px solid rgba(139,92,246,0.3)",
+                borderRadius:"0 0 42px 42px",
+                padding:"12px 20px 16px",
+                transform: infillPanelOpen ? "translateY(0)" : "translateY(100%)",
+                opacity:   infillPanelOpen ? 1 : 0,
+                transition:"transform 0.3s ease, opacity 0.3s ease",
+                pointerEvents: infillPanelOpen ? "auto" : "none",
+              }}>
+                {/* Header */}
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <span style={{ fontSize:13, fontWeight:800, color:"#fff" }}>⬡ Relleno interior</span>
+                  <button onClick={() => setInfillPanelOpen(false)} style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.6)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>×</button>
+                </div>
+
+                {/* Slider */}
+                <div style={{ marginBottom:8 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+                    <span style={{ fontSize:11, color:"rgba(255,255,255,0.5)" }}>Densidad de relleno</span>
+                    <span style={{ fontSize:18, fontWeight:800, color:"#c4b5fd" }}>{infillPct}%</span>
+                  </div>
+                  <input type="range" min={15} max={100} step={5} value={infillPct}
+                    onChange={e => setInfillPct(+e.target.value)}
+                    style={{ width:"100%", accentColor:"#7c3aed", height:4, cursor:"pointer" }} />
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:4 }}>
+                    <span>15% · mínimo</span>
+                    <span>50% · funcional</span>
+                    <span>100% · sólido</span>
+                  </div>
+                </div>
+
+                {/* Quick chips */}
+                <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
+                  {[
+                    { v:15,  label:"15%", hint:"Decorativo" },
+                    { v:20,  label:"20%", hint:"Liviano" },
+                    { v:30,  label:"30%", hint:"Estándar" },
+                    { v:50,  label:"50%", hint:"Funcional" },
+                    { v:80,  label:"80%", hint:"Resistente" },
+                    { v:100, label:"100%",hint:"Sólido" },
+                  ].map(({ v, label, hint }) => (
+                    <button key={v} onClick={() => setInfillPct(v)} style={{
+                      borderRadius:999, padding:"3px 10px", fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
+                      background: infillPct === v ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)",
+                      border:     infillPct === v ? "1px solid rgba(139,92,246,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                      color:      infillPct === v ? "#c4b5fd" : "rgba(255,255,255,0.45)",
+                    }}>
+                      {label}
+                      <span style={{ fontSize:8, marginLeft:4, opacity:0.6 }}>{hint}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Live weight + price preview */}
+                <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:10, padding:"7px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>
+                    <span style={{ fontWeight:700, color:"#fff" }}>{weightForPricing.toFixed(1)}g</span>
+                    {" · a escala " + Math.round(modelScale * 100) + "%"}
+                  </span>
+                  <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(pricing.salePrice)}</span>
+                </div>
+
+                {/* Close + Reset row */}
+                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                  <button onClick={() => setInfillPanelOpen(false)}
+                    style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"9px 0", fontSize:13, fontWeight:800, cursor:"pointer" }}>
+                    ✓ Listo
+                  </button>
+                  <button onClick={() => setInfillPct(15)}
+                    style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", fontSize:11, fontWeight:600, borderRadius:10, padding:"9px 14px", cursor:"pointer" }}>
+                    Reset
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* ── SCALE PANEL (slides up from bottom of viewer) ── */}
@@ -686,7 +898,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     <p style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:12 }}>¿Cómo deseas continuar?</p>
                     <div style={{ display:"flex", alignItems:"center", gap:16 }}>
                       <button
-                        onClick={() => setScalePanelOpen(true)}
+                        onClick={() => { setScalePanelOpen(true); setInfillPanelOpen(false); }}
                         style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"10px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}
                       >
                         ↕ Escalar modelo
@@ -838,7 +1050,8 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
           selectedMaterial={selectedMaterial}
           selectedColor={selectedColor}
           settings={settings}
-          parsedWeight={parsedWeight}
+          parsedWeight={baseWeight}
+          infillPct={infillPct}
           activePrinter={activePrinter}
           buildCheck={buildCheck}
           modelScale={modelScale}

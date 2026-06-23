@@ -20,6 +20,20 @@ const calcVolume = (geo) => {
   return Math.abs(v);
 };
 
+const calcArea = (geo) => {
+  const g = geo.index ? geo.toNonIndexed() : geo;
+  const p = g.attributes.position;
+  let area = 0;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (let i = 0; i < p.count; i += 3) {
+    a.fromBufferAttribute(p, i);
+    b.fromBufferAttribute(p, i + 1);
+    c.fromBufferAttribute(p, i + 2);
+    area += b.clone().sub(a).cross(c.clone().sub(a)).length() / 2;
+  }
+  return area;
+};
+
 const detectScale = (sz) => {
   const m = Math.max(sz.x, sz.y, sz.z);
   if (m < 1)  return 1000;
@@ -294,7 +308,8 @@ const prepareGeometry = (geo) => {
   const sz = new THREE.Vector3();
   geo.boundingBox.getSize(sz);
   const volumeMM3 = calcVolume(geo);
-  return { sz, volumeMM3 };
+  const areaMM2   = calcArea(geo);
+  return { sz, volumeMM3, areaMM2 };
 };
 
 const GlowToneMap = ({ enabled }) => {
@@ -341,7 +356,6 @@ const ModelViewer = ({
   selectedMaterial, materials, onModelSizeChange, onLoadingChange,
   technology = "fdm",
   modelScale = 1,
-  infillFactor = 0.65,
 }) => {
   const [model, setModel] = useState(null);
   const [modelSize, setModelSize] = useState(null);
@@ -390,19 +404,16 @@ const ModelViewer = ({
     const ext = file.name.split(".").pop().toLowerCase();
     const url = URL.createObjectURL(file);
     prevUrlRef.current = url;
-    const density = materials?.[selectedMaterial]?.density || 1.24;
-    const effectiveFactor = technology === "fdm" ? infillFactor : 1;
     const colorHex = selectedColor?.hex || "#8b5cf6";
     const colorFinish = selectedColor?.finish;
     onLoadingChange?.(true);
     setModel(null);
     setModelSize(null);
 
-    const finish = (mesh, sz, volumeMM3, complexity, support) => {
+    const finish = (mesh, sz, volumeMM3, areaMM2, complexity, support) => {
       mesh.position.y = sz.y / 2;
       mesh.castShadow = true;
       applyTechnologyMaterial(mesh, colorHex, technology, colorFinish);
-      const weight = ((volumeMM3 / 1000) * density * effectiveFactor).toFixed(1);
       originalSizeRef.current = sz;
       setModel(mesh);
       setModelSize(sz);
@@ -411,7 +422,8 @@ const ModelViewer = ({
       setModelStats({
         fileName:           file.name,
         dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-        materialUsage:      weight,
+        volumeMM3,
+        areaMM2,
         complexity,
         supportLevel:       support.supportLevel,
         needsSupports:      support.needsSupports,
@@ -423,11 +435,11 @@ const ModelViewer = ({
     if (ext === "stl") {
       new STLLoader().load(url, (geo) => {
         geo.computeVertexNormals();
-        const { sz, volumeMM3 } = prepareGeometry(geo);
+        const { sz, volumeMM3, areaMM2 } = prepareGeometry(geo);
         const support = analyzeSupportNeeds(geo);
         const mesh = new THREE.Mesh(geo, createMaterial(colorHex, technology, colorFinish));
         const complexity = geo.attributes.position.count > 200000 ? "High" : geo.attributes.position.count > 80000 ? "Medium" : "Low";
-        finish(mesh, sz, volumeMM3, complexity, support);
+        finish(mesh, sz, volumeMM3, areaMM2, complexity, support);
       });
     }
 
@@ -460,12 +472,12 @@ const ModelViewer = ({
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
         mergedGeo.computeVertexNormals();
         const support = analyzeSupportNeeds(mergedGeo);
-        const totalVol = calcVolume(mergedGeo);
+        const totalVol  = calcVolume(mergedGeo);
+        const totalArea = calcArea(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(obj);
         const sz = finalBox.getSize(new THREE.Vector3());
         const ctr = finalBox.getCenter(new THREE.Vector3());
         obj.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
-        const weight = ((totalVol / 1000) * density * effectiveFactor).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
         originalSizeRef.current = sz;
         setModel(obj);
@@ -475,7 +487,8 @@ const ModelViewer = ({
         setModelStats({
           fileName:           file.name,
           dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-          materialUsage:      weight,
+          volumeMM3:          totalVol,
+          areaMM2:            totalArea,
           complexity,
           supportLevel:       support.supportLevel,
           needsSupports:      support.needsSupports,
@@ -514,12 +527,12 @@ const ModelViewer = ({
         mergedGeo.setAttribute("position", new THREE.Float32BufferAttribute(allPositions, 3));
         mergedGeo.computeVertexNormals();
         const support = analyzeSupportNeeds(mergedGeo);
-        const totalVol = calcVolume(mergedGeo);
+        const totalVol  = calcVolume(mergedGeo);
+        const totalArea = calcArea(mergedGeo);
         const finalBox = new THREE.Box3().setFromObject(object);
         const sz = finalBox.getSize(new THREE.Vector3());
         const ctr = finalBox.getCenter(new THREE.Vector3());
         object.position.set(-ctr.x, -finalBox.min.y, -ctr.z);
-        const weight = ((totalVol / 1000) * density * effectiveFactor).toFixed(1);
         const complexity = totalTris > 200000 ? "High" : totalTris > 80000 ? "Medium" : "Low";
         originalSizeRef.current = sz;
         setModel(object);
@@ -529,7 +542,8 @@ const ModelViewer = ({
         setModelStats({
           fileName:           file.name,
           dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
-          materialUsage:      weight,
+          volumeMM3:          totalVol,
+          areaMM2:            totalArea,
           complexity,
           supportLevel:       support.supportLevel,
           needsSupports:      support.needsSupports,
