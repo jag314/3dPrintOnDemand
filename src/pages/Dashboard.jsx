@@ -127,7 +127,7 @@ const ResumenSection = ({ orders, materials, printers, settings }) => {
   Object.entries(materials).forEach(([name, mat]) => {
     const inv = inventory[name] || {};
     const spools = inv.spools || 0;
-    if (spools <= (settings?.lowStockAlert || 1)) {
+    if (spools <= (settings?.lowStockAlert ?? 1)) {
       alerts.push({ type:"stock", msg:`${name}: ${spools} rollo${spools === 1 ? "" : "s"} en stock` });
     }
   });

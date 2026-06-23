@@ -384,8 +384,8 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
     modelStats.volumeMM3, modelStats.areaMM2, 1.0,
     technology === "sla" ? 100 : infillPct, materialDensity
   );
-  const markup         = settings?.commercialMarkup || 2.5;
-  const minimumPrice   = settings?.minimumPrice || 5000;
+  const markup         = settings?.commercialMarkup ?? 2.5;
+  const minimumPrice   = settings?.minimumPrice    ?? 5000;
 
   const supportConfig = useMemo(() => ({
     none:     { material: 0, time: 0 },
@@ -431,16 +431,6 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
     const result = calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
-    const basePrintHours = weightForPricing / costs.gPerHour;
-    console.log("[FDM DIAGNOSTIC]",
-      "\narchivo:                      ", modelStats.fileName,
-      "\ngPerHour usado:               ", costs.gPerHour,
-      "\nweightForPricing:             ", weightForPricing.toFixed(2), "g",
-      "\nsupportLevel detectado:       ", suppLevel,
-      "\nsupportConfig usado:          ", JSON.stringify(suppCfg),
-      "\nbasePrintHours (sin soporte): ", basePrintHours.toFixed(4), "h =", (basePrintHours * 60).toFixed(1), "min",
-      "\nprintHours (con soporte):     ", result.printHours.toFixed(4), "h =", (result.printHours * 60).toFixed(1), "min",
-    );
     return result;
   }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
 
