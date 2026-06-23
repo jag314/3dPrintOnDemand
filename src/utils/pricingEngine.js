@@ -23,11 +23,6 @@ export const SUPPORT_POST_HOURS = {
   heavy:    1.5,
 };
 
-export const SMALL_FAST_PART_THRESHOLD = {
-  maxWeightGrams:    30,
-  maxPrintHours:     1.0,
-  reducedLaborHours: 0.25,
-};
 
 export const calculateSalePrice = (costReal, markup = COMMERCIAL_MARKUP, minimumPrice = 0) => {
   const raw     = costReal * markup;
@@ -75,7 +70,6 @@ export const calculateFDMPrice = ({
   markup = COMMERCIAL_MARKUP,
   minimumPrice = 0,
   supportLevel = "none",
-  smallFastThreshold = SMALL_FAST_PART_THRESHOLD,
 }) => {
   const effectiveWeight = weightGrams * (1 + supportExtraMaterial);
   const basePrintHours  = weightGrams / costs.gPerHour;
@@ -87,17 +81,14 @@ export const calculateFDMPrice = ({
   const electricity     = printHours * costs.elecPerHour;
   const amortization    = printHours * costs.amortPerHour;
   const supportPostHrs  = SUPPORT_POST_HOURS[supportLevel] || 0;
-  const isSmallFastPart =
-    weightGrams    < smallFastThreshold.maxWeightGrams &&
-    basePrintHours < smallFastThreshold.maxPrintHours  &&
-    (supportLevel === "none" || supportLevel === "light");
-  const labor = isSmallFastPart
-    ? costs.operatorRate * smallFastThreshold.reducedLaborHours
-    : costs.operatorRate * (costs.prepHours + costs.postHours + supportPostHrs);
+  const labor           = costs.operatorRate * (costs.prepHours + costs.postHours + supportPostHrs);
   const subtotal        = materialCost + electricity + amortization + labor;
   const failureCost    = subtotal * costs.failureRate;
-  const costReal       = Math.round(subtotal + failureCost);
-  const salePrice      = calculateSalePrice(costReal, markup, minimumPrice);
+  const costReal          = Math.round(subtotal + failureCost);
+  const salePrice         = calculateSalePrice(costReal, markup, minimumPrice);
+  // Preview uses ₡50 rounding so small infill/scale changes are visible in the UI.
+  // Checkout always uses salePrice (₡500) — the actual amount charged.
+  const salePricePreview  = Math.max(Math.round(costReal * markup / 50) * 50, minimumPrice);
 
   return {
     // Admin only — never show to customer
@@ -114,11 +105,11 @@ export const calculateFDMPrice = ({
     subtotal,
     // Customer facing
     salePrice,
+    salePricePreview,
     margin:       0.60,
     markup,
     // Support info
     isSLA:         false,
-    isSmallFastPart,
     needsSupports: supportExtraMaterial > 0,
     supportLevel,
   };
@@ -150,8 +141,9 @@ export const calculateSLAPrice = ({
   const labor          = costs.operatorRate * (costs.prepHours + costs.postHours);
   const subtotal       = materialCost + electricity + amortization + labor;
   const failureCost    = subtotal * costs.failureRate;
-  const costReal       = Math.round(subtotal + failureCost);
-  const salePrice      = calculateSalePrice(costReal, markup, minimumPrice);
+  const costReal         = Math.round(subtotal + failureCost);
+  const salePrice        = calculateSalePrice(costReal, markup, minimumPrice);
+  const salePricePreview = Math.max(Math.round(costReal * markup / 50) * 50, minimumPrice);
 
   return {
     // Admin only
@@ -169,6 +161,7 @@ export const calculateSLAPrice = ({
     subtotal,
     // Customer facing
     salePrice,
+    salePricePreview,
     margin:       0.60,
     markup,
     // Support info

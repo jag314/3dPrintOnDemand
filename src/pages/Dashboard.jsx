@@ -591,6 +591,12 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                             }{admin.needsSupports && admin.effectiveWeightG ? ` → ${admin.effectiveWeightG.toFixed(1)}g efectivo` : ""}
                           </span>
                         </div>
+                        {admin.infillPct != null && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/40">Relleno</span>
+                            <span className="text-white/80">{admin.infillPct}%</span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-sm">
                           <span className="text-white/40">Tiempo est.</span>
                           <span className="text-white/80">{admin.printTimeLabel || formatPrintTime(admin.printHours || 0)}</span>

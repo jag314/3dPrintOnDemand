@@ -173,13 +173,6 @@ export const DEFAULT_SETTINGS = {
   // Standard profile, ~15-20% infill + 3 walls) = 63.5% ratio. Applied in ModelViewer for
   // FDM only; SLA is effectively solid and uses factor 1.0.
   infillWeightFactor:  0.65,
-  // Small/fast parts (< 30g AND base print time < 1h) with no or light supports get a
-  // reduced flat labor charge instead of the standard prepHours+postHours flat fee.
-  SMALL_FAST_PART_THRESHOLD: {
-    maxWeightGrams:    30,
-    maxPrintHours:     1.0,
-    reducedLaborHours: 0.25,
-  },
 };
 
 // ── App ───────────────────────────────────────────────────────────────────────

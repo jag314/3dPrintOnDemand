@@ -418,7 +418,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   ), [modelStats.volumeMM3, modelStats.areaMM2, modelScale, infillPct, technology, materialDensity]);
 
   const pricing = useMemo(() => {
-    const empty = { salePrice:0, costReal:0, printHours:0, needsPrinter:false, materialBase:0, supportMatCost:0, materialCost:0, electricity:0, amortization:0, labor:0, failureCost:0, subtotal:0, needsSupports:false, supportLevel:"none" };
+    const empty = { salePrice:0, salePricePreview:0, costReal:0, printHours:0, needsPrinter:false, materialBase:0, supportMatCost:0, materialCost:0, electricity:0, amortization:0, labor:0, failureCost:0, subtotal:0, needsSupports:false, supportLevel:"none" };
     if (!activePrinter) return { ...empty, needsPrinter:true };
     const materialData = materials[selectedMaterial];
     if (!materialData || weightForPricing === 0) return empty;
@@ -430,7 +430,37 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
       return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
-    const result = calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD });
+    const result = calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
+    const basePrintHours = weightForPricing / costs.gPerHour;
+    console.log("[COST BREAKDOWN]",
+      "\n--- PRINTER (runtime desde localStorage) ---",
+      "\nprinterId:            ", costs.printerId,
+      "\nprinterName:          ", costs.printerName,
+      "\noperatorRate:         ₡", costs.operatorRate, "/h",
+      "\nprepHours:            ", costs.prepHours, "h",
+      "\npostHours:            ", costs.postHours, "h",
+      "\ngPerHour:             ", costs.gPerHour, "g/h",
+      "\nfailureRate:          ", costs.failureRate,
+      "\nelecPerHour:          ₡", costs.elecPerHour?.toFixed(4),
+      "\namortPerHour:         ₡", costs.amortPerHour?.toFixed(4),
+      "\n--- INPUT ---",
+      "\nescala:               ", Math.round(modelScale * 100) + "%",
+      "\ninfillPct:            ", infillPct,
+      "\nweightGrams:          ", weightForPricing.toFixed(3), "g",
+      "\nbasePrintHours:       ", basePrintHours.toFixed(4), "h",
+      "\nprintHours (c/soporte):", result.printHours.toFixed(4), "h",
+      "\n--- DESGLOSE costReal ---",
+      "\nmaterial:             ₡", result.materialBase?.toFixed(2),
+      "\nsoporteMat:           ₡", result.supportMatCost?.toFixed(2),
+      "\nelectricidad:         ₡", result.electricity?.toFixed(2),
+      "\namortización:         ₡", result.amortization?.toFixed(2),
+      "\nmanoDeObra:           ₡", result.labor?.toFixed(2),
+      "\nfailureCost:          ₡", result.failureCost?.toFixed(2),
+      "\ncostReal:             ₡", result.costReal,
+      "\n--- PRECIO ---",
+      "\nsalePricePreview(₡50):₡", result.salePricePreview,
+      "\nsalePrice(₡500):      ₡", result.salePrice,
+    );
     return result;
   }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
 
@@ -449,9 +479,9 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
     if (technology === "sla") {
       const density    = materialData.density || 1.10;
       const pricePerML = materialData.pricePerML || materialData.pricePerGram;
-      return calculateSLAPrice({ weightGrams:panelLiveWeight, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel }).salePrice;
+      return calculateSLAPrice({ weightGrams:panelLiveWeight, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel }).salePricePreview;
     }
-    return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel, smallFastThreshold:settings?.SMALL_FAST_PART_THRESHOLD }).salePrice;
+    return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel }).salePricePreview;
   }, [panelLiveWeight, selectedMaterial, materials, activePrinter, technology, markup, minimumPrice, modelStats.supportLevel, supportConfig]);
 
   // waNumber/waSupport not needed here — compact banner uses /contact route; CheckoutFlow handles WhatsApp
@@ -605,7 +635,15 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                         border:     infillPct !== 15 ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(139,92,246,0.4)",
                         borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:800,
                         color: infillPct !== 15 ? "#fde68a" : "#c4b5fd",
-                      }}>{infillPct}%</span>
+                        display:"flex", alignItems:"center", gap:4,
+                      }}>
+                        {infillPct}%
+                        {weightForPricing > 0 && (
+                          <span style={{ opacity:0.65, fontWeight:600, fontSize:9 }}>
+                            · {weightForPricing.toFixed(1)}g
+                          </span>
+                        )}
+                      </span>
                     </button>
                   </div>
                 )}
@@ -629,8 +667,14 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     border:     modelScale !== 1.0 ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(139,92,246,0.4)",
                     borderRadius:999, padding:"1px 7px", fontSize:10, fontWeight:800,
                     color: modelScale !== 1.0 ? "#fde68a" : "#c4b5fd",
+                    display:"flex", alignItems:"center", gap:4,
                   }}>
-                    {Math.round(modelScale * 100)}%
+                    {scalePanelOpen ? currentScale : Math.round(modelScale * 100)}%
+                    {displayWeight > 0 && (
+                      <span style={{ opacity:0.65, fontWeight:600, fontSize:9 }}>
+                        · {displayWeight.toFixed(1)}g
+                      </span>
+                    )}
                   </span>
                 </button>
 
@@ -701,7 +745,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     <span style={{ fontWeight:700, color:"#fff" }}>{weightForPricing.toFixed(1)}g</span>
                     {" · a escala " + Math.round(modelScale * 100) + "%"}
                   </span>
-                  <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(pricing.salePrice)}</span>
+                  <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(pricing.salePricePreview)}</span>
                 </div>
 
                 {/* Close + Reset row */}
@@ -762,10 +806,10 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                         <span style={{ fontSize:9, fontWeight:700, color:"#a78bfa", background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", borderRadius:999, padding:"1px 7px" }}>Custom</span>
                       )}
                       <input
-                        type="number" min={1} max={200}
+                        type="number" min={15} max={200}
                         value={currentScale}
                         onChange={e => {
-                          const v = Math.min(200, Math.max(1, parseInt(e.target.value) || 1));
+                          const v = Math.min(200, Math.max(15, parseInt(e.target.value) || 15));
                           setCurrentScale(v);
                         }}
                         style={{ width:68, textAlign:"center", background:"rgba(139,92,246,0.08)", border: currentScale !== 100 ? "1.5px solid #7c3aed" : "1.5px solid rgba(139,92,246,0.4)", boxShadow: currentScale !== 100 ? "0 0 10px rgba(124,58,237,0.35)" : "none", borderRadius:8, padding:"3px 6px", fontSize:18, fontWeight:800, color:"#c4b5fd", outline:"none", MozAppearance:"textfield", transition:"border-color 0.2s, box-shadow 0.2s" }}
@@ -773,13 +817,13 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                       <span style={{ fontSize:14, fontWeight:700, color:"#a78bfa" }}>%</span>
                     </div>
                   </div>
-                  <input type="range" min={1} max={200} step={1} value={currentScale}
+                  <input type="range" min={15} max={200} step={1} value={currentScale}
                     onChange={e => setCurrentScale(+e.target.value)}
                     style={{ width:"100%", accentColor:"#7c3aed", height:4, cursor:"pointer" }} />
                   <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:4 }}>
                     {minScalePct ? (
                       <span style={{ color:"#f59e0b" }}>{minScalePct}% · óptimo</span>
-                    ) : <span>1%</span>}
+                    ) : <span>15%</span>}
                     <span>100% · original</span>
                     <span>200%</span>
                   </div>
@@ -1006,11 +1050,11 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                   <>
                     <p style={{ fontSize:9, letterSpacing:"0.22em", textTransform:"uppercase", color:"rgba(255,255,255,0.35)", fontWeight:700, marginBottom:6 }}>COSTO DE MANUFACTURA</p>
                     <h3 className="text-4xl sm:text-5xl font-black text-violet-400 leading-none break-all">
-                      {formatCRC(pricing.salePrice * quantity)}
+                      {formatCRC(pricing.salePricePreview * quantity)}
                     </h3>
                     {quantity > 1 && (
                       <p style={{ fontSize:12, color:"rgba(167,139,250,0.7)", marginTop:4 }}>
-                        {formatCRC(pricing.salePrice)} × {quantity} piezas
+                        {formatCRC(pricing.salePricePreview)} × {quantity} piezas
                       </p>
                     )}
                     <p style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontStyle:"italic", marginTop:4 }}>
