@@ -315,7 +315,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const [debouncedScale, setDebouncedScale] = useState(100);   // debounced, drives Three.js model
 
   const [modelStats, setModelStats] = useState({
-    fileName:"-", dimensions:"-", volumeMM3:0, areaMM2:0, complexity:"-",
+    fileName:"-", dimensions:"-", dimensionsMM:null, volumeMM3:0, areaMM2:0, complexity:"-",
     supportLevel:"none", needsSupports:false, overhangRatio:0,
   });
   const [infillPct,      setInfillPct]      = useState(15);
@@ -406,6 +406,14 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
 
   const fitsOriginal = buildCheck?.fitsOriginal ?? true;
   const fitsAtCurrentScale = fitsOriginal || (!!buildCheck && Math.round(modelScale * 100) <= buildCheck.minScalePct);
+  const panelFitsAtPreviewScale = (() => {
+    if (!activePrinter?.buildVolume) return false;
+    const mm = modelStats.dimensionsMM;
+    if (!mm) return false;
+    const scale = currentScale / 100;
+    const { x: bvX, y: bvY, z: bvZ } = activePrinter.buildVolume;
+    return (mm.x * scale) <= bvX && (mm.y * scale) <= bvY && (mm.z * scale) <= bvZ;
+  })();
 
   // Live viewer scale — debounced so Three.js only updates after slider settles
   const modelScaleProp = scalePanelOpen ? debouncedScale / 100 : modelScale;
@@ -419,6 +427,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
 
   const pricing = useMemo(() => {
     const empty = { salePrice:0, salePricePreview:0, costReal:0, printHours:0, needsPrinter:false, materialBase:0, supportMatCost:0, materialCost:0, electricity:0, amortization:0, labor:0, failureCost:0, subtotal:0, needsSupports:false, supportLevel:"none" };
+    if (!fitsAtCurrentScale) return empty;
     if (!activePrinter) return { ...empty, needsPrinter:true };
     const materialData = materials[selectedMaterial];
     if (!materialData || weightForPricing === 0) return empty;
@@ -431,38 +440,8 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       return calculateSLAPrice({ weightGrams:weightForPricing, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
     }
     const result = calculateFDMPrice({ weightGrams:weightForPricing, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel });
-    const basePrintHours = weightForPricing / costs.gPerHour;
-    console.log("[COST BREAKDOWN]",
-      "\n--- PRINTER (runtime desde localStorage) ---",
-      "\nprinterId:            ", costs.printerId,
-      "\nprinterName:          ", costs.printerName,
-      "\noperatorRate:         ₡", costs.operatorRate, "/h",
-      "\nprepHours:            ", costs.prepHours, "h",
-      "\npostHours:            ", costs.postHours, "h",
-      "\ngPerHour:             ", costs.gPerHour, "g/h",
-      "\nfailureRate:          ", costs.failureRate,
-      "\nelecPerHour:          ₡", costs.elecPerHour?.toFixed(4),
-      "\namortPerHour:         ₡", costs.amortPerHour?.toFixed(4),
-      "\n--- INPUT ---",
-      "\nescala:               ", Math.round(modelScale * 100) + "%",
-      "\ninfillPct:            ", infillPct,
-      "\nweightGrams:          ", weightForPricing.toFixed(3), "g",
-      "\nbasePrintHours:       ", basePrintHours.toFixed(4), "h",
-      "\nprintHours (c/soporte):", result.printHours.toFixed(4), "h",
-      "\n--- DESGLOSE costReal ---",
-      "\nmaterial:             ₡", result.materialBase?.toFixed(2),
-      "\nsoporteMat:           ₡", result.supportMatCost?.toFixed(2),
-      "\nelectricidad:         ₡", result.electricity?.toFixed(2),
-      "\namortización:         ₡", result.amortization?.toFixed(2),
-      "\nmanoDeObra:           ₡", result.labor?.toFixed(2),
-      "\nfailureCost:          ₡", result.failureCost?.toFixed(2),
-      "\ncostReal:             ₡", result.costReal,
-      "\n--- PRECIO ---",
-      "\nsalePricePreview(₡50):₡", result.salePricePreview,
-      "\nsalePrice(₡500):      ₡", result.salePrice,
-    );
     return result;
-  }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig]);
+  }, [weightForPricing, modelStats, selectedMaterial, materials, technology, activePrinter, markup, minimumPrice, supportConfig, fitsAtCurrentScale]);
 
   // Live price for scale panel (uses currentScale for instant feedback)
   const panelLiveWeight = useMemo(() => computeWeightG(
@@ -473,6 +452,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const panelLivePrice  = useMemo(() => {
     const materialData = materials[selectedMaterial];
     if (!activePrinter || !materialData || panelLiveWeight === 0) return 0;
+    if (!panelFitsAtPreviewScale) return 0;
     const costs    = calculatePrinterCosts(activePrinter);
     const suppLevel = modelStats.supportLevel || "none";
     const suppCfg   = supportConfig[suppLevel] || { material: 0, time: 0 };
@@ -482,7 +462,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
       return calculateSLAPrice({ weightGrams:panelLiveWeight, density, pricePerML, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel }).salePricePreview;
     }
     return calculateFDMPrice({ weightGrams:panelLiveWeight, pricePerGram:materialData.pricePerGram, supportExtraMaterial:suppCfg.material, supportExtraTime:suppCfg.time, costs, markup, minimumPrice, supportLevel:suppLevel }).salePricePreview;
-  }, [panelLiveWeight, selectedMaterial, materials, activePrinter, technology, markup, minimumPrice, modelStats.supportLevel, supportConfig]);
+  }, [panelLiveWeight, selectedMaterial, materials, activePrinter, technology, markup, minimumPrice, modelStats.supportLevel, supportConfig, panelFitsAtPreviewScale]);
 
   // waNumber/waSupport not needed here — compact banner uses /contact route; CheckoutFlow handles WhatsApp
 
@@ -504,6 +484,101 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   // fitsOriginal is used only for the compact oversized banner; AnalysisBadge no longer receives it
   const displayWeight = scalePanelOpen ? panelLiveWeight : weightForPricing;
   const badgeProps = { modelStats, parsedWeight: parseFloat(displayWeight.toFixed(1)), displayDimensions };
+
+  // Scale panel body — shared between the lg (absolute/in-viewer) and <lg (flow) renders
+  const scalePanelBody = (
+    <>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <span style={{ fontSize:13, fontWeight:800, color:"#fff" }}>↕ Escalar modelo</span>
+        <button onClick={() => setScalePanelOpen(false)} style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.6)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>×</button>
+      </div>
+      {/* Live dimensions */}
+      {(() => {
+        const dims = scaleDimensions(modelStats.dimensions, currentScale)?.replace(" mm","").split(" × ") || ["—","—","—"];
+        return (
+          <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+            {[["X","#ef4444",dims[0]],["Y","#22c55e",dims[1]],["Z","#3b82f6",dims[2]]].map(([l,c,v]) => (
+              <div key={l} style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, padding:"4px 8px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+                <span style={{ fontSize:8, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:c }}>{l}</span>
+                <span style={{ fontSize:11, fontWeight:700, color:"#fff", marginTop:1 }}>{v}mm</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+      {/* Slider + custom number input */}
+      <div style={{ marginBottom:8 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+          <span style={{ fontSize:11, color:"rgba(255,255,255,0.5)" }}>Tamaño</span>
+          <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+            {!quickScales.includes(currentScale) && (
+              <span style={{ fontSize:9, fontWeight:700, color:"#a78bfa", background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", borderRadius:999, padding:"1px 7px" }}>Custom</span>
+            )}
+            <input
+              type="number" min={15} max={200}
+              value={currentScale}
+              onChange={e => {
+                const v = Math.min(200, Math.max(15, parseInt(e.target.value) || 15));
+                setCurrentScale(v);
+              }}
+              style={{ width:68, textAlign:"center", background:"rgba(139,92,246,0.08)", border: currentScale !== 100 ? "1.5px solid #7c3aed" : "1.5px solid rgba(139,92,246,0.4)", boxShadow: currentScale !== 100 ? "0 0 10px rgba(124,58,237,0.35)" : "none", borderRadius:8, padding:"3px 6px", fontSize:18, fontWeight:800, color:"#c4b5fd", outline:"none", MozAppearance:"textfield", transition:"border-color 0.2s, box-shadow 0.2s" }}
+            />
+            <span style={{ fontSize:14, fontWeight:700, color:"#a78bfa" }}>%</span>
+          </div>
+        </div>
+        <input type="range" min={15} max={200} step={1} value={currentScale}
+          onChange={e => setCurrentScale(+e.target.value)}
+          style={{ width:"100%", accentColor:"#7c3aed", height:4, cursor:"pointer" }} />
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:4 }}>
+          {minScalePct ? (
+            <span style={{ color:"#f59e0b" }}>{minScalePct}% · óptimo</span>
+          ) : <span>15%</span>}
+          <span>100% · original</span>
+          <span>200%</span>
+        </div>
+      </div>
+      {/* Quick scale pills */}
+      <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
+        {quickScales.map(s => {
+          const isMin = s === minScalePct;
+          const isSelected = currentScale === s;
+          return (
+            <button key={s} onClick={() => setCurrentScale(s)} style={{
+              borderRadius:999, padding:"0 10px", minHeight:44, display:"flex", alignItems:"center", fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
+              background: isSelected ? "rgba(139,92,246,0.2)" : isMin ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.04)",
+              border: isSelected ? "1px solid rgba(139,92,246,0.5)" : isMin ? "1px solid rgba(245,158,11,0.35)" : "1px solid rgba(255,255,255,0.1)",
+              color: isSelected ? "#c4b5fd" : isMin ? "#fde68a" : "rgba(255,255,255,0.5)",
+            }}>
+              {s}%
+            </button>
+          );
+        })}
+      </div>
+      {/* Weight + price preview — single line */}
+      <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:10, padding:"7px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>
+          <span style={{ fontWeight:700, color:"#fff" }}>{panelLiveWeight.toFixed(1)}g</span>
+          {" · estimado"}
+        </span>
+        {panelFitsAtPreviewScale
+          ? <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(panelLivePrice)}</span>
+          : <span style={{ fontSize:11, fontWeight:700, color:"#f59e0b" }}>⚠ escala el modelo</span>
+        }
+      </div>
+      {/* Apply + Reset row */}
+      <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+        <button onClick={() => { setModelScale(currentScale / 100); setScalePanelOpen(false); }}
+          style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"9px 0", fontSize:13, fontWeight:800, cursor:"pointer" }}>
+          ✓ Aplicar
+        </button>
+        <button onClick={() => setCurrentScale(100)}
+          style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", fontSize:11, fontWeight:600, borderRadius:10, padding:"9px 14px", cursor:"pointer" }}>
+          Reset
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
@@ -745,7 +820,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                     <span style={{ fontWeight:700, color:"#fff" }}>{weightForPricing.toFixed(1)}g</span>
                     {" · a escala " + Math.round(modelScale * 100) + "%"}
                   </span>
-                  <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(pricing.salePricePreview)}</span>
+                  {fitsAtCurrentScale && <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(pricing.salePricePreview)}</span>}
                 </div>
 
                 {/* Close + Reset row */}
@@ -762,9 +837,9 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
               </div>
             )}
 
-            {/* ── SCALE PANEL (slides up from bottom of viewer) ── */}
+            {/* ── SCALE PANEL — lg+ only: absolute slide-up inside viewer ── */}
             {file && (
-              <div style={{
+              <div className="hidden lg:block" style={{
                 position:"absolute", bottom:0, left:0, right:0, zIndex:35,
                 background:"rgba(8,6,22,0.92)",
                 backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
@@ -776,100 +851,23 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                 transition:"transform 0.3s ease, opacity 0.3s ease",
                 pointerEvents: scalePanelOpen ? "auto" : "none",
               }}>
-                {/* Header */}
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                  <span style={{ fontSize:13, fontWeight:800, color:"#fff" }}>↕ Escalar modelo</span>
-                  <button onClick={() => setScalePanelOpen(false)} style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.6)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>×</button>
-                </div>
-
-                {/* Live dimensions */}
-                {(() => {
-                  const dims = scaleDimensions(modelStats.dimensions, currentScale)?.replace(" mm","").split(" × ") || ["—","—","—"];
-                  return (
-                    <div style={{ display:"flex", gap:6, marginBottom:10 }}>
-                      {[["X","#ef4444",dims[0]],["Y","#22c55e",dims[1]],["Z","#3b82f6",dims[2]]].map(([l,c,v]) => (
-                        <div key={l} style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, padding:"4px 8px", display:"flex", flexDirection:"column", alignItems:"center" }}>
-                          <span style={{ fontSize:8, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:c }}>{l}</span>
-                          <span style={{ fontSize:11, fontWeight:700, color:"#fff", marginTop:1 }}>{v}mm</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {/* Slider + custom number input */}
-                <div style={{ marginBottom:8 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
-                    <span style={{ fontSize:11, color:"rgba(255,255,255,0.5)" }}>Tamaño</span>
-                    <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-                      {!quickScales.includes(currentScale) && (
-                        <span style={{ fontSize:9, fontWeight:700, color:"#a78bfa", background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", borderRadius:999, padding:"1px 7px" }}>Custom</span>
-                      )}
-                      <input
-                        type="number" min={15} max={200}
-                        value={currentScale}
-                        onChange={e => {
-                          const v = Math.min(200, Math.max(15, parseInt(e.target.value) || 15));
-                          setCurrentScale(v);
-                        }}
-                        style={{ width:68, textAlign:"center", background:"rgba(139,92,246,0.08)", border: currentScale !== 100 ? "1.5px solid #7c3aed" : "1.5px solid rgba(139,92,246,0.4)", boxShadow: currentScale !== 100 ? "0 0 10px rgba(124,58,237,0.35)" : "none", borderRadius:8, padding:"3px 6px", fontSize:18, fontWeight:800, color:"#c4b5fd", outline:"none", MozAppearance:"textfield", transition:"border-color 0.2s, box-shadow 0.2s" }}
-                      />
-                      <span style={{ fontSize:14, fontWeight:700, color:"#a78bfa" }}>%</span>
-                    </div>
-                  </div>
-                  <input type="range" min={15} max={200} step={1} value={currentScale}
-                    onChange={e => setCurrentScale(+e.target.value)}
-                    style={{ width:"100%", accentColor:"#7c3aed", height:4, cursor:"pointer" }} />
-                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:4 }}>
-                    {minScalePct ? (
-                      <span style={{ color:"#f59e0b" }}>{minScalePct}% · óptimo</span>
-                    ) : <span>15%</span>}
-                    <span>100% · original</span>
-                    <span>200%</span>
-                  </div>
-                </div>
-
-                {/* Quick scale pills */}
-                <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
-                  {quickScales.map(s => {
-                    const isMin = s === minScalePct;
-                    const isSelected = currentScale === s;
-                    return (
-                      <button key={s} onClick={() => setCurrentScale(s)} style={{
-                        borderRadius:999, padding:"3px 10px", fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
-                        background: isSelected ? "rgba(139,92,246,0.2)" : isMin ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.04)",
-                        border: isSelected ? "1px solid rgba(139,92,246,0.5)" : isMin ? "1px solid rgba(245,158,11,0.35)" : "1px solid rgba(255,255,255,0.1)",
-                        color: isSelected ? "#c4b5fd" : isMin ? "#fde68a" : "rgba(255,255,255,0.5)",
-                      }}>
-                        {s}%
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Weight + price preview — single line */}
-                <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:10, padding:"7px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                  <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>
-                    <span style={{ fontWeight:700, color:"#fff" }}>{panelLiveWeight.toFixed(1)}g</span>
-                    {" · estimado"}
-                  </span>
-                  <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(panelLivePrice)}</span>
-                </div>
-
-                {/* Apply + Reset row */}
-                <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                  <button onClick={() => { setModelScale(currentScale / 100); setScalePanelOpen(false); }}
-                    style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"9px 0", fontSize:13, fontWeight:800, cursor:"pointer" }}>
-                    ✓ Aplicar
-                  </button>
-                  <button onClick={() => setCurrentScale(100)}
-                    style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", fontSize:11, fontWeight:600, borderRadius:10, padding:"9px 14px", cursor:"pointer" }}>
-                    Reset
-                  </button>
-                </div>
+                {scalePanelBody}
               </div>
             )}
           </div>
+
+          {/* ── SCALE PANEL — <lg only: in-flow below canvas ── */}
+          {file && scalePanelOpen && (
+            <div className="lg:hidden" style={{
+              background:"rgba(8,6,22,0.92)",
+              backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+              border:"1px solid rgba(139,92,246,0.3)",
+              borderRadius:18,
+              padding:"12px 20px 16px",
+            }}>
+              {scalePanelBody}
+            </div>
+          )}
 
           {/* ── QUOTE PANEL ── */}
           {file && (
@@ -1042,7 +1040,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                       <span>→</span>
                     </button>
                   </div>
-                ) : pricing.needsPrinter ? (
+                ) : !fitsAtCurrentScale ? null : pricing.needsPrinter ? (
                   <div style={{ padding:"14px", borderRadius:12, background:"rgba(245,158,11,0.06)", border:"1px solid rgba(245,158,11,0.2)" }}>
                     <p style={{ fontSize:13, color:"#f59e0b", fontWeight:600 }}>⚙️ Sin impresora {technology.toUpperCase()} activa</p>
                   </div>
@@ -1063,7 +1061,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                   </>
                 )}
 
-                {technology !== "sla" && !pricing.needsPrinter && weightForPricing > 0 && (
+                {technology !== "sla" && !pricing.needsPrinter && weightForPricing > 0 && fitsAtCurrentScale && (
                   <button onClick={() => setShowModal(true)}
                     className="mt-6 w-full primary-button py-4 rounded-2xl sm:rounded-3xl text-base sm:text-lg font-bold">
                     Confirmar Pedido →

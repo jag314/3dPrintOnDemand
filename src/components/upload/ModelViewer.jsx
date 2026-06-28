@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader";
-import { useThree } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
 const calcVolume = (geo) => {
@@ -349,6 +349,42 @@ const buildHalo = (model, colorHex) => {
   return group;
 };
 
+// Wraps the loaded model with landing-page-style rotation + float animation.
+// Rotation pauses while the user is actively orbiting and resumes 1.5 s after.
+const AnimatedModel = ({ model, haloModel, modelSize, isGlow, glowDist, selectedColor }) => {
+  const groupRef = useRef();
+  const { controls } = useThree();
+  const lastInteractRef = useRef(0);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current || !modelSize) return;
+    const t = state.clock.elapsedTime;
+    if (controls?.active) lastInteractRef.current = t;
+    if (t - lastInteractRef.current > 1.5) {
+      groupRef.current.rotation.y += delta * 0.08;
+    }
+    const amp = Math.max(modelSize.x, modelSize.y, modelSize.z) * 0.018;
+    groupRef.current.position.y = amp * Math.sin(t * 1.2);
+  });
+
+  return (
+    <group ref={groupRef}>
+      {haloModel && <primitive object={haloModel} />}
+      {isGlow && modelSize && (
+        <pointLight
+          position={[0, modelSize.y * 0.5, 0]}
+          color={selectedColor.hex}
+          intensity={1.2}
+          distance={glowDist}
+          decay={2}
+        />
+      )}
+      <primitive object={model} />
+      {modelSize && <DimensionLines size={modelSize} />}
+    </group>
+  );
+};
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 const ModelViewer = ({
@@ -422,6 +458,7 @@ const ModelViewer = ({
       setModelStats({
         fileName:           file.name,
         dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+        dimensionsMM:       { x: sz.x, y: sz.z, z: sz.y },
         volumeMM3,
         areaMM2,
         complexity,
@@ -487,6 +524,7 @@ const ModelViewer = ({
         setModelStats({
           fileName:           file.name,
           dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          dimensionsMM:       { x: sz.x, y: sz.z, z: sz.y },
           volumeMM3:          totalVol,
           areaMM2:            totalArea,
           complexity,
@@ -542,6 +580,7 @@ const ModelViewer = ({
         setModelStats({
           fileName:           file.name,
           dimensions:         `${sz.x.toFixed(1)} × ${sz.z.toFixed(1)} × ${sz.y.toFixed(1)} mm`,
+          dimensionsMM:       { x: sz.x, y: sz.z, z: sz.y },
           volumeMM3:          totalVol,
           areaMM2:            totalArea,
           complexity,
@@ -566,18 +605,14 @@ const ModelViewer = ({
     <>
       <GlowToneMap enabled={isGlow} />
       <CameraFit size={modelSize} />
-      {haloModel && <primitive object={haloModel} />}
-      {isGlow && modelSize && (
-        <pointLight
-          position={[0, modelSize.y * 0.5, 0]}
-          color={selectedColor.hex}
-          intensity={1.2}
-          distance={glowDist}
-          decay={2}
-        />
-      )}
-      <primitive object={model} />
-      {modelSize && <DimensionLines size={modelSize} />}
+      <AnimatedModel
+        model={model}
+        haloModel={haloModel}
+        modelSize={modelSize}
+        isGlow={isGlow}
+        glowDist={glowDist}
+        selectedColor={selectedColor}
+      />
     </>
   );
 };
