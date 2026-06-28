@@ -2,7 +2,7 @@ import { Router }    from 'express';
 import multer         from 'multer';
 import { randomUUID } from 'crypto';
 import path           from 'path';
-import nodemailer     from 'nodemailer';
+import { Resend }     from 'resend';
 import supabase, { BUCKET } from '../lib/supabase.js';
 
 const router = Router();
@@ -110,21 +110,11 @@ router.post('/', async (req, res) => {
       attachments.push({ name: safeFilename, url: urlData.signedUrl });
     }
 
-    // ── Send email ─────────────────────────────────────────────────────────────
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-      console.error('[contact] Missing GMAIL_USER / GMAIL_APP_PASSWORD env vars');
+    // ── Send email via Resend ──────────────────────────────────────────────────
+    if (!process.env.RESEND_API_KEY) {
+      console.error('[contact] Missing RESEND_API_KEY env var');
       return res.status(500).json({ error: 'Configuración de correo incompleta en el servidor.' });
     }
-
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // STARTTLS
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
 
     const attachmentBlock = attachments.length > 0
       ? `\n\n━━━ ARCHIVOS ADJUNTOS (links válidos 7 días) ━━━\n` +
@@ -141,14 +131,21 @@ router.post('/', async (req, res) => {
       attachmentBlock,
     ].filter((l) => l !== null).join('\n');
 
-    await transporter.sendMail({
-      from:    `"Inity 3D Formulario" <${process.env.CONTACT_EMAIL || 'info@inity3d.com'}>`,
-      to:      process.env.CONTACT_EMAIL || 'info@inity3d.com',
-      replyTo: `"${nombre.trim()}" <${email.trim()}>`,
-      subject: `[Inity 3D] ${servicio || 'Consulta'} — ${nombre.trim()}`,
-      text:    textBody,
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { data: emailData, error: emailErr } = await resend.emails.send({
+      from:     `Inity 3D Formulario <${process.env.CONTACT_EMAIL || 'info@inity3d.com'}>`,
+      to:       [process.env.CONTACT_EMAIL || 'info@inity3d.com'],
+      reply_to: `${nombre.trim()} <${email.trim()}>`,
+      subject:  `[Inity 3D] ${servicio || 'Consulta'} — ${nombre.trim()}`,
+      text:     textBody,
     });
 
+    if (emailErr) {
+      console.error('[contact] Resend error:', JSON.stringify(emailErr));
+      return res.status(500).json({ error: 'Error al enviar el correo. Intentá de nuevo en unos minutos.' });
+    }
+
+    console.log('[contact] Email sent via Resend, id:', emailData?.id);
     res.json({ ok: true });
 
   } catch (err) {

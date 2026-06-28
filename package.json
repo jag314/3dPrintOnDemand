@@ -40,6 +40,7 @@
     "react-tilt": "^1.0.2",
     "react-vertical-timeline-component": "^3.6.0",
     "recharts": "^3.8.1",
+    "resend": "^6.16.0",
     "three": "^0.157.0",
     "ws": "^8.21.0"
   },
