@@ -17,6 +17,8 @@ app.set('trust proxy', 1);
 // 5173 is busy, so hardcoding a single port breaks login on port changes).
 // In production, restrict to the real Vercel domain + any CLIENT_ORIGIN override.
 const prodOrigins = [
+  'https://www.inity3d.com',
+  'https://inity3d.com',
   'https://3d-print-on-demand-gilt.vercel.app',
   process.env.CLIENT_ORIGIN,
 ].filter(Boolean);
