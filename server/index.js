@@ -6,6 +6,7 @@ import ordersRouter   from './routes/orders.js';
 import adminRouter    from './routes/admin.js';
 import authRouter     from './routes/auth.js';
 import shippingRouter from './routes/shipping.js';
+import contactRouter  from './routes/contact.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -44,6 +45,15 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// 5 contact form submissions per IP per hour — prevent email spam
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many contact requests. Try again in 1 hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.get('/api/health', (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
@@ -52,6 +62,7 @@ app.use('/api/orders',   uploadLimiter, ordersRouter);
 app.use('/api/admin',    adminRouter);
 app.use('/api/auth',     authRouter);
 app.use('/api/shipping', shippingRouter);
+app.use('/api/contact',  contactLimiter, contactRouter);
 
 // Catch-all: unknown /api/* routes
 app.use('/api', (_, res) => res.status(404).json({ error: 'Unknown API endpoint' }));
