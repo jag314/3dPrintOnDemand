@@ -53,13 +53,19 @@ router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screensh
 
       if (uploadResult.error) {
         console.error('[STL Upload] FAILED:', uploadResult.error.message);
-        storedOriginalPath = null;
-      } else {
-        storedOriginalPath = originalPath;
+        return res.status(500).json({
+          error: 'No se pudo guardar el archivo STL. Por favor intentá de nuevo.',
+          detail: uploadResult.error.message,
+        });
       }
+
+      storedOriginalPath = originalPath;
     } catch (ex) {
       console.error('[STL Upload] EXCEPTION:', ex.message);
-      storedOriginalPath = null;
+      return res.status(500).json({
+        error: 'No se pudo guardar el archivo STL. Por favor intentá de nuevo.',
+        detail: ex.message,
+      });
     }
 
     // ── 4. Upload scaled copy — non-fatal, only if original succeeded ─────────
