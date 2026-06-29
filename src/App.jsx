@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./utils/supabase/client";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { MaterialsProvider } from "./context/MaterialsContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -177,9 +177,27 @@ export const DEFAULT_SETTINGS = {
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
+// Saved per location.key so back/forward restores exactly where the user was.
+const scrollPositions = {};
+
 const ScrollToTop = () => {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  const location = useLocation();
+  const navType  = useNavigationType();
+
+  // Persist scrollY when leaving this history entry.
+  useEffect(() => {
+    return () => { scrollPositions[location.key] = window.scrollY; };
+  }, [location.key]);
+
+  // Forward navigation → top. Back/forward → restore saved position.
+  useEffect(() => {
+    if (navType === 'POP') {
+      window.scrollTo(0, scrollPositions[location.key] ?? 0);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [location.key, navType]);
+
   return null;
 };
 
