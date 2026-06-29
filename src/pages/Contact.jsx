@@ -254,7 +254,7 @@ const Contact = () => {
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.stl,.obj,.3mf,.pdf,image/jpeg,image/png,image/gif,image/webp,application/pdf,model/stl,application/sla,application/vnd.ms-pkistl,model/obj,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.stl,.obj,.3mf,.pdf"
                     className="hidden"
                     onChange={handleFileChange}
                   />

@@ -58,7 +58,7 @@ const InlineUpload = ({ onFileUpload }) => {
         padding:"clamp(24px,4vw,48px) clamp(16px,3vw,32px)",
       }}
     >
-      <input ref={inputRef} type="file" accept=".stl,.obj,.3mf,model/stl,application/sla,application/vnd.ms-pkistl,model/obj,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml" style={{ display:"none" }}
+      <input ref={inputRef} type="file" accept=".stl,.obj,.3mf" style={{ display:"none" }}
         onChange={(e) => { const f = e.target.files[0]; if (f) onFileUpload(f); }} />
       <div style={{ position:"absolute", inset:0, pointerEvents:"none", background:"radial-gradient(ellipse at center, rgba(139,92,246,0.12) 0%, transparent 65%)", opacity:active?1:0, transition:"opacity 0.35s ease" }} />
       {[
@@ -94,7 +94,7 @@ const InlineUploadCompact = ({ onFileUpload }) => {
   const inputRef = React.useRef();
   return (
     <div onClick={() => inputRef.current?.click()} title="Subir nuevo archivo" style={{ width:58, height:58, borderRadius:16, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:3, cursor:"pointer", background:"rgba(139,92,246,0.12)", border:"1px solid rgba(139,92,246,0.28)", backdropFilter:"blur(16px)", transition:"all 0.2s ease", boxShadow:"0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-      <input ref={inputRef} type="file" accept=".stl,.obj,.3mf,model/stl,application/sla,application/vnd.ms-pkistl,model/obj,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml" style={{ display:"none" }} onChange={(e) => { const f = e.target.files[0]; if (f) onFileUpload(f); }} />
+      <input ref={inputRef} type="file" accept=".stl,.obj,.3mf" style={{ display:"none" }} onChange={(e) => { const f = e.target.files[0]; if (f) onFileUpload(f); }} />
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
       </svg>
