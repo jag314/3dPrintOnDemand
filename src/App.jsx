@@ -177,6 +177,12 @@ export const DEFAULT_SETTINGS = {
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
+
 const App = () => {
   // TODO: Remove this block after confirming the DB connection works
   useEffect(() => {
@@ -286,6 +292,7 @@ const App = () => {
 
   return (
     <MaterialsProvider materials={materials} setMaterials={setMaterials}>
+      <ScrollToTop />
       {!isAdmin && <Navbar />}
       <Routes>
         <Route path="/"          element={<Home />} />

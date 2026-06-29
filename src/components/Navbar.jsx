@@ -42,7 +42,7 @@ const Navbar = () => {
       <input
         ref={uploadRef}
         type="file"
-        accept=".stl,.obj,.3mf"
+        accept=".stl,.obj,.3mf,model/stl,application/sla,application/vnd.ms-pkistl,model/obj,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
         style={{ display: "none" }}
         onChange={(e) => {
           const file = e.target.files[0];

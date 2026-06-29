@@ -61,7 +61,7 @@ const Hero = () => {
             <input
               ref={inputRef}
               type="file"
-              accept=".stl,.obj,.3mf"
+              accept=".stl,.obj,.3mf,model/stl,application/sla,application/vnd.ms-pkistl,model/obj,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
               className="hidden"
               onChange={(e) => handleFile(e.target.files[0])}
             />

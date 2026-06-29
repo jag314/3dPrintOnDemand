@@ -356,13 +356,9 @@ const AnimatedModel = ({ model, haloModel, modelSize, isGlow, glowDist, selected
   const { controls } = useThree();
   const lastInteractRef = useRef(0);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (!groupRef.current || !modelSize) return;
     const t = state.clock.elapsedTime;
-    if (controls?.active) lastInteractRef.current = t;
-    if (t - lastInteractRef.current > 1.5) {
-      groupRef.current.rotation.y += delta * 0.08;
-    }
     const amp = Math.max(modelSize.x, modelSize.y, modelSize.z) * 0.018;
     groupRef.current.position.y = amp * Math.sin(t * 1.2);
   });
