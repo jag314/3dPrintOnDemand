@@ -157,16 +157,16 @@ const TechnologySelector = ({ technology, setTechnology }) => {
   }, [modal, photoIdx]);
   return (
     <>
-      <div className="absolute top-6 z-30" style={{ left:"50%", transform:"translateX(-50%)", background:"rgba(10,10,20,0.72)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"10px 10px", boxShadow:"0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
+      <div className="absolute top-6 z-30 hidden lg:block" style={{ left:"50%", transform:"translateX(-50%)", background:"rgba(10,10,20,0.72)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"18px", padding:"10px 10px", boxShadow:"0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
         <div style={{ fontSize:"9px", letterSpacing:"0.14em", color:"rgba(255,255,255,0.25)", fontWeight:600, textTransform:"uppercase", marginBottom:8, paddingLeft:4 }}>Tecnología</div>
         <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
           {[{id:"fdm",label:"FDM",desc:"PLA · PETG · ABS",icon:"⬡"},{id:"sla",label:"SLA",desc:"High detail · Resin",icon:"◈"}].map(({id,label,desc,icon}) => (
             <div key={id} style={{ display:"flex", alignItems:"stretch" }}>
-              <button onClick={() => setTechnology(id)} style={{ padding:"7px 10px 7px 11px", borderRadius:"12px 0 0 12px", cursor:"pointer", transition:"all 0.2s ease", background:technology===id?"linear-gradient(135deg,rgba(139,92,246,0.3),rgba(109,40,217,0.18))":"rgba(255,255,255,0.03)", borderTop:technology===id?"1px solid rgba(139,92,246,0.55)":"1px solid rgba(255,255,255,0.06)", borderBottom:technology===id?"1px solid rgba(139,92,246,0.55)":"1px solid rgba(255,255,255,0.06)", borderLeft:technology===id?"1px solid rgba(139,92,246,0.55)":"1px solid rgba(255,255,255,0.06)", borderRight:"none", color:technology===id?"#ede9fe":"rgba(255,255,255,0.3)", display:"flex", alignItems:"center", gap:8 }}>
+              <button onClick={() => setTechnology(id)} style={{ padding:"10px 12px 10px 14px", borderRadius:"12px 0 0 12px", cursor:"pointer", transition:"all 0.2s ease", background:technology===id?"linear-gradient(135deg,rgba(139,92,246,0.5),rgba(109,40,217,0.35))":"rgba(255,255,255,0.03)", borderTop:technology===id?"1px solid rgba(139,92,246,0.7)":"1px solid rgba(255,255,255,0.06)", borderBottom:technology===id?"1px solid rgba(139,92,246,0.7)":"1px solid rgba(255,255,255,0.06)", borderLeft:technology===id?"1px solid rgba(139,92,246,0.7)":"1px solid rgba(255,255,255,0.06)", borderRight:"none", color:technology===id?"#ede9fe":"rgba(255,255,255,0.4)", display:"flex", alignItems:"center", gap:8 }}>
                 <span style={{ fontSize:13, opacity:technology===id?1:0.4 }}>{icon}</span>
                 <div style={{ textAlign:"left" }}><div style={{ fontSize:11, fontWeight:700 }}>{label}</div><div style={{ fontSize:9, opacity:0.5, marginTop:1 }}>{desc}</div></div>
               </button>
-              <button onClick={(e) => { e.stopPropagation(); setModal(id); }} style={{ width:26, borderRadius:"0 12px 12px 0", cursor:"pointer", background:technology===id?"rgba(139,92,246,0.18)":"rgba(255,255,255,0.04)", borderTop:technology===id?"1px solid rgba(139,92,246,0.55)":"1px solid rgba(255,255,255,0.06)", borderBottom:technology===id?"1px solid rgba(139,92,246,0.55)":"1px solid rgba(255,255,255,0.06)", borderRight:technology===id?"1px solid rgba(139,92,246,0.55)":"1px solid rgba(255,255,255,0.06)", borderLeft:`1px solid ${technology===id?"rgba(139,92,246,0.25)":"rgba(255,255,255,0.04)"}`, color:technology===id?"rgba(196,181,253,0.9)":"rgba(255,255,255,0.3)", fontSize:10, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"serif", fontStyle:"italic" }}>i</button>
+              <button onClick={(e) => { e.stopPropagation(); setModal(id); }} style={{ minWidth:44, width:44, borderRadius:"0 12px 12px 0", cursor:"pointer", background:technology===id?"rgba(139,92,246,0.18)":"rgba(255,255,255,0.04)", borderTop:technology===id?"1px solid rgba(139,92,246,0.7)":"1px solid rgba(255,255,255,0.06)", borderBottom:technology===id?"1px solid rgba(139,92,246,0.7)":"1px solid rgba(255,255,255,0.06)", borderRight:technology===id?"1px solid rgba(139,92,246,0.7)":"1px solid rgba(255,255,255,0.06)", borderLeft:`1px solid ${technology===id?"rgba(139,92,246,0.25)":"rgba(255,255,255,0.04)"}`, color:technology===id?"rgba(196,181,253,0.9)":"rgba(255,255,255,0.4)", fontSize:11, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"serif", fontStyle:"italic" }}>i</button>
             </div>
           ))}
         </div>
@@ -321,6 +321,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
   const [infillPct,      setInfillPct]      = useState(15);
   const [infillPanelOpen, setInfillPanelOpen] = useState(false);
   const [showInfillInfo,  setShowInfillInfo]  = useState(false);
+  const [mobileTechOpen,  setMobileTechOpen]  = useState(false);
 
   const materialNames = Object.keys(materials).filter(
     name => !materials[name].technology || materials[name].technology === technology
@@ -580,6 +581,65 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
     </>
   );
 
+  // Infill panel body — shared between lg (floating, hidden on mobile) and <lg (in-flow) renders
+  const infillPanelBody = (
+    <>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <span style={{ fontSize:13, fontWeight:800, color:"#fff" }}>⬡ Relleno interior</span>
+        <button onClick={() => setInfillPanelOpen(false)} style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.6)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>×</button>
+      </div>
+      <div style={{ marginBottom:8 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+          <span style={{ fontSize:11, color:"rgba(255,255,255,0.5)" }}>Densidad de relleno</span>
+          <span style={{ fontSize:18, fontWeight:800, color:"#c4b5fd" }}>{infillPct}%</span>
+        </div>
+        <input type="range" min={15} max={100} step={5} value={infillPct}
+          onChange={e => setInfillPct(+e.target.value)}
+          style={{ width:"100%", accentColor:"#7c3aed", height:4, cursor:"pointer" }} />
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"rgba(255,255,255,0.3)", marginTop:4 }}>
+          <span>15% · mínimo</span><span>50% · funcional</span><span>100% · sólido</span>
+        </div>
+      </div>
+      <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:10 }}>
+        {[
+          { v:15,  label:"15%",  hint:"Decorativo" },
+          { v:20,  label:"20%",  hint:"Liviano" },
+          { v:30,  label:"30%",  hint:"Estándar" },
+          { v:50,  label:"50%",  hint:"Funcional" },
+          { v:80,  label:"80%",  hint:"Resistente" },
+          { v:100, label:"100%", hint:"Sólido" },
+        ].map(({ v, label, hint }) => (
+          <button key={v} onClick={() => setInfillPct(v)} style={{
+            borderRadius:999, padding:"0 10px", minHeight:44, display:"flex", alignItems:"center",
+            fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
+            background: infillPct === v ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)",
+            border:     infillPct === v ? "1px solid rgba(139,92,246,0.5)" : "1px solid rgba(255,255,255,0.1)",
+            color:      infillPct === v ? "#c4b5fd" : "rgba(255,255,255,0.45)",
+          }}>
+            {label}<span style={{ fontSize:8, marginLeft:4, opacity:0.6 }}>{hint}</span>
+          </button>
+        ))}
+      </div>
+      <div style={{ background:"rgba(139,92,246,0.06)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:10, padding:"7px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>
+          <span style={{ fontWeight:700, color:"#fff" }}>{weightForPricing.toFixed(1)}g</span>
+          {" · a escala " + Math.round(modelScale * 100) + "%"}
+        </span>
+        {fitsAtCurrentScale && <span style={{ fontSize:15, fontWeight:900, color:"#a78bfa" }}>{formatCRC(pricing.salePricePreview)}</span>}
+      </div>
+      <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+        <button onClick={() => setInfillPanelOpen(false)}
+          style={{ flex:1, background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"9px 0", fontSize:13, fontWeight:800, cursor:"pointer" }}>
+          ✓ Listo
+        </button>
+        <button onClick={() => setInfillPct(15)}
+          style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", fontSize:11, fontWeight:600, borderRadius:10, padding:"9px 14px", cursor:"pointer" }}>
+          Reset
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <main className="section-background min-h-screen pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -625,8 +685,9 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
               </ViewerCanvas>
             </div>
 
-            {/* ── FLOATING BADGES (bottom-right of viewer): [i][Relleno%] [Escalar%] ── */}
+            {/* ── FLOATING BADGES (bottom-right of viewer): [i][Relleno%] [Escalar%] — desktop only ── */}
             {file && (
+              <div className="hidden lg:block">
               <div style={{ position:"absolute", bottom:80, right:16, zIndex:30, display:"flex", gap:8, alignItems:"center" }}>
 
                 {/* ── Infill badge + i button (FDM only) ── */}
@@ -754,11 +815,12 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                 </button>
 
               </div>
+              </div>
             )}
 
-            {/* ── INFILL PANEL (slides up from bottom of viewer) ── */}
+            {/* ── INFILL PANEL (slides up from bottom of viewer, desktop only) ── */}
             {file && technology !== "sla" && (
-              <div style={{
+              <div className="hidden lg:block" style={{
                 position:"absolute", bottom:0, left:0, right:0, zIndex:35,
                 background:"rgba(8,6,22,0.92)",
                 backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
@@ -866,6 +928,127 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
               padding:"12px 20px 16px",
             }}>
               {scalePanelBody}
+            </div>
+          )}
+
+          {/* ── MOBILE INFILL PANEL — in-flow below canvas ── */}
+          {file && technology !== "sla" && infillPanelOpen && (
+            <div className="lg:hidden" style={{
+              background:"rgba(8,6,22,0.92)",
+              backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+              border:"1px solid rgba(139,92,246,0.3)",
+              borderRadius:18,
+              padding:"12px 20px 16px",
+            }}>
+              {infillPanelBody}
+            </div>
+          )}
+
+          {/* ── MOBILE TECH PANEL — in-flow below canvas ── */}
+          {file && mobileTechOpen && (
+            <div className="lg:hidden" style={{
+              background:"rgba(8,6,22,0.92)",
+              backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+              border:"1px solid rgba(139,92,246,0.3)",
+              borderRadius:18,
+              padding:"16px 20px",
+            }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+                <span style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Tecnología de Impresión</span>
+                <button onClick={() => setMobileTechOpen(false)} style={{ width:24, height:24, borderRadius:"50%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.6)", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>×</button>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {[{id:"fdm",label:"FDM",desc:"PLA · PETG · ABS · ASA",icon:"⬡"},{id:"sla",label:"SLA",desc:"Alta definición · Resina",icon:"◈"}].map(({id,label,desc,icon}) => (
+                  <button key={id}
+                    onClick={() => { setTechnology(id); setMobileTechOpen(false); }}
+                    style={{
+                      display:"flex", alignItems:"center", gap:14, minHeight:64,
+                      padding:"14px 16px", borderRadius:14, cursor:"pointer", transition:"all 0.2s ease", textAlign:"left",
+                      background: technology===id ? "linear-gradient(135deg,rgba(139,92,246,0.35),rgba(109,40,217,0.22))" : "rgba(255,255,255,0.03)",
+                      border: technology===id ? "1px solid rgba(139,92,246,0.65)" : "1px solid rgba(255,255,255,0.08)",
+                    }}>
+                    <span style={{ fontSize:22, opacity: technology===id ? 1 : 0.4 }}>{icon}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:14, fontWeight:700, color: technology===id ? "#ede9fe" : "rgba(255,255,255,0.6)" }}>{label}</div>
+                      <div style={{ fontSize:11, color:"rgba(255,255,255,0.35)", marginTop:2 }}>{desc}</div>
+                    </div>
+                    {technology===id && (
+                      <span style={{ fontSize:11, fontWeight:700, color:"#a78bfa", background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:999, padding:"2px 9px", whiteSpace:"nowrap" }}>✓ Activo</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setMobileTechOpen(false)}
+                style={{ marginTop:12, width:"100%", background:"linear-gradient(135deg,#7c3aed,#9333ea)", color:"#fff", border:"none", borderRadius:10, padding:"10px 0", fontSize:13, fontWeight:800, cursor:"pointer" }}>
+                ✓ Listo
+              </button>
+            </div>
+          )}
+
+          {/* ── MOBILE WIDGET ICON BAR — <lg only, always visible when file loaded ── */}
+          {file && (
+            <div className="lg:hidden flex gap-2 mt-2">
+
+              {/* Tecnología */}
+              <button
+                onClick={() => { setMobileTechOpen(v => !v); setInfillPanelOpen(false); setScalePanelOpen(false); }}
+                style={{
+                  width:58, height:58, borderRadius:16, flexShrink:0,
+                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2,
+                  cursor:"pointer", transition:"all 0.2s ease",
+                  background: mobileTechOpen ? "rgba(139,92,246,0.28)" : "rgba(139,92,246,0.12)",
+                  border: mobileTechOpen ? "1px solid rgba(139,92,246,0.65)" : "1px solid rgba(139,92,246,0.28)",
+                  backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+                }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={mobileTechOpen ? "#c4b5fd" : "rgba(167,139,250,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+                </svg>
+                <span style={{ fontSize:7, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color: mobileTechOpen ? "#c4b5fd" : "rgba(167,139,250,0.7)" }}>
+                  {technology.toUpperCase()}
+                </span>
+              </button>
+
+              {/* Relleno — FDM only */}
+              {technology !== "sla" && (
+                <button
+                  onClick={() => { setInfillPanelOpen(v => !v); setMobileTechOpen(false); setScalePanelOpen(false); }}
+                  style={{
+                    width:58, height:58, borderRadius:16, flexShrink:0,
+                    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2,
+                    cursor:"pointer", transition:"all 0.2s ease",
+                    background: infillPanelOpen ? "rgba(139,92,246,0.28)" : "rgba(139,92,246,0.12)",
+                    border: infillPanelOpen ? "1px solid rgba(139,92,246,0.65)" : infillPct !== 15 ? "1px solid rgba(245,158,11,0.45)" : "1px solid rgba(139,92,246,0.28)",
+                    backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+                  }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={infillPanelOpen ? "#c4b5fd" : infillPct !== 15 ? "#fde68a" : "rgba(167,139,250,0.8)"} strokeWidth="2" strokeLinecap="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                  </svg>
+                  <span style={{ fontSize:7, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color: infillPanelOpen ? "#c4b5fd" : infillPct !== 15 ? "#fde68a" : "rgba(167,139,250,0.7)" }}>
+                    {infillPct}%
+                  </span>
+                </button>
+              )}
+
+              {/* Escalar */}
+              <button
+                onClick={() => { setScalePanelOpen(v => !v); setMobileTechOpen(false); setInfillPanelOpen(false); }}
+                style={{
+                  width:58, height:58, borderRadius:16, flexShrink:0,
+                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2,
+                  cursor:"pointer", transition:"all 0.2s ease",
+                  background: scalePanelOpen ? "rgba(139,92,246,0.28)" : "rgba(139,92,246,0.12)",
+                  border: scalePanelOpen ? "1px solid rgba(139,92,246,0.65)" : modelScale !== 1.0 ? "1px solid rgba(245,158,11,0.45)" : "1px solid rgba(139,92,246,0.28)",
+                  backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+                }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={scalePanelOpen ? "#c4b5fd" : modelScale !== 1.0 ? "#fde68a" : "rgba(167,139,250,0.8)"} strokeWidth="2" strokeLinecap="round">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                </svg>
+                <span style={{ fontSize:7, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color: scalePanelOpen ? "#c4b5fd" : modelScale !== 1.0 ? "#fde68a" : "rgba(167,139,250,0.7)" }}>
+                  {Math.round(modelScale * 100)}%
+                </span>
+              </button>
+
             </div>
           )}
 
