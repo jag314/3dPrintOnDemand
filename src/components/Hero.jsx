@@ -61,7 +61,6 @@ const Hero = () => {
             <input
               ref={inputRef}
               type="file"
-              accept=".stl,.obj,.3mf"
               className="hidden"
               onChange={(e) => handleFile(e.target.files[0])}
             />

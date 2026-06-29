@@ -12,7 +12,6 @@ const LivePreview = () => {
       <input
         ref={livequoteRef}
         type="file"
-        accept=".stl,.obj,.3mf"
         style={{ display: "none" }}
         onChange={(e) => {
           const file = e.target.files[0];

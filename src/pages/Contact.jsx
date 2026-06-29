@@ -254,7 +254,6 @@ const Contact = () => {
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.stl,.obj,.3mf,.pdf"
                     className="hidden"
                     onChange={handleFileChange}
                   />
