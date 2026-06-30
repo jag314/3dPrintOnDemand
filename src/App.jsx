@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./utils/supabase/client";
+import { mapPrinterFromDB, mapMaterialFromDB, mapSettingsFromDB } from "./utils/configMappers";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { MaterialsProvider } from "./context/MaterialsContext";
 import Navbar from "./components/Navbar";
@@ -11,6 +12,8 @@ import About from "./pages/About";
 import Teach from "./pages/Teach";
 import Designer from "./pages/Designer";
 import Contact from "./pages/Contact";
+
+const USE_SUPABASE = import.meta.env.VITE_CONFIG_SOURCE === 'supabase';
 
 // ── Defaults ─────────────────────────────────────────────────────────────────
 
@@ -211,8 +214,16 @@ const App = () => {
       });
   }, []);
 
-  // Printers — inity_printers key, with migration from old "printers" key
+  // configReady/configError gate the price display while Supabase fetch is in flight.
+  // When USE_SUPABASE=false, config is always "ready" (localStorage is synchronous).
+  const [configReady, setConfigReady] = useState(!USE_SUPABASE);
+  const [configError, setConfigError] = useState(false);
+
+  // Printers — inity_printers key, with migration from old "printers" key.
+  // When USE_SUPABASE, start with code defaults as safe placeholder (prevents null
+  // crashes in QuotePage) — Supabase fetch overwrites them before configReady=true.
   const [printers, setPrinters] = useState(() => {
+    if (USE_SUPABASE) return DEFAULT_PRINTERS;
     // Merge saved printers over defaults per-printer (matched by id) so new default
     // fields propagate to existing sessions while preserving intentional admin edits.
     const mergePrinters = (parsed) => {
@@ -248,11 +259,13 @@ const App = () => {
   });
 
   useEffect(() => {
+    if (USE_SUPABASE) return;
     localStorage.setItem("inity_printers", JSON.stringify(printers));
   }, [printers]);
 
   // Materials — inity_materials key, with migration from old "materials" key
   const [materials, setMaterials] = useState(() => {
+    if (USE_SUPABASE) return defaultMaterials;
     try {
       const saved = localStorage.getItem("inity_materials");
       if (saved) {
@@ -275,11 +288,13 @@ const App = () => {
   });
 
   useEffect(() => {
+    if (USE_SUPABASE) return;
     localStorage.setItem("inity_materials", JSON.stringify(materials));
   }, [materials]);
 
   // Settings — inity_settings key
   const [settings, setSettings] = useState(() => {
+    if (USE_SUPABASE) return DEFAULT_SETTINGS;
     try {
       const saved = localStorage.getItem("inity_settings");
       if (saved) {
@@ -297,8 +312,28 @@ const App = () => {
   });
 
   useEffect(() => {
+    if (USE_SUPABASE) return;
     localStorage.setItem("inity_settings", JSON.stringify(settings));
   }, [settings]);
+
+  // Fetch config from Supabase (only when USE_SUPABASE=true)
+  useEffect(() => {
+    if (!USE_SUPABASE) return;
+    Promise.all([
+      supabase.from('printers').select('*').order('sort_order'),
+      supabase.from('materials').select('*').order('sort_order'),
+      supabase.from('settings').select('*').eq('id', 1).single(),
+    ]).then(([{ data: pRows, error: pErr }, { data: mRows, error: mErr }, { data: sRow, error: sErr }]) => {
+      if (pErr || mErr || sErr) throw pErr || mErr || sErr;
+      setPrinters(pRows.map(mapPrinterFromDB));
+      setMaterials(Object.fromEntries(mRows.map(mapMaterialFromDB)));
+      setSettings(mapSettingsFromDB(sRow));
+      setConfigReady(true);
+    }).catch(err => {
+      console.error('Config fetch failed:', err);
+      setConfigError(true);
+    });
+  }, []);
 
   const getActivePrinter = (technology) =>
     printers.find(p => p.technology === technology && p.status === "active") ||
@@ -320,6 +355,8 @@ const App = () => {
             printers={printers}
             getActivePrinter={getActivePrinter}
             settings={settings}
+            configReady={configReady}
+            configError={configError}
           />
         } />
         <Route path="/dashboard" element={

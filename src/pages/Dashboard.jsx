@@ -9,6 +9,10 @@ import {
 } from "recharts";
 import { calculatePrinterCosts, formatCRC, formatPrintTime, COMMERCIAL_MARKUP } from "../utils/pricingEngine";
 import { DEFAULT_SETTINGS } from "../App";
+import { printerToSnakeCase, materialToSnakeCase, settingsToSnakeCase } from "../utils/configMappers";
+
+const USE_SUPABASE = import.meta.env.VITE_CONFIG_SOURCE === 'supabase';
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
 // ── Shared constants ──────────────────────────────────────────────────────────
 
@@ -748,14 +752,39 @@ const PrinterEditForm = ({ draft, setDraft, onSave, onCancel }) => {
   );
 };
 
-const PrintersSection = ({ printers, setPrinters, orders }) => {
+const PrintersSection = ({ printers, setPrinters, orders, adminToken }) => {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState(null);
   const startEdit = p => { setEditingId(p.id); setDraft({ ...p, printSpeedProfiles: JSON.parse(JSON.stringify(p.printSpeedProfiles)) }); };
   const startAdd  = tech => { setEditingId("new"); setDraft({ ...(tech==="sla"?SLA_DEFAULTS:FDM_DEFAULTS), technology:tech, id:Date.now().toString() }); };
   const cancelEdit = () => { setEditingId(null); setDraft(null); };
-  const saveEdit  = () => { setPrinters(prev => editingId === "new" ? [...prev, draft] : prev.map(p => p.id === editingId ? draft : p)); cancelEdit(); };
-  const activate  = (id, tech) => setPrinters(prev => prev.map(p => p.technology !== tech ? p : { ...p, status: p.id === id ? "active" : "inactive" }));
+  const saveEdit = () => {
+    const isNew = editingId === "new";
+    setPrinters(prev => isNew ? [...prev, draft] : prev.map(p => p.id === editingId ? draft : p));
+    if (USE_SUPABASE) {
+      const method = isNew ? 'POST' : 'PUT';
+      const url    = isNew ? `${API_BASE}/api/admin/printers` : `${API_BASE}/api/admin/printers/${draft.id}`;
+      fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(printerToSnakeCase(draft)),
+      }).catch(err => console.error('Error saving printer:', err));
+    }
+    cancelEdit();
+  };
+  const activate = (id, tech) => {
+    const updated = printers.map(p => p.technology !== tech ? p : { ...p, status: p.id === id ? "active" : "inactive" });
+    setPrinters(updated);
+    if (USE_SUPABASE) {
+      updated.filter(p => p.technology === tech).forEach(p => {
+        fetch(`${API_BASE}/api/admin/printers/${p.id}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(printerToSnakeCase(p)),
+        }).catch(err => console.error('Error activating printer:', err));
+      });
+    }
+  };
   const deletePrinter = (printer) => {
     const isOnlyActive = printer.status === "active" && printers.filter(p => p.technology === printer.technology && p.status === "active").length === 1;
     if (isOnlyActive) {
@@ -764,6 +793,12 @@ const PrintersSection = ({ printers, setPrinters, orders }) => {
       if (!window.confirm(`¿Eliminás la impresora "${printer.name}"? Esta acción no se puede deshacer.`)) return;
     }
     setPrinters(prev => prev.filter(p => p.id !== printer.id));
+    if (USE_SUPABASE) {
+      fetch(`${API_BASE}/api/admin/printers/${printer.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      }).catch(err => console.error('Error deleting printer:', err));
+    }
   };
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -840,7 +875,7 @@ const PrintersSection = ({ printers, setPrinters, orders }) => {
 
 // ── SECTION 4: Materiales ─────────────────────────────────────────────────────
 
-const MaterialsSection = ({ materials, setMaterials }) => {
+const MaterialsSection = ({ materials, setMaterials, adminToken }) => {
   const [expandedMaterial, setExpandedMaterial] = useState(null);
   const [editingMaterial,  setEditingMaterial]  = useState(null);
   const [newName,  setNewName]  = useState(""); const [newSpoolPrice, setNewSpoolPrice] = useState(""); const [newSpoolWeight, setNewSpoolWeight] = useState("1000"); const [newDensity, setNewDensity] = useState(""); const [newTech, setNewTech] = useState("fdm");
@@ -852,13 +887,30 @@ const MaterialsSection = ({ materials, setMaterials }) => {
   const saveInventory = (inv) => { setInventory(inv); localStorage.setItem("inity_inventory", JSON.stringify(inv)); };
   const setSpools = (materialName, spools) => saveInventory({ ...inventory, [materialName]: { ...(inventory[materialName]||{}), spools: +spools } });
 
+  const syncMaterial = (name, mat) => {
+    if (!USE_SUPABASE) return;
+    fetch(`${API_BASE}/api/admin/materials/${encodeURIComponent(name)}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(materialToSnakeCase(name, mat)),
+    }).catch(err => console.error(`Error syncing material ${name}:`, err));
+  };
+
   const addMaterial = () => {
     if (!newName) return;
     const spc = parseFloat(newSpoolPrice)||0, swg = parseFloat(newSpoolWeight)||1000;
     const ppg = swg > 0 ? +(spc/swg).toFixed(4) : 0;
     const updated = clone();
-    updated[newName] = { technology:newTech, spoolPriceCRC:spc, spoolWeightG:swg, pricePerGram:ppg, ...(newTech==="sla"?{density:parseFloat(newDensity)||1.10,pricePerML:ppg}:{}), colors:[] };
+    const newMat = { technology:newTech, spoolPriceCRC:spc, spoolWeightG:swg, pricePerGram:ppg, ...(newTech==="sla"?{density:parseFloat(newDensity)||1.10,pricePerML:ppg}:{}), colors:[] };
+    updated[newName] = newMat;
     setMaterials(updated);
+    if (USE_SUPABASE) {
+      fetch(`${API_BASE}/api/admin/materials`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(materialToSnakeCase(newName, newMat)),
+      }).catch(err => console.error('Error adding material:', err));
+    }
     setNewName(""); setNewSpoolPrice(""); setNewSpoolWeight("1000"); setNewDensity(""); setNewTech("fdm");
   };
 
@@ -871,12 +923,12 @@ const MaterialsSection = ({ materials, setMaterials }) => {
   };
 
   const updateColor  = (n, i, p) => { const u = clone(); u[n].colors = u[n].colors.map((c,j)=>j===i?{...c,...p}:c); setMaterials(u); };
-  const removeColor  = (n, i)    => { const u = clone(); u[n].colors = u[n].colors.filter((_,j)=>j!==i); setMaterials(u); };
+  const removeColor  = (n, i)    => { const u = clone(); u[n].colors = u[n].colors.filter((_,j)=>j!==i); setMaterials(u); syncMaterial(n, u[n]); };
   const addCC = (n) => {
     if (!ccName) return;
     const u = clone(); const mat = u[n];
     mat.colors.push({ name:ccName, hex:ccHex, finish:ccFinish, premium:ccPremium, hidden:false, useMaterialPrice:ccPrice==="", customPrice:ccPrice===""?mat.pricePerGram:parseFloat(ccPrice) });
-    setMaterials(u); setCCName(""); setCCHex("#a855f7"); setCCPrice(""); setCCPremium(false); setCCFinish("matte");
+    setMaterials(u); syncMaterial(n, mat); setCCName(""); setCCHex("#a855f7"); setCCPrice(""); setCCPremium(false); setCCFinish("matte");
   };
 
   return (
@@ -962,9 +1014,9 @@ const MaterialsSection = ({ materials, setMaterials }) => {
               </div>
               <div className="flex flex-col items-center gap-2 mt-1">
                 <div style={{ padding:"3px 8px", borderRadius:8, background:ts.bg, border:`1px solid ${ts.border}`, color:ts.color, fontSize:10, fontWeight:700, textTransform:"uppercase", whiteSpace:"nowrap" }}>{ts.icon} {ts.label}</div>
-                <button onClick={()=>isEditing?setEditingMaterial(null):setEditingMaterial(name)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition ${isEditing?"bg-green-500/20 text-green-300":"bg-violet-500/10 text-violet-300"}`}>{isEditing?<Save size={18}/>:<Pencil size={18}/>}</button>
+                <button onClick={()=>{ if (isEditing) { syncMaterial(name, material); setEditingMaterial(null); } else { setEditingMaterial(name); } }} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition ${isEditing?"bg-green-500/20 text-green-300":"bg-violet-500/10 text-violet-300"}`}>{isEditing?<Save size={18}/>:<Pencil size={18}/>}</button>
                 <button onClick={()=>setExpandedMaterial(expanded?null:name)} className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">{expanded?<ChevronUp size={18}/>:<ChevronDown size={18}/>}</button>
-                <button onClick={()=>{const u=clone();delete u[name];setMaterials(u);}} className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition"><Trash2 size={18}/></button>
+                <button onClick={()=>{ const u=clone(); delete u[name]; setMaterials(u); if (USE_SUPABASE) fetch(`${API_BASE}/api/admin/materials/${encodeURIComponent(name)}`,{method:'DELETE',headers:{Authorization:`Bearer ${adminToken}`}}).catch(e=>console.error(e)); }} className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition"><Trash2 size={18}/></button>
               </div>
             </div>
             {expanded && (
@@ -1384,10 +1436,23 @@ const EnviosSection = ({ adminToken }) => {
 
 // ── SECTION 8: Configuración ──────────────────────────────────────────────────
 
-const ConfiguracionSection = ({ settings, setSettings }) => {
+const ConfiguracionSection = ({ settings, setSettings, adminToken }) => {
   const [draft, setDraft] = useState({ ...settings });
   const set = (k, v) => setDraft(p => ({ ...p, [k]: v }));
-  const save = () => { setSettings(draft); };
+  const save = () => {
+    if (USE_SUPABASE) {
+      fetch(`${API_BASE}/api/admin/settings`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsToSnakeCase(draft)),
+      })
+        .then(r => r.ok ? r.json() : r.json().then(b => Promise.reject(b.error || 'Error')))
+        .then(() => setSettings(draft))
+        .catch(err => alert(`Error guardando configuración: ${err}`));
+    } else {
+      setSettings(draft);
+    }
+  };
   const margin = Math.round((1 - 1/draft.commercialMarkup) * 100);
 
   return (
@@ -1606,12 +1671,12 @@ const Dashboard = ({ materials, setMaterials, printers, setPrinters, settings, s
       <div className="flex-1 min-h-screen" style={{ marginLeft:240, padding:"40px 40px 80px" }}>
         {activeSection === "resumen"       && <ResumenSection       orders={orders} materials={materials} printers={printers} settings={settings} />}
         {activeSection === "pedidos"       && <PedidosSection       orders={orders} setOrders={setOrders} adminToken={adminToken} />}
-        {activeSection === "impresoras"    && <PrintersSection      printers={printers} setPrinters={setPrinters} orders={orders} />}
-        {activeSection === "materiales"    && <MaterialsSection     materials={materials} setMaterials={setMaterials} />}
+        {activeSection === "impresoras"    && <PrintersSection      printers={printers} setPrinters={setPrinters} orders={orders} adminToken={adminToken} />}
+        {activeSection === "materiales"    && <MaterialsSection     materials={materials} setMaterials={setMaterials} adminToken={adminToken} />}
         {activeSection === "clientes"      && <ClientesSection      orders={orders} />}
         {activeSection === "ventas"        && <VentasSection        orders={orders} />}
         {activeSection === "envios"        && <EnviosSection        adminToken={adminToken} />}
-        {activeSection === "configuracion" && <ConfiguracionSection settings={settings} setSettings={setSettings} />}
+        {activeSection === "configuracion" && <ConfiguracionSection settings={settings} setSettings={setSettings} adminToken={adminToken} />}
       </div>
     </div>
   );

@@ -158,6 +158,141 @@ router.patch('/orders/:id/status', async (req, res) => {
   }
 });
 
+// ── PUT /api/admin/settings ───────────────────────────────────────────────────
+router.put('/settings', async (req, res) => {
+  const allowed = [
+    'business_name','email','whatsapp','address','currency',
+    'apply_vat','vat_rate','commercial_markup','urgency_semi','urgency_urgent',
+    'minimum_price','quote_valid_days','welcome_message','response_time_h',
+    'notification_email','low_stock_alert',
+    'support_light_mat','support_light_time',
+    'support_moderate_mat','support_moderate_time',
+    'support_heavy_mat','support_heavy_time',
+    'infill_weight_factor',
+  ];
+  const update = Object.fromEntries(
+    Object.entries(req.body || {}).filter(([k]) => allowed.includes(k))
+  );
+  update.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabase.from('settings').update(update).eq('id', 1).select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('[PUT /api/admin/settings]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/printers ───────────────────────────────────────────────────
+router.get('/printers', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('printers').select('*').order('sort_order');
+    if (error) throw error;
+    res.json({ printers: data || [] });
+  } catch (err) {
+    console.error('[GET /api/admin/printers]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/admin/printers ──────────────────────────────────────────────────
+router.post('/printers', async (req, res) => {
+  const { created_at: _ca, ...row } = req.body || {};
+  row.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabase.from('printers').insert(row).select().single();
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) {
+    console.error('[POST /api/admin/printers]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PUT /api/admin/printers/:id ───────────────────────────────────────────────
+router.put('/printers/:id', async (req, res) => {
+  const { id } = req.params;
+  const { id: _id, created_at: _ca, ...updates } = req.body || {};
+  updates.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabase.from('printers').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Printer not found' });
+    res.json(data);
+  } catch (err) {
+    console.error('[PUT /api/admin/printers/:id]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /api/admin/printers/:id ───────────────────────────────────────────
+router.delete('/printers/:id', async (req, res) => {
+  try {
+    const { error } = await supabase.from('printers').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE /api/admin/printers/:id]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/materials ──────────────────────────────────────────────────
+router.get('/materials', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('materials').select('*').order('sort_order');
+    if (error) throw error;
+    res.json({ materials: data || [] });
+  } catch (err) {
+    console.error('[GET /api/admin/materials]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/admin/materials ─────────────────────────────────────────────────
+router.post('/materials', async (req, res) => {
+  const { created_at: _ca, ...row } = req.body || {};
+  row.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabase.from('materials').insert(row).select().single();
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) {
+    console.error('[POST /api/admin/materials]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PUT /api/admin/materials/:name ────────────────────────────────────────────
+router.put('/materials/:name', async (req, res) => {
+  const name = decodeURIComponent(req.params.name);
+  const { name: _n, created_at: _ca, ...updates } = req.body || {};
+  updates.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabase.from('materials').update(updates).eq('name', name).select().single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Material not found' });
+    res.json(data);
+  } catch (err) {
+    console.error('[PUT /api/admin/materials/:name]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /api/admin/materials/:name ─────────────────────────────────────────
+router.delete('/materials/:name', async (req, res) => {
+  const name = decodeURIComponent(req.params.name);
+  try {
+    const { error } = await supabase.from('materials').delete().eq('name', name);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE /api/admin/materials/:name]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /api/admin/shipping/config ───────────────────────────────────────────
 router.get('/shipping/config', async (req, res) => {
   try {

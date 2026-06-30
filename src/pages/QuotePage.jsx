@@ -298,7 +298,7 @@ const scaleDimensions = (dimensionsStr, scalePct) => {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
+const QuotePage = ({ materials, printers, getActivePrinter, settings, configReady = true, configError = false }) => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const [file,           setFile]           = useState(location.state?.file || null);
@@ -1197,7 +1197,14 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
 
               {/* Price section */}
               <div className="pt-6 border-t border-white/10">
-                {technology === "sla" ? (
+                {configError ? (
+                  <div style={{ padding:"14px", borderRadius:12, background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.2)" }}>
+                    <p style={{ fontSize:13, color:"#f87171", fontWeight:600 }}>⚠️ No pudimos cargar la configuración de precios.</p>
+                    <p style={{ fontSize:12, color:"rgba(255,255,255,0.45)", marginTop:4 }}>Recargá la página o <a href="/contact" style={{ color:"#a78bfa" }}>contactanos</a>.</p>
+                  </div>
+                ) : !configReady ? (
+                  <p className="animate-pulse" style={{ color:"#a78bfa", fontSize:22, fontWeight:900 }}>Cargando configuración…</p>
+                ) : technology === "sla" ? (
                   <div style={{
                     background:"rgba(124,58,237,0.06)",
                     borderTop:"1px solid rgba(124,58,237,0.18)",
@@ -1244,7 +1251,7 @@ const QuotePage = ({ materials, printers, getActivePrinter, settings }) => {
                   </>
                 )}
 
-                {technology !== "sla" && !pricing.needsPrinter && weightForPricing > 0 && fitsAtCurrentScale && (
+                {configReady && !configError && technology !== "sla" && !pricing.needsPrinter && weightForPricing > 0 && fitsAtCurrentScale && (
                   <button onClick={() => setShowModal(true)}
                     className="mt-6 w-full primary-button py-4 rounded-2xl sm:rounded-3xl text-base sm:text-lg font-bold">
                     Confirmar Pedido →
