@@ -225,11 +225,7 @@ const STATUS_BTN_CFG = {
   cancelled: { label:"Cancelar ✗",        style:{ background:"rgba(239,68,68,0.1)",    border:"1px solid rgba(239,68,68,0.3)",    color:"#f87171" } },
 };
 
-// ── STL download via signed Supabase URL ─────────────────────────────────────
-// Calls the admin API which returns a 60-second signed URL from Supabase Storage.
-// Requires a valid adminToken (admin JWT).
-
-const downloadViaApi = async (orderId, type, adminToken, refStr) => {
+const downloadViaApi = async (orderId, type, adminToken) => {
   console.log('[Dashboard] Download clicked — orderId:', orderId, '| type:', type, '| hasToken:', !!adminToken);
   if (!adminToken) { alert("Inicia sesión como admin para descargar archivos."); return; }
   try {
@@ -242,17 +238,14 @@ const downloadViaApi = async (orderId, type, adminToken, refStr) => {
       throw new Error(body.error || `Error ${res.status}`);
     }
     const { url } = await res.json();
-    // Fetch as blob so the `download` attribute works cross-origin (Supabase signed URLs).
-    const blob = await fetch(url).then(r => r.blob());
-    const refNum = (refStr || "").replace(/[^0-9]/g, "") || orderId.slice(-6);
-    const fileName = `inity3d_order_${refNum}_${type}.stl`;
+    // Navigate directly — avoids cross-origin blob fetch which fails for R2 multipart objects.
+    // Browser downloads automatically because Content-Type is application/octet-stream.
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName;
+    a.href = url;
+    a.style.display = "none";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
   } catch (err) {
     alert("No se pudo descargar el archivo: " + err.message);
   }

@@ -23,10 +23,7 @@ async function findOrder(paramId, columns) {
 }
 
 async function getSignedUrl(storagePath, expiresInSeconds = 60) {
-  // R2 paths are prefixed 'r2/' — strip the prefix to get the actual bucket key.
-  // Legacy Supabase paths have no prefix and fall through to Supabase Storage.
   if (storagePath.startsWith(R2_PREFIX)) {
-    // R2 bucket key includes the 'r2/' prefix — pass the full path, not stripped.
     return r2SignedUrl(storagePath, expiresInSeconds);
   }
   const { data, error } = await supabase.storage
@@ -111,8 +108,6 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
       });
     }
 
-    const url = await getSignedUrl(storagePath);
-
     let fileName;
     if (type === 'screenshot') {
       const ext = storagePath.split('.').pop() || 'jpg';
@@ -124,6 +119,8 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
         ? `${baseName}_original.stl`
         : `${baseName}_scaled_${row.scale_applied}pct.stl`;
     }
+
+    const url = await getSignedUrl(storagePath);
 
     res.json({ url, fileName });
   } catch (err) {
