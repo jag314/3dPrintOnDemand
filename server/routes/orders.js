@@ -3,6 +3,9 @@ import multer         from 'multer';
 import { randomUUID } from 'crypto';
 import supabase, { BUCKET } from '../lib/supabase.js';
 import { scaleSTL, isSTL }  from '../lib/stlUtils.js';
+import { R2_PREFIX, uploadFile as r2Upload, deleteFiles as r2Delete } from '../lib/r2.js';
+
+const USE_R2 = process.env.STORAGE_PROVIDER === 'r2';
 
 const router = Router();
 
@@ -40,25 +43,27 @@ router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screensh
 
     // ── 3. Upload original STL ───────────────────────────────────────────────
     const ext = (stlFile.originalname || 'model.stl').split('.').pop().toLowerCase();
-    const originalPath = `orders/${orderId}/original.${ext}`;
+    const originalPath = `${USE_R2 ? R2_PREFIX : ''}orders/${orderId}/original.${ext}`;
     let storedOriginalPath = null;
 
     try {
-      const uploadResult = await supabase.storage
-        .from(BUCKET)
-        .upload(originalPath, stlFile.buffer, {
-          contentType: stlFile.mimetype || 'application/octet-stream',
-          upsert: true,
-        });
-
-      if (uploadResult.error) {
-        console.error('[STL Upload] FAILED:', uploadResult.error.message);
-        return res.status(500).json({
-          error: 'No se pudo guardar el archivo STL. Por favor intentá de nuevo.',
-          detail: uploadResult.error.message,
-        });
+      if (USE_R2) {
+        await r2Upload(originalPath, stlFile.buffer, stlFile.mimetype || 'application/octet-stream');
+      } else {
+        const uploadResult = await supabase.storage
+          .from(BUCKET)
+          .upload(originalPath, stlFile.buffer, {
+            contentType: stlFile.mimetype || 'application/octet-stream',
+            upsert: true,
+          });
+        if (uploadResult.error) {
+          console.error('[STL Upload] FAILED:', uploadResult.error.message);
+          return res.status(500).json({
+            error: 'No se pudo guardar el archivo STL. Por favor intentá de nuevo.',
+            detail: uploadResult.error.message,
+          });
+        }
       }
-
       storedOriginalPath = originalPath;
     } catch (ex) {
       console.error('[STL Upload] EXCEPTION:', ex.message);
@@ -73,12 +78,17 @@ router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screensh
     if (storedOriginalPath && scalePct !== 100 && isSTL(stlFile.originalname)) {
       try {
         const scaledBuffer = scaleSTL(stlFile.buffer, scalePct / 100);
-        const candidate    = `orders/${orderId}/scaled_${scalePct}pct.stl`;
-        const { error: scaledErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(candidate, scaledBuffer, { contentType: 'model/stl', upsert: true });
-        if (scaledErr) console.warn('[Scaled STL upload failed — non-fatal]', scaledErr.message);
-        else           scaledPath = candidate;
+        const candidate    = `${USE_R2 ? R2_PREFIX : ''}orders/${orderId}/scaled_${scalePct}pct.stl`;
+        if (USE_R2) {
+          await r2Upload(candidate, scaledBuffer, 'model/stl');
+          scaledPath = candidate;
+        } else {
+          const { error: scaledErr } = await supabase.storage
+            .from(BUCKET)
+            .upload(candidate, scaledBuffer, { contentType: 'model/stl', upsert: true });
+          if (scaledErr) console.warn('[Scaled STL upload failed — non-fatal]', scaledErr.message);
+          else           scaledPath = candidate;
+        }
       } catch (ex) {
         console.warn('[STL scaling exception — non-fatal]', ex.message);
       }
@@ -90,15 +100,20 @@ router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screensh
     if (screenshotFile) {
       try {
         const ssExt  = (screenshotFile.originalname || 'screenshot.jpg').split('.').pop().toLowerCase();
-        const ssPath = `orders/${orderId}/sinpe_screenshot.${ssExt}`;
-        const { error: ssErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(ssPath, screenshotFile.buffer, {
-            contentType: screenshotFile.mimetype || 'image/jpeg',
-            upsert: true,
-          });
-        if (ssErr) console.warn('[Screenshot upload failed — non-fatal]', ssErr.message);
-        else       screenshotStoragePath = ssPath;
+        const ssPath = `${USE_R2 ? R2_PREFIX : ''}orders/${orderId}/sinpe_screenshot.${ssExt}`;
+        if (USE_R2) {
+          await r2Upload(ssPath, screenshotFile.buffer, screenshotFile.mimetype || 'image/jpeg');
+          screenshotStoragePath = ssPath;
+        } else {
+          const { error: ssErr } = await supabase.storage
+            .from(BUCKET)
+            .upload(ssPath, screenshotFile.buffer, {
+              contentType: screenshotFile.mimetype || 'image/jpeg',
+              upsert: true,
+            });
+          if (ssErr) console.warn('[Screenshot upload failed — non-fatal]', ssErr.message);
+          else       screenshotStoragePath = ssPath;
+        }
       } catch (ex) {
         console.warn('[Screenshot upload exception — non-fatal]', ex.message);
       }
@@ -192,7 +207,13 @@ router.post('/', upload.fields([{ name:'stlFile', maxCount:1 }, { name:'screensh
     if (dbErr) {
       console.error('[DB insert failed]', dbErr.message);
       const toRemove = [storedOriginalPath, scaledPath].filter(Boolean);
-      if (toRemove.length) await supabase.storage.from(BUCKET).remove(toRemove);
+      if (toRemove.length) {
+        if (USE_R2) {
+          await r2Delete(toRemove.map(p => p.slice(R2_PREFIX.length)));
+        } else {
+          await supabase.storage.from(BUCKET).remove(toRemove);
+        }
+      }
       return res.status(502).json({ error: 'Failed to save order: ' + dbErr.message });
     }
 

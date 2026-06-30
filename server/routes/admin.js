@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAdmin } from '../middleware/adminAuth.js';
 import supabase, { BUCKET } from '../lib/supabase.js';
+import { R2_PREFIX, getSignedDownloadUrl as r2SignedUrl } from '../lib/r2.js';
 
 const router = Router();
 
@@ -21,10 +22,16 @@ async function findOrder(paramId, columns) {
   return { row: data, error };
 }
 
-async function getSignedUrl(storagePath) {
+async function getSignedUrl(storagePath, expiresInSeconds = 60) {
+  // R2 paths are prefixed 'r2/' — strip the prefix to get the actual bucket key.
+  // Legacy Supabase paths have no prefix and fall through to Supabase Storage.
+  if (storagePath.startsWith(R2_PREFIX)) {
+    // R2 bucket key includes the 'r2/' prefix — pass the full path, not stripped.
+    return r2SignedUrl(storagePath, expiresInSeconds);
+  }
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrl(storagePath, 60);  // 60-second expiry
+    .createSignedUrl(storagePath, expiresInSeconds);
   if (error) throw new Error('Signed URL error: ' + error.message);
   return data.signedUrl;
 }

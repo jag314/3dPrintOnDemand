@@ -4,6 +4,9 @@ import { randomUUID } from 'crypto';
 import path           from 'path';
 import { Resend }     from 'resend';
 import supabase, { BUCKET } from '../lib/supabase.js';
+import { R2_PREFIX, uploadFile as r2Upload, getSignedDownloadUrl as r2SignedUrl } from '../lib/r2.js';
+
+const USE_R2 = process.env.STORAGE_PROVIDER === 'r2';
 
 const router = Router();
 
@@ -83,31 +86,48 @@ router.post('/', async (req, res) => {
     for (const file of req.files || []) {
       const safeFilename  = sanitizeFilename(file.originalname);
       const uuid          = randomUUID();
-      const storagePath   = `contact/${uuid}/${safeFilename}`;
+      const storagePath   = `${USE_R2 ? R2_PREFIX : ''}contact/${uuid}/${safeFilename}`;
 
-      const { error: uploadErr } = await supabase.storage
-        .from(BUCKET)
-        .upload(storagePath, file.buffer, {
-          contentType: file.mimetype || 'application/octet-stream',
-          upsert: false,
-        });
+      if (USE_R2) {
+        try {
+          await r2Upload(storagePath, file.buffer, file.mimetype || 'application/octet-stream');
+        } catch (ex) {
+          console.error('[contact] R2 upload failed:', ex.message);
+          return res.status(500).json({ error: 'Error al guardar el archivo adjunto.' });
+        }
+        let signedUrl;
+        try {
+          signedUrl = await r2SignedUrl(storagePath, 7 * 24 * 60 * 60);
+        } catch (ex) {
+          console.error('[contact] R2 signed URL failed:', ex.message);
+          return res.status(500).json({ error: 'Error al generar link de descarga.' });
+        }
+        attachments.push({ name: safeFilename, url: signedUrl });
+      } else {
+        const { error: uploadErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(storagePath, file.buffer, {
+            contentType: file.mimetype || 'application/octet-stream',
+            upsert: false,
+          });
 
-      if (uploadErr) {
-        console.error('[contact] Supabase upload failed:', uploadErr.message);
-        return res.status(500).json({ error: 'Error al guardar el archivo adjunto.' });
+        if (uploadErr) {
+          console.error('[contact] Supabase upload failed:', uploadErr.message);
+          return res.status(500).json({ error: 'Error al guardar el archivo adjunto.' });
+        }
+
+        // 7-day signed URL — long enough to survive email delivery + reading delay
+        const { data: urlData, error: urlErr } = await supabase.storage
+          .from(BUCKET)
+          .createSignedUrl(storagePath, 7 * 24 * 60 * 60);
+
+        if (urlErr) {
+          console.error('[contact] Signed URL failed:', urlErr.message);
+          return res.status(500).json({ error: 'Error al generar link de descarga.' });
+        }
+
+        attachments.push({ name: safeFilename, url: urlData.signedUrl });
       }
-
-      // 7-day signed URL — long enough to survive email delivery + reading delay
-      const { data: urlData, error: urlErr } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(storagePath, 7 * 24 * 60 * 60);
-
-      if (urlErr) {
-        console.error('[contact] Signed URL failed:', urlErr.message);
-        return res.status(500).json({ error: 'Error al generar link de descarga.' });
-      }
-
-      attachments.push({ name: safeFilename, url: urlData.signedUrl });
     }
 
     // ── Send email via Resend ──────────────────────────────────────────────────
