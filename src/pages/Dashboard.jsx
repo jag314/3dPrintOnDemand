@@ -22,6 +22,7 @@ const STATUS_CFG = {
   quoted:    { label:"Cotizado",     dot:"#3b82f6", bg:"rgba(59,130,246,0.15)",   border:"rgba(59,130,246,0.4)"  },
   confirmed: { label:"Confirmado",   dot:"#8b5cf6", bg:"rgba(139,92,246,0.15)",   border:"rgba(139,92,246,0.4)"  },
   printing:  { label:"En impresión", dot:"#06b6d4", bg:"rgba(6,182,212,0.15)",    border:"rgba(6,182,212,0.4)"   },
+  shipped:   { label:"Enviado",      dot:"#f97316", bg:"rgba(249,115,22,0.15)",   border:"rgba(249,115,22,0.4)"  },
   completed: { label:"Completado",   dot:"#10b981", bg:"rgba(16,185,129,0.15)",   border:"rgba(16,185,129,0.4)"  },
   cancelled: { label:"Cancelado",    dot:"#ef4444", bg:"rgba(239,68,68,0.15)",    border:"rgba(239,68,68,0.4)"   },
 };
@@ -212,7 +213,8 @@ const NEXT_STATUSES = {
   pending:   ["quoted","confirmed","cancelled"],
   quoted:    ["confirmed","cancelled"],
   confirmed: ["printing","cancelled"],
-  printing:  ["completed","cancelled"],
+  printing:  ["shipped","cancelled"],
+  shipped:   ["completed","cancelled"],
   completed: [],
   cancelled: [],
 };
@@ -221,6 +223,7 @@ const STATUS_BTN_CFG = {
   quoted:    { label:"Marcar Cotizado",   style:{ background:"rgba(59,130,246,0.15)",  border:"1px solid rgba(59,130,246,0.35)",  color:"#60a5fa" } },
   confirmed: { label:"Confirmar Pedido",  style:{ background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.35)", color:"#a78bfa" } },
   printing:  { label:"En Impresión",      style:{ background:"rgba(6,182,212,0.15)",   border:"1px solid rgba(6,182,212,0.35)",   color:"#22d3ee" } },
+  shipped:   { label:"Marcar Enviado 📦", style:{ background:"rgba(249,115,22,0.15)",  border:"1px solid rgba(249,115,22,0.35)",  color:"#fb923c" } },
   completed: { label:"Completado ✓",      style:{ background:"rgba(16,185,129,0.15)",  border:"1px solid rgba(16,185,129,0.35)",  color:"#34d399" } },
   cancelled: { label:"Cancelar ✗",        style:{ background:"rgba(239,68,68,0.1)",    border:"1px solid rgba(239,68,68,0.3)",    color:"#f87171" } },
 };
@@ -329,10 +332,12 @@ const AdminLogin = ({ onLogin }) => {
 };
 
 const PedidosSection = ({ orders, setOrders, adminToken }) => {
-  const [search, setSearch]     = useState("");
-  const [filter, setFilter]     = useState("all");
-  const [sort, setSort]         = useState("newest");
-  const [expanded, setExpanded] = useState(null);
+  const [search, setSearch]       = useState("");
+  const [filter, setFilter]       = useState("all");
+  const [sort, setSort]           = useState("newest");
+  const [expanded, setExpanded]   = useState(null);
+  const [trackingForm, setTrackingForm] = useState(null); // { orderId, tracking, courier }
+  const [emailWarning, setEmailWarning] = useState(null); // { orderId, error }
 
   const filtered = useMemo(() => {
     let list = [...orders];
@@ -355,7 +360,7 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
     return list;
   }, [orders, search, filter, sort]);
 
-  const updateStatus = (id, status) => {
+  const updateStatus = async (id, status, extraBody = {}) => {
     // Optimistic UI + localStorage update
     const updated = orders.map(o => {
       if (o.id !== id) return o;
@@ -376,14 +381,23 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
     setOrders(updated);
     localStorage.setItem("inity_orders", JSON.stringify(updated));
 
-    // Sync status to Supabase via API when admin token is available
     if (adminToken) {
       const apiBase = import.meta.env.VITE_API_URL || "";
-      fetch(`${apiBase}/api/admin/orders/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
-        body: JSON.stringify({ status }),
-      }).catch(err => console.error("Status sync to API failed:", err));
+      try {
+        const r = await fetch(`${apiBase}/api/admin/orders/${id}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+          body: JSON.stringify({ status, ...extraBody }),
+        });
+        const data = await r.json();
+        if (!r.ok) { console.error("Status sync failed:", data.error); return; }
+        if (!data.emailSent && (status === "confirmed" || status === "shipped")) {
+          setEmailWarning({ orderId: id, error: data.emailError });
+          setTimeout(() => setEmailWarning(w => w?.orderId === id ? null : w), 12000);
+        }
+      } catch (err) {
+        console.error("Status sync to API failed:", err);
+      }
     }
   };
 
@@ -658,6 +672,16 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                       {(NEXT_STATUSES[order.status] || []).map(nextStatus => {
                         const cfg = STATUS_BTN_CFG[nextStatus];
                         if (!cfg) return null;
+                        if (nextStatus === "shipped") {
+                          return (
+                            <button key={nextStatus}
+                              onClick={() => setTrackingForm({ orderId: order.id, tracking: "", courier: "" })}
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition hover:opacity-80"
+                              style={cfg.style}>
+                              {cfg.label}
+                            </button>
+                          );
+                        }
                         return (
                           <button key={nextStatus} onClick={() => updateStatus(order.id, nextStatus)}
                             className="px-4 py-2 rounded-xl text-xs font-bold transition hover:opacity-80"
@@ -672,6 +696,68 @@ const PedidosSection = ({ orders, setOrders, adminToken }) => {
                         <Trash2 size={13} /> Eliminar
                       </button>
                     </div>
+
+                    {/* Inline tracking form — shown when admin clicks "Marcar Enviado" */}
+                    {trackingForm?.orderId === order.id && (
+                      <div style={{ marginTop:12, padding:"14px 16px", background:"rgba(249,115,22,0.08)", border:"1px solid rgba(249,115,22,0.25)", borderRadius:12 }}>
+                        <p style={{ fontSize:11, fontWeight:700, color:"#fb923c", marginBottom:10, textTransform:"uppercase", letterSpacing:"0.1em" }}>Datos de envío</p>
+                        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                          <input
+                            placeholder="Empresa de courier (ej. Correos de CR)"
+                            value={trackingForm.courier}
+                            onChange={e => setTrackingForm(f => ({ ...f, courier: e.target.value }))}
+                            className={inputCls}
+                            style={{ fontSize:13 }}
+                          />
+                          <input
+                            placeholder="Número de guía / tracking *"
+                            value={trackingForm.tracking}
+                            onChange={e => setTrackingForm(f => ({ ...f, tracking: e.target.value }))}
+                            className={inputCls}
+                            style={{ fontSize:13 }}
+                          />
+                          <div style={{ display:"flex", gap:8, marginTop:4 }}>
+                            <button
+                              onClick={() => setTrackingForm(null)}
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition hover:opacity-80"
+                              style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.45)" }}>
+                              Cancelar
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const { tracking, courier } = trackingForm;
+                                setTrackingForm(null);
+                                await updateStatus(order.id, "shipped", { trackingNumber: tracking, courierCompany: courier });
+                              }}
+                              disabled={!trackingForm.tracking?.trim()}
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition hover:opacity-80"
+                              style={{
+                                background: trackingForm.tracking?.trim() ? "rgba(249,115,22,0.2)" : "rgba(249,115,22,0.06)",
+                                border:`1px solid rgba(249,115,22,${trackingForm.tracking?.trim() ? "0.5" : "0.2"})`,
+                                color: trackingForm.tracking?.trim() ? "#fb923c" : "rgba(249,115,22,0.35)",
+                                cursor: trackingForm.tracking?.trim() ? "pointer" : "not-allowed",
+                              }}>
+                              Confirmar envío →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Email warning — shown 12s when Resend fails on confirmed/shipped */}
+                    {emailWarning?.orderId === order.id && (
+                      <div style={{ marginTop:10, padding:"10px 14px", background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10 }}>
+                        <p style={{ fontSize:12, color:"#fbbf24", fontWeight:600 }}>
+                          ⚠ Status actualizado, pero el correo al cliente no se pudo enviar.
+                        </p>
+                        {emailWarning.error && (
+                          <p style={{ fontSize:11, color:"rgba(251,191,36,0.65)", marginTop:3 }}>{emailWarning.error}</p>
+                        )}
+                        <p style={{ fontSize:11, color:"rgba(251,191,36,0.5)", marginTop:3 }}>
+                          Avisale al cliente manualmente si es necesario.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

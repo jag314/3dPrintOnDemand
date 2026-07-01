@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Resend } from 'resend';
 import { requireAdmin } from '../middleware/adminAuth.js';
 import supabase, { BUCKET } from '../lib/supabase.js';
 import { R2_PREFIX, getSignedDownloadUrl as r2SignedUrl } from '../lib/r2.js';
@@ -7,6 +8,11 @@ const router = Router();
 
 // All /api/admin/* routes require a valid admin JWT
 router.use(requireAdmin);
+
+const VALID_STATUSES = new Set([
+  'pending_verification', 'pending', 'quoted', 'confirmed',
+  'printing', 'shipped', 'completed', 'cancelled',
+]);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -129,19 +135,93 @@ router.get('/orders/:id/download/:type', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Email helpers ─────────────────────────────────────────────────────────────
+
+async function sendOrderEmail(to, subject, body) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({
+    from:    `Inity 3D <${process.env.CONTACT_EMAIL || 'info@inity3d.com'}>`,
+    to:      [to],
+    subject,
+    text:    body,
+  });
+  if (error) throw new Error(JSON.stringify(error));
+}
+
+function buildConfirmedEmail(order, ref) {
+  const total = order.total_price_crc
+    ? `₡${Number(order.total_price_crc).toLocaleString('es-CR')}`
+    : null;
+  return [
+    `Hola ${order.customer_name || 'cliente'},`,
+    '',
+    '¡Buenas noticias! Recibimos y confirmamos el pago de tu pedido.',
+    'Tu modelo ya fue ingresado a la cola de impresión.',
+    '',
+    '━━━ DETALLE DEL PEDIDO ━━━',
+    `Referencia:   ${ref}`,
+    order.material ? `Material:     ${order.material}${order.color ? ` — ${order.color}` : ''}` : null,
+    order.quantity != null ? `Cantidad:     ${order.quantity} unidad(es)` : null,
+    total ? `Total:        ${total}` : null,
+    '',
+    'Te avisaremos cuando tu pedido esté listo o en camino.',
+    'Cualquier consulta podés responder a este correo o escribirnos por WhatsApp.',
+    '',
+    '¡Gracias por elegir Inity 3D!',
+    '— El equipo de Inity 3D',
+    'info@inity3d.com',
+  ].filter(l => l !== null).join('\n');
+}
+
+function buildShippedEmail(order, ref, trackingNumber, courierCompany) {
+  const lines = [
+    `Hola ${order.customer_name || 'cliente'},`,
+    '',
+    'Tu pedido ya fue despachado y está en camino a vos.',
+    '',
+    '━━━ DATOS DE ENVÍO ━━━',
+    `Referencia:       ${ref}`,
+  ];
+  if (courierCompany) lines.push(`Empresa:          ${courierCompany}`);
+  if (trackingNumber) lines.push(`Número de guía:   ${trackingNumber}`);
+  lines.push(
+    '',
+    'Podés usar ese número para rastrear tu paquete directamente',
+    'en el sitio web del courier.',
+    '',
+    'Si tenés alguna duda, respondé a este correo o escribinos por WhatsApp.',
+    '',
+    '¡Gracias por tu compra!',
+    '— El equipo de Inity 3D',
+    'info@inity3d.com',
+  );
+  return lines.join('\n');
+}
+
 // ── PATCH /api/admin/orders/:id/status ────────────────────────────────────────
 router.patch('/orders/:id/status', async (req, res) => {
-  const { status } = req.body || {};
+  const { status, trackingNumber, courierCompany } = req.body || {};
   if (!status) return res.status(400).json({ error: 'status is required' });
+  if (!VALID_STATUSES.has(status)) {
+    return res.status(400).json({
+      error: `Invalid status "${status}". Must be one of: ${[...VALID_STATUSES].join(', ')}`,
+    });
+  }
 
   try {
-    // Fetch current status before updating (needed for the log row)
-    const { row: current } = await findOrder(req.params.id, 'id, order_status');
+    const cols = 'id, order_status, reference_number, customer_email, customer_name, total_price_crc, material, color, quantity';
+    const { row: current } = await findOrder(req.params.id, cols);
     if (!current) return res.status(404).json({ error: 'Order not found' });
+
+    const updatePayload = { order_status: status };
+    if (status === 'shipped') {
+      if (trackingNumber) updatePayload.tracking_number = trackingNumber;
+      if (courierCompany) updatePayload.courier_company = courierCompany;
+    }
 
     const { error: updateErr } = await supabase
       .from('orders')
-      .update({ order_status: status })
+      .update(updatePayload)
       .eq('id', current.id);
 
     if (updateErr) throw updateErr;
@@ -155,7 +235,41 @@ router.patch('/orders/:id/status', async (req, res) => {
       note:        `Status changed to ${status}`,
     });
 
-    res.json({ success: true, orderId: current.id, newStatus: status });
+    // Send email best-effort — status is already saved; email failure must not roll it back.
+    // TODO (deuda técnica): add cancellation email for orders already in confirmed/printing/shipped
+    //   so the customer is notified when a confirmed order is cancelled.
+    let emailSent = false;
+    let emailError = null;
+
+    const ref = current.reference_number != null ? `#${current.reference_number}` : current.id.slice(-6);
+
+    if (status === 'confirmed' && current.customer_email) {
+      try {
+        await sendOrderEmail(
+          current.customer_email,
+          `Tu pedido ${ref} está confirmado — Inity 3D`,
+          buildConfirmedEmail(current, ref),
+        );
+        emailSent = true;
+      } catch (e) {
+        emailError = e.message;
+        console.error('[EMAIL confirmed] Failed:', e.message);
+      }
+    } else if (status === 'shipped' && current.customer_email) {
+      try {
+        await sendOrderEmail(
+          current.customer_email,
+          `Tu pedido ${ref} está en camino — Inity 3D`,
+          buildShippedEmail(current, ref, trackingNumber, courierCompany),
+        );
+        emailSent = true;
+      } catch (e) {
+        emailError = e.message;
+        console.error('[EMAIL shipped] Failed:', e.message);
+      }
+    }
+
+    res.json({ success: true, orderId: current.id, newStatus: status, emailSent, emailError });
   } catch (err) {
     console.error('[PATCH /api/admin/orders/:id/status]', err.message);
     res.status(500).json({ error: err.message });
